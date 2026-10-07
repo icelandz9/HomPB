@@ -1,13 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;800&display=swap"
+    />
+    <link rel="stylesheet" href="main_page.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="container-nav">
+        <a href="/" class="logo">HOMPB</a>
 
-    <h1>Hello</h1>
-    
-</body>
+        <ul class="menu">
+          <li><a href="#">ช้อปสินค้า</a></li>
+          <li><a href="#">ห้องต่างๆ</a></li>
+          <li><a href="#">บริการต่างๆ</a></li>
+        </ul>
+
+        <form action="search" method="get" role="search" class="search">
+          <input
+            type="search"
+            name="q"
+            aria-label="ค้นหาสินค้า"
+            placeholder="ค้นหาสินค้า เช่น หมอน โซฟา กาต้มน้ำ"
+          />
+          <button type="submit" aria-label="ค้นหา" class="search-btn">
+            <img src="img/Light/search_icon_light.png" alt="" />
+          </button>
+        </form>
+
+        <div class="actions">
+          <a href="/account" class="act-btn" aria-label="บัญชีของฉัน"><img src="img/Light/profile-light_icon.png" alt="" /></a>
+          <a href="/wishlist" class="act-btn" aria-label="รายการโปรด"><img src="img/Light/heart-light_icon.png" alt="" /></a>
+          <a href="/cart" class="act-btn" aria-label="ตะกร้า"><img src="img/Light/shopping-light_icon.png" alt="" /></a>
+          <a href="/track" class="act-btn" aria-label="ติดตามพัสดุ"><img src="img/Light/truck-light_icon.png" alt="" /></a>
+          <button type="button" class="act-btn" aria-label="เปลี่ยนธีม"><img src="img/Light/sun-light_icon.png" alt="" /></button>
+        </div>
+      </div>
+    </nav>
+  </body>
 </html>
