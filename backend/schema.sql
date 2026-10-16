@@ -130,12 +130,10 @@ create type refund_reason as enum (
 
 create type sender_type as enum (
     'customer',
-    'staff',
-    'bot'
+    'staff'
 );
 
 create type conversation_status as enum (
-    'bot_handling',
     'waiting_staff',
     'in_progress',
     'closed'
@@ -324,7 +322,7 @@ create table conversations(
     customer_id uuid not null references profiles(id) on delete cascade,
     staff_id uuid references profiles(id) on delete set null,
     order_id uuid references orders(id) on delete set null,
-    status conversation_status not null default 'bot_handling',
+    status conversation_status not null default 'waiting_staff',
     created_at timestamptz not null default now(),
     closed_at timestamptz
 );
@@ -333,7 +331,7 @@ create table messages(
     id uuid primary key default gen_random_uuid(),
     conversation_id uuid not null references conversations(id) on delete cascade,
     sender_type sender_type not null,
-    sender_id uuid references profiles(id) on delete set null,
+    sender_id uuid not null references profiles(id),
     body text,
     image_path text,
     created_at timestamptz not null default now(),
