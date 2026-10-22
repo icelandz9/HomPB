@@ -1,0 +1,309 @@
+// ========== ผู้ใช้ปัจจุบัน (เชื่อมกับ Login ภายหลัง) ==========
+const me = { name: "ฝ่ายบัญชี", email: "finance@hompb.com", role: "ฝ่ายบัญชี" };
+
+// ========== สิทธิ์ของฝ่ายบัญชี: M = จัดการ, V = ดูอย่างเดียว ==========
+const ACL = { overview: "V", orders: "V", finance: "M" };
+const PAGES = [
+  ["overview", "ภาพรวม", "▦"],
+  ["orders", "คำสั่งซื้อ", "☰"],
+  ["finance", "การเงิน & ชำระเงิน", "▭"],
+];
+
+// ========== ข้อมูล (ว่างไว้ก่อน ค่อยเชื่อม API/ฐานข้อมูลภายหลัง) ==========
+// payments: {orderId,date,amt,slip,slipUrl,status:'wait'|'ok'|'bad'|'refund',refundAmt,note}
+let payments = [];
+// orders: {id,cust,items,amt,status,date}  (ฝ่ายบัญชีเห็นยอดเงิน แต่ไม่เห็นที่อยู่)
+let orders = [];
+// history: [เวลา, คำสั่งซื้อ, การดำเนินการ, จำนวนเงิน, หมายเหตุ, ผู้ทำ]
+let history = [];
+let refundIdx = null; // แถวที่กำลังทำรายการคืนเงิน
+let rejectIdx = null; // แถวที่กำลังบันทึกเหตุผลไม่ผ่าน
+
+// ========== ฟังก์ชันช่วย ==========
+const $ = (s) => document.querySelector(s);
+const esc = (s) =>
+  String(s).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+const baht = (n) => "฿" + Number(n).toLocaleString("th-TH");
+const canM = (p) => ACL[p] === "M";
+function toast(t) {
+  const e = document.createElement("div");
+  e.className = "toast";
+  e.textContent = t;
+  document.body.appendChild(e);
+  setTimeout(() => e.remove(), 2200);
+}
+function logout() {
+  toast("เชื่อมปุ่มออกจากระบบกับหน้า Login ภายหลัง");
+}
+function guard(p) {
+  if (!canM(p)) {
+    toast("คุณไม่มีสิทธิ์ดำเนินการนี้");
+    return false;
+  }
+  return true;
+}
+function card(title, note, body, pad) {
+  return `<div class="card"><div class="ch"><h2>${title}</h2><span>${note || ""}</span></div>${pad ? `<div class="cb">${body}</div>` : body}</div>`;
+}
+function table(heads, rowsHtml, id) {
+  return `<div class="tw"><table><tr>${heads.map((h) => `<th>${h}</th>`).join("")}</tr><tbody${id ? ` id="${id}"` : ""}>${rowsHtml || `<tr><td class="empty" colspan="${heads.length}">ยังไม่มีข้อมูล</td></tr>`}</tbody></table></div>`;
+}
+function payPill(s) {
+  return (
+    {
+      wait: '<span class="pill w">รอตรวจสอบ</span>',
+      ok: '<span class="pill o">ยืนยันแล้ว</span>',
+      bad: '<span class="pill r">ไม่ผ่าน</span>',
+      refund: '<span class="pill r">คืนเงินแล้ว</span>',
+    }[s] || esc(s)
+  );
+}
+function addHistory(orderId, action, amt, note) {
+  history.unshift([
+    new Date().toLocaleString("th-TH"),
+    orderId,
+    action,
+    amt,
+    note || "-",
+    me.email,
+  ]);
+}
+
+// ========== เปลี่ยนหน้า (เมนูแสดงตามสิทธิ์) ==========
+function go(p) {
+  if (!ACL[p]) p = "overview";
+  $("#nav").innerHTML = PAGES.filter((x) => ACL[x[0]])
+    .map(
+      (x) =>
+        `<button class="${x[0] === p ? "on" : ""}" onclick="go('${x[0]}')"><span aria-hidden="true">${x[2]}</span>${x[1]}</button>`,
+    )
+    .join("");
+  const t = PAGES.find((x) => x[0] === p)[1];
+  $("#pg").innerHTML =
+    `<h1>${t}</h1><p class="who">${me.role} · สิทธิ์: ${canM(p) ? "จัดการ" : "ดูอย่างเดียว"}</p>` +
+    VIEWS[p]();
+  window.scrollTo(0, 0);
+}
+
+// ========== เนื้อหาแต่ละหน้า ==========
+const VIEWS = {
+  // ---- ภาพรวม (ดูอย่างเดียว) ----
+  overview() {
+    const k = (l, v) => `<div class="kpi"><p>${l}</p><b>${v}</b></div>`;
+    const sum = (f) =>
+      payments.filter(f).reduce((a, p) => a + Number(p.amt), 0);
+    const refunded = payments
+      .filter((p) => p.status === "refund")
+      .reduce((a, p) => a + Number(p.refundAmt || 0), 0);
+    return `<div class="kpis">
+${k("สลิปรอตรวจสอบ", payments.filter((p) => p.status === "wait").length)}
+${k("ยอดที่ยืนยันแล้ว", baht(sum((p) => p.status === "ok")))}
+${k("ยอดรอตรวจสอบ", baht(sum((p) => p.status === "wait")))}
+${k("ยอดที่คืนเงินแล้ว", baht(refunded))}
+</div>`;
+  },
+
+  // ---- คำสั่งซื้อ (ดูอย่างเดียว เห็นยอดเงิน ไม่เห็นที่อยู่) ----
+  orders() {
+    const rows = orders
+      .map(
+        (o) =>
+          `<tr><td><b>${o.id}</b></td><td>${esc(o.cust)}</td><td>${esc(o.items)}</td><td>${baht(o.amt)}</td><td>${esc(o.status)}</td><td>${o.date}</td></tr>`,
+      )
+      .join("");
+    return card(
+      "คำสั่งซื้อ",
+      "ดูอย่างเดียว · ที่อยู่ลูกค้าเห็นได้เฉพาะฝ่ายจัดส่ง",
+      table(
+        ["คำสั่งซื้อ", "ลูกค้า", "สินค้า", "ยอดเงิน", "สถานะ", "วันที่"],
+        rows,
+      ),
+    );
+  },
+
+  // ---- การเงิน & ชำระเงิน (จัดการได้) ----
+  finance() {
+    return (
+      (rejectIdx !== null ? rejectForm() : "") +
+      (refundIdx !== null ? refundForm() : "") +
+      card(
+        "ตรวจสอบการชำระเงิน",
+        "ข้อมูลการเงินเป็นความลับ · เข้าถึงได้เฉพาะ Admin และฝ่ายบัญชี",
+        `<div class="filters">
+<div><label for="fq">ค้นหาคำสั่งซื้อ</label><input id="fq" placeholder="เช่น HPB1001" oninput="renderRows()"></div>
+<div><label for="fs">สถานะ</label><select id="fs" onchange="renderRows()">
+<option value="">ทั้งหมด</option><option value="wait">รอตรวจสอบ</option><option value="ok">ยืนยันแล้ว</option><option value="bad">ไม่ผ่าน</option><option value="refund">คืนเงินแล้ว</option></select></div>
+</div>` +
+          table(
+            [
+              "คำสั่งซื้อ",
+              "ยอดเงิน",
+              "หลักฐานการโอน",
+              "สถานะ",
+              "หมายเหตุ",
+              "การดำเนินการ",
+            ],
+            rowsHtml(),
+            "prow",
+          ),
+      ) +
+      card(
+        "ประวัติการดำเนินการ",
+        "บันทึกทุกครั้งที่อนุมัติ ปฏิเสธ หรือคืนเงิน",
+        table(
+          [
+            "เวลา",
+            "คำสั่งซื้อ",
+            "การดำเนินการ",
+            "จำนวนเงิน",
+            "หมายเหตุ",
+            "ผู้ทำรายการ",
+          ],
+          history
+            .slice(0, 50)
+            .map(
+              (h) =>
+                `<tr><td>${h[0]}</td><td>${h[1]}</td><td>${esc(h[2])}</td><td>${baht(h[3])}</td><td>${esc(h[4])}</td><td>${esc(h[5])}</td></tr>`,
+            )
+            .join(""),
+        ),
+      )
+    );
+  },
+};
+
+// ========== ตารางการชำระเงิน (กรองได้) ==========
+function rowsHtml() {
+  const q = ($("#fq")?.value || "").trim().toLowerCase(),
+    s = $("#fs")?.value || "";
+  return payments
+    .map((p, i) => ({ p, i }))
+    .filter(
+      ({ p }) =>
+        (!q || p.orderId.toLowerCase().includes(q)) && (!s || p.status === s),
+    )
+    .map(
+      ({ p, i }) => `<tr>
+<td><b>${p.orderId}</b><br><small class="muted">${p.date}</small></td>
+<td>${baht(p.amt)}</td>
+<td>${p.slipUrl ? `<a href="${esc(p.slipUrl)}" target="_blank" rel="noopener" style="color:var(--text)">${esc(p.slip)}</a>` : esc(p.slip || "-")}</td>
+<td>${payPill(p.status)}</td>
+<td class="muted">${esc(p.note || "-")}${p.status === "refund" ? ` (คืน ${baht(p.refundAmt)})` : ""}</td>
+<td>${
+        p.status === "wait"
+          ? `<div class="acts"><button class="btn sm" onclick="approve(${i})">ยืนยัน</button><button class="btn line sm" onclick="startReject(${i})">ไม่ผ่าน</button></div>`
+          : p.status === "ok"
+            ? `<button class="btn line sm" onclick="startRefund(${i})">คืนเงิน</button>`
+            : '<span class="muted">ดำเนินการแล้ว</span>'
+      }</td></tr>`,
+    )
+    .join("");
+}
+function renderRows() {
+  $("#prow").innerHTML =
+    rowsHtml() || '<tr><td class="empty" colspan="6">ไม่พบรายการ</td></tr>';
+}
+
+// ========== ฟอร์มไม่ผ่าน / คืนเงิน ==========
+function rejectForm() {
+  const p = payments[rejectIdx];
+  return card(
+    "ไม่ผ่านการตรวจสอบ " + p.orderId,
+    "",
+    `
+<label for="rj">เหตุผล (ลูกค้าจะเห็นข้อความนี้)</label>
+<input id="rj" placeholder="เช่น ยอดโอนไม่ตรง / สลิปไม่ชัดเจน"><br><br>
+<button class="btn" onclick="reject()">ยืนยันไม่ผ่าน</button> <button class="btn line" onclick="cancelForm()">ยกเลิก</button>`,
+    1,
+  );
+}
+function refundForm() {
+  const p = payments[refundIdx];
+  return card(
+    "คืนเงินให้ลูกค้า " + p.orderId,
+    "ยอดที่ชำระ " + baht(p.amt),
+    `
+<div class="form">
+<div><label for="ra">จำนวนเงินที่คืน (฿)</label><input id="ra" type="number" min="1" max="${p.amt}" value="${p.amt}"></div>
+<div><label for="rr">เหตุผล</label><input id="rr" placeholder="เช่น สินค้าหมด / ลูกค้ายกเลิก"></div>
+</div><br>
+<button class="btn" onclick="refund()">ยืนยันคืนเงิน</button> <button class="btn line" onclick="cancelForm()">ยกเลิก</button>`,
+    1,
+  );
+}
+function cancelForm() {
+  rejectIdx = null;
+  refundIdx = null;
+  go("finance");
+}
+
+// ========== ฟังก์ชันจัดการการเงิน (จุดที่ต้องเชื่อม API ภายหลัง) ==========
+function approve(i) {
+  if (!guard("finance")) return;
+  const p = payments[i];
+  p.status = "ok";
+  p.note = "";
+  addHistory(p.orderId, "อนุมัติยอด", p.amt);
+  // TODO: แจ้งระบบคำสั่งซื้อว่าชำระแล้ว เพื่อให้ฝ่ายจัดส่งเห็นงาน
+  go("finance");
+  toast("อนุมัติยอดแล้ว");
+}
+function startReject(i) {
+  if (!guard("finance")) return;
+  rejectIdx = i;
+  refundIdx = null;
+  go("finance");
+}
+function reject() {
+  if (!guard("finance")) return;
+  const why = $("#rj").value.trim();
+  if (!why) {
+    toast("กรอกเหตุผลก่อน");
+    return;
+  }
+  const p = payments[rejectIdx];
+  p.status = "bad";
+  p.note = why;
+  addHistory(p.orderId, "ไม่ผ่าน", p.amt, why);
+  rejectIdx = null;
+  go("finance");
+  toast("บันทึกแล้ว");
+}
+function startRefund(i) {
+  if (!guard("finance")) return;
+  refundIdx = i;
+  rejectIdx = null;
+  go("finance");
+}
+function refund() {
+  if (!guard("finance")) return;
+  const p = payments[refundIdx],
+    amt = +$("#ra").value,
+    why = $("#rr").value.trim();
+  if (!amt || amt <= 0 || amt > p.amt) {
+    toast("จำนวนเงินคืนต้องไม่เกินยอดที่ชำระ");
+    return;
+  }
+  if (!why) {
+    toast("กรอกเหตุผลก่อน");
+    return;
+  }
+  p.status = "refund";
+  p.refundAmt = amt;
+  p.note = why;
+  addHistory(p.orderId, "คืนเงิน", amt, why);
+  refundIdx = null;
+  go("finance");
+  toast("บันทึกการคืนเงินแล้ว");
+}
+
+// ========== เริ่มทำงาน ==========
+$("#tn").textContent = me.name;
+$("#te").textContent = me.email;
+go("overview");
