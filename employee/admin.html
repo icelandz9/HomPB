@@ -1,11 +1,919 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HOMPB ระบบหลังบ้าน (Admin)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #130f0e;
+            --panel: #211a18;
+            --side: #2b211e;
+            --line: #3a2f2b;
+            --acc: #a52c1c;
+            --text: #f6efeb;
+            --mute: #b9aaa3;
+            --ok: #9fd8a8;
+            --okbg: #1f3a2a;
+            --warn: #f1cd6b;
+            --warnbg: #3b2f14;
+            color-scheme: dark
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Anuphan', 'Noto Sans Thai', system-ui, sans-serif;
+            font-size: 16px
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+            color: inherit
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin: 0 0 6px
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 11px 14px
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 48px
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus,
+        button:focus-visible {
+            outline: 2px solid var(--acc);
+            outline-offset: 2px
+        }
+
+        .btn {
+            background: var(--acc);
+            border: 0;
+            border-radius: 999px;
+            padding: 10px 22px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.line {
+            background: none;
+            border: 1px solid var(--line)
+        }
+
+        .btn.sm {
+            padding: 6px 14px
+        }
+
+        .logo {
+            font-size: 34px;
+            font-weight: 700;
+            margin: 0
+        }
+
+        .sub {
+            color: var(--mute);
+            margin: 2px 0 0
+        }
+
+        /* โครงหน้า */
+        #app {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh
+        }
+
+        aside {
+            background: var(--side);
+            padding: 28px 14px;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh
+        }
+
+        aside .logo,
+        aside .sub {
+            padding: 0 10px
+        }
+
+        aside .sub {
+            margin-bottom: 34px
+        }
+
+        nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        nav button,
+        .out {
+            background: none;
+            border: 0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            text-align: left;
+            cursor: pointer;
+            color: var(--text);
+            display: flex;
+            gap: 12px;
+            align-items: center
+        }
+
+        nav button:hover,
+        .out:hover {
+            background: #3a2d29
+        }
+
+        nav button.on {
+            background: var(--acc)
+        }
+
+        main {
+            min-width: 0
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 30px;
+            background: #1c1513;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .top small {
+            color: var(--mute);
+            display: block
+        }
+
+        .pg {
+            padding: 34px 30px 60px
+        }
+
+        h1 {
+            font-size: 40px;
+            margin: 0
+        }
+
+        .who {
+            color: var(--mute);
+            font-size: 19px;
+            margin: 6px 0 26px
+        }
+
+        /* การ์ด / ตาราง */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 26px;
+            margin-bottom: 26px;
+            overflow: hidden
+        }
+
+        .ch {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .ch h2 {
+            margin: 0;
+            font-size: 22px
+        }
+
+        .ch span {
+            color: var(--mute)
+        }
+
+        .cb {
+            padding: 22px 28px
+        }
+
+        .tw {
+            overflow-x: auto
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 860px
+        }
+
+        th {
+            text-align: left;
+            color: var(--mute);
+            padding: 14px 16px;
+            background: #1c1513;
+            white-space: nowrap
+        }
+
+        td {
+            padding: 12px 16px;
+            border-top: 1px solid var(--line);
+            vertical-align: middle
+        }
+
+        td.empty {
+            text-align: center;
+            color: var(--mute);
+            padding: 36px
+        }
+
+        td input,
+        td select {
+            padding: 8px 12px;
+            border-radius: 12px
+        }
+
+        td input.num {
+            width: 90px
+        }
+
+        tr.k td {
+            background: #38241f
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 14px
+        }
+
+        .pill.o {
+            background: var(--okbg);
+            color: var(--ok)
+        }
+
+        .pill.w {
+            background: var(--warnbg);
+            color: var(--warn)
+        }
+
+        .pill.r {
+            background: #3d1914;
+            color: #ff9d8f
+        }
+
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 26px
+        }
+
+        .kpi {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 24px
+        }
+
+        .kpi p {
+            margin: 0;
+            color: var(--mute)
+        }
+
+        .kpi b {
+            display: block;
+            font-size: 44px;
+            margin-top: 10px
+        }
+
+        .form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            align-items: end
+        }
+
+        .filters {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            padding: 18px 28px;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .filters>div {
+            flex: 1;
+            min-width: 200px
+        }
+
+        .acts {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .muted {
+            color: var(--mute)
+        }
+
+        .note {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px 22px;
+            margin-bottom: 22px
+        }
+
+        /* แชท */
+        .chat {
+            display: grid;
+            grid-template-columns: minmax(240px, 1fr) 2fr;
+            gap: 20px
+        }
+
+        .clist {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .cl {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 16px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%
+        }
+
+        .cl.on {
+            border-color: var(--acc)
+        }
+
+        .cl .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center
+        }
+
+        .cl small {
+            color: var(--mute);
+            display: block;
+            margin-top: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .cw {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 480px;
+            background: var(--panel)
+        }
+
+        .cw header {
+            background: var(--acc);
+            padding: 16px 22px;
+            font-weight: 700
+        }
+
+        .cw header small {
+            display: block;
+            font-weight: 400;
+            opacity: .9
+        }
+
+        .msgs {
+            flex: 1;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+            max-height: 420px
+        }
+
+        .msgs small {
+            color: var(--mute);
+            margin-top: 6px
+        }
+
+        .bub {
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 12px 16px;
+            max-width: 80%;
+            white-space: pre-wrap
+        }
+
+        .bub.me {
+            background: #3a1d18;
+            border-color: var(--acc);
+            align-self: flex-end
+        }
+
+        .msgs small.r {
+            align-self: flex-end
+        }
+
+        .quick {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 12px 14px 0;
+            border-top: 1px solid var(--line)
+        }
+
+        .cin {
+            display: flex;
+            gap: 10px;
+            padding: 14px;
+            align-items: flex-end
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--acc);
+            padding: 12px 20px;
+            border-radius: 14px
+        }
+
+        @media(max-width:860px) {
+            #app {
+                grid-template-columns: 1fr
+            }
+
+            aside {
+                position: static;
+                height: auto;
+                padding: 16px
+            }
+
+            nav {
+                flex-direction: row;
+                overflow-x: auto
+            }
+
+            nav button {
+                white-space: nowrap
+            }
+
+            h1 {
+                font-size: 30px
+            }
+
+            .pg,
+            .top {
+                padding-left: 16px;
+                padding-right: 16px
+            }
+
+            .chat {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
 </head>
+
 <body>
-    
+
+    <!-- ========== โครงหน้า: Sidebar + เนื้อหา ========== -->
+    <div id="app">
+        <aside>
+            <h1 class="logo">HOMPB</h1>
+            <p class="sub">ระบบหลังบ้าน</p>
+            <nav id="nav"></nav>
+            <button class="out" onclick="logout()">⎋ ออกจากระบบ</button>
+        </aside>
+        <main>
+            <div class="top">
+                <div><b id="tn"></b><small id="te"></small></div>
+                <button class="btn line" onclick="toast('ใส่ลิงก์หน้าร้านภายหลัง')">ดูหน้าร้าน</button>
+            </div>
+            <div class="pg" id="pg"></div>
+        </main>
+    </div>
+
+    <script>
+        // ========== ผู้ใช้ปัจจุบัน (เชื่อมกับ Login ภายหลัง) ==========
+        const me = { name: 'Admin', email: 'admin@hompb.com', role: 'admin' };
+        const BRAND = 'ฝ่ายบริการลูกค้า HomPB'; // ชื่อที่ลูกค้าเห็นในแชท (ไม่แสดงชื่อพนักงาน)
+
+        // ========== ตำแหน่ง และสิทธิ์ (M = จัดการ, V = ดูอย่างเดียว) ==========
+        const ROLES = { admin: 'Admin', stock: 'ฝ่ายคลังสินค้า', finance: 'ฝ่ายบัญชี', ship: 'ฝ่ายจัดส่ง', cs: 'ฝ่ายบริการลูกค้า-ฝ่ายขาย' };
+        const PAGES = [['overview', 'ภาพรวม', '▦'], ['products', 'สินค้า & สต๊อก', '◫'], ['orders', 'คำสั่งซื้อ', '☰'], ['finance', 'การเงิน & ชำระเงิน', '▭'], ['shipping', 'จัดส่ง & ที่อยู่ลูกค้า', '⛟'], ['chat', 'แชทลูกค้า', '✉'], ['users', 'ผู้ใช้ & ระบบ', '♙']];
+        // ตารางสิทธิ์ทุกฝ่าย (ใช้แสดงในหน้าภาพรวม และใช้ตอนทำระบบสิทธิ์จริง)
+        const ACL = {
+            admin: { overview: 'M', products: 'M', orders: 'M', finance: 'M', shipping: 'M', chat: 'M', users: 'M' },
+            stock: { overview: 'V', products: 'M', orders: 'V' },
+            finance: { overview: 'V', orders: 'V', finance: 'M' },
+            ship: { overview: 'V', orders: 'V', shipping: 'M' },
+            cs: { overview: 'V', products: 'V', orders: 'V', chat: 'M' }
+        };
+        const ZONES = ['ห้องนอน', 'ห้องน้ำ', 'ห้องนั่งเล่น', 'ห้องครัว', 'เครื่องใช้ไฟฟ้า'];
+        const REASONS = ['รับสินค้าเข้า', 'สินค้าเสียหาย', 'นับสต๊อกใหม่', 'คืนสินค้า', 'อื่น ๆ'];
+        const SHIP_STATUS = ['รอจัดส่ง', 'กำลังจัดส่ง', 'จัดส่งสำเร็จ'];
+        const CARRIERS = ['ไปรษณีย์ไทย', 'Flash Express', 'J&T Express', 'Kerry Express', 'อื่น ๆ'];
+        const QUICK = ['สวัสดีค่ะ ยินดีให้บริการค่ะ', 'รบกวนขอเลขคำสั่งซื้อด้วยนะคะ', 'ขอบคุณที่ติดต่อมานะคะ มีอะไรให้ช่วยเพิ่มเติมไหมคะ'];
+        const LOW = 10; // ต่ำกว่าหรือเท่ากับค่านี้ถือว่า "ใกล้หมด"
+
+        // ========== ข้อมูล (ว่างไว้ก่อน ค่อยเชื่อม API/ฐานข้อมูลภายหลัง) ==========
+        let products = [];   // {id,name,zone,price,qty,desc}
+        let orders = [];     // {id,cust,phone,items,amt,addr,status,date}
+        let payments = [];   // {orderId,date,amt,slip,slipUrl,status:'wait'|'ok'|'bad'|'refund',refundAmt,note}
+        let shipments = [];  // เฉพาะคำสั่งซื้อที่ชำระแล้ว {orderId,name,phone,addr,items,date,status,carrier,track}
+        let chats = [];      // {id,customer,open,msgs:[{from:'cus'|'bot'|'staff',text,time}]}
+        let staff = [{ name: me.name, email: me.email, role: 'admin' }];  // บัญชีพนักงาน (มีแค่ Admin ปัจจุบัน)
+        let movements = [];  // ประวัติปรับสต๊อก [เวลา,รหัส,ชื่อ,ปรับ,เหตุผล,คงเหลือใหม่,ผู้ทำ]
+        let payHist = [];    // ประวัติการเงิน   [เวลา,คำสั่งซื้อ,การดำเนินการ,จำนวนเงิน,หมายเหตุ,ผู้ทำ]
+        let shipHist = [];   // ประวัติจัดส่ง    [เวลา,คำสั่งซื้อ,สถานะ,ขนส่ง,เลขพัสดุ,ผู้ทำ]
+        let logs = [];       // บันทึกการทำงานของระบบ [เวลา,ผู้ใช้,การกระทำ]  (ดูอย่างเดียว)
+
+        // ตัวแปรสถานะหน้าจอ
+        let cur = 'overview', editIdx = null, refundIdx = null, rejectIdx = null, active = null, draft = '';
+
+        // ========== ฟังก์ชันช่วย ==========
+        const $ = s => document.querySelector(s);
+        const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const baht = n => '฿' + Number(n).toLocaleString('th-TH');
+        const now = () => new Date().toLocaleString('th-TH');
+        const lv = p => ACL[me.role][p];
+        const canM = p => lv(p) === 'M';
+        function toast(t) { const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 2200) }
+        function logout() { toast('เชื่อมปุ่มออกจากระบบกับหน้า Login ภายหลัง') }
+        function guard(p) { if (!canM(p)) { toast('คุณไม่มีสิทธิ์ดำเนินการนี้'); return false } return true }
+        function log(a) { logs.unshift([now(), me.email, a]) }
+        function card(title, note, body, pad) { return `<div class="card"><div class="ch"><h2>${title}</h2><span>${note || ''}</span></div>${pad ? `<div class="cb">${body}</div>` : body}</div>` }
+        function table(heads, rowsHtml, id) { return `<div class="tw"><table><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr><tbody${id ? ` id="${id}"` : ''}>${rowsHtml || `<tr><td class="empty" colspan="${heads.length}">ยังไม่มีข้อมูล</td></tr>`}</tbody></table></div>` }
+        function stockPill(q) { return q <= 0 ? '<span class="pill r">หมดสต๊อก</span>' : q <= LOW ? '<span class="pill w">ใกล้หมด</span>' : '<span class="pill o">ปกติ</span>' }
+        function payPill(s) { return { wait: '<span class="pill w">รอตรวจสอบ</span>', ok: '<span class="pill o">ยืนยันแล้ว</span>', bad: '<span class="pill r">ไม่ผ่าน</span>', refund: '<span class="pill r">คืนเงินแล้ว</span>' }[s] || esc(s) }
+        function shipPill(s) { return s === 'จัดส่งสำเร็จ' ? `<span class="pill o">${s}</span>` : s === 'กำลังจัดส่ง' ? `<span class="pill w">${s}</span>` : `<span class="pill r">${s}</span>` }
+
+        // ========== เปลี่ยนหน้า (เมนูแสดงตามสิทธิ์) ==========
+        function go(p) {
+            if (!lv(p)) p = 'overview';
+            cur = p;
+            $('#nav').innerHTML = PAGES.filter(x => lv(x[0])).map(x => `<button class="${x[0] === p ? 'on' : ''}" onclick="go('${x[0]}')"><span aria-hidden="true">${x[2]}</span>${x[1]}</button>`).join('');
+            const t = PAGES.find(x => x[0] === p)[1];
+            $('#pg').innerHTML = `<h1>${t}</h1><p class="who">${ROLES[me.role]} · สิทธิ์: ${canM(p) ? 'จัดการ' : 'ดูอย่างเดียว'}</p>` + VIEWS[p]();
+            const m = $('.msgs'); if (m) m.scrollTop = m.scrollHeight;
+            window.scrollTo(0, 0);
+        }
+        // อัปเดตเฉพาะตารางตอนพิมพ์ค้นหา/เปลี่ยนตัวกรอง
+        function renderRows() {
+            const fn = { products: prodRows, finance: payRows, shipping: shipRows }[cur];
+            const el = $('#prow'); if (el) el.innerHTML = fn() || '<tr><td class="empty" colspan="12">ไม่พบรายการ</td></tr>';
+        }
+
+        // ========== เนื้อหาแต่ละหน้า ==========
+        const VIEWS = {
+
+            // ---- ภาพรวม (KPI + ตารางสิทธิ์) ----
+            overview() {
+                const k = (l, v) => `<div class="kpi"><p>${l}</p><b>${v}</b></div>`;
+                const sum = s => payments.filter(p => p.status === s).reduce((a, p) => a + Number(p.amt), 0);
+                const refunded = payments.filter(p => p.status === 'refund').reduce((a, p) => a + Number(p.refundAmt || 0), 0);
+                const heads = ['ตำแหน่ง', ...PAGES.slice(1).map(p => p[1])];
+                const rows = Object.keys(ROLES).map(r => `<tr class="${r === 'admin' ? 'k' : ''}"><td><b>${ROLES[r]}</b></td>${PAGES.slice(1).map(p => { const v = ACL[r][p[0]]; return `<td>${v === 'M' ? 'จัดการ' : v === 'V' ? 'ดูอย่างเดียว' : '—'}</td>` }).join('')}</tr>`).join('');
+                return `<div class="kpis">
+  ${k('คำสั่งซื้อทั้งหมด', orders.length)}
+  ${k('สลิปรอตรวจสอบ', payments.filter(p => p.status === 'wait').length)}
+  ${k('แชทที่รอตอบ', chats.filter(c => c.open).length)}
+  ${k('ยอดที่ยืนยันแล้ว', baht(sum('ok')))}
+  ${k('ยอดที่คืนเงินแล้ว', baht(refunded))}
+  ${k('รอจัดส่ง', shipments.filter(s => s.status === 'รอจัดส่ง').length)}
+  ${k('สินค้าใกล้หมด (≤' + LOW + ')', products.filter(p => p.qty > 0 && p.qty <= LOW).length)}
+  ${k('สินค้าหมดสต๊อก', products.filter(p => p.qty <= 0).length)}
+ </div>`
+                    + card('สิทธิ์การเข้าถึงตามตำแหน่ง', 'แต่ละตำแหน่งเข้าถึงข้อมูลต่างกัน · Admin เข้าถึงได้ทั้งหมด', table(heads, rows));
+            },
+
+            // ---- สินค้า & สต๊อก (ฝ่ายคลัง) ----
+            products() {
+                return (editIdx !== null ? editForm() : '')
+                    + card('สินค้าและสต๊อก', 'ปรับจำนวน: ใส่ + เพื่อเพิ่ม หรือ − เพื่อลด แล้วเลือกเหตุผล',
+                        `<div class="filters">
+     <div><label for="fq">ค้นหาสินค้า</label><input id="fq" placeholder="ชื่อหรือรหัสสินค้า" oninput="renderRows()"></div>
+     <div><label for="fz">โซน</label><select id="fz" onchange="renderRows()"><option value="">ทุกโซน</option>${ZONES.map(z => `<option>${z}</option>`).join('')}</select></div>
+     <div><label for="fs">สถานะสต๊อก</label><select id="fs" onchange="renderRows()"><option value="">ทั้งหมด</option><option value="ok">ปกติ</option><option value="low">ใกล้หมด</option><option value="out">หมดสต๊อก</option></select></div>
+    </div>`
+                        + table(['รหัส', 'ชื่อสินค้า', 'โซน', 'ราคา (฿)', 'คงเหลือ', 'สถานะ', 'ปรับจำนวน (+/−)', 'เหตุผล', 'การดำเนินการ'], prodRows(), 'prow'))
+                    + card('เพิ่มสินค้าใหม่', '', `
+  <div class="form">
+   <div><label for="np">ชื่อสินค้า</label><input id="np"></div>
+   <div><label for="nz">โซน</label><select id="nz">${ZONES.map(z => `<option>${z}</option>`).join('')}</select></div>
+   <div><label for="nc">ราคา (฿)</label><input id="nc" type="number" min="0"></div>
+   <div><label for="nq">จำนวน</label><input id="nq" type="number" min="0"></div>
+  </div><br>
+  <label for="nd">รายละเอียด</label><input id="nd"><br><br>
+  <button class="btn" onclick="addP()">เพิ่มสินค้า</button>`, 1)
+                    + card('ประวัติการปรับสต๊อก', 'ติดตามการเปลี่ยนแปลงของสต๊อก',
+                        table(['เวลา', 'รหัส', 'สินค้า', 'ปรับ', 'เหตุผล', 'คงเหลือใหม่', 'ผู้ทำรายการ'],
+                            movements.slice(0, 50).map(m => `<tr><td>${m[0]}</td><td>${m[1]}</td><td>${esc(m[2])}</td><td>${m[3] > 0 ? '+' : ''}${m[3]}</td><td>${esc(m[4])}</td><td>${m[5]}</td><td>${esc(m[6])}</td></tr>`).join('')));
+            },
+
+            // ---- คำสั่งซื้อ (Admin เห็นครบทุกคอลัมน์) ----
+            orders() {
+                const rows = orders.map(o => `<tr><td><b>${o.id}</b></td><td>${esc(o.cust)}<br><small class="muted">${esc(o.phone || '')}</small></td><td>${esc(o.items)}</td><td>${baht(o.amt)}</td><td>${esc(o.addr)}</td><td>${esc(o.status)}</td><td>${o.date}</td></tr>`).join('');
+                return card('คำสั่งซื้อทั้งหมด', '', table(['คำสั่งซื้อ', 'ลูกค้า', 'สินค้า', 'ยอดเงิน', 'ที่อยู่', 'สถานะ', 'วันที่'], rows));
+            },
+
+            // ---- การเงิน & ชำระเงิน (ฝ่ายบัญชี) ----
+            finance() {
+                return (rejectIdx !== null ? rejectForm() : '')
+                    + (refundIdx !== null ? refundForm() : '')
+                    + card('ตรวจสอบการชำระเงิน', 'ข้อมูลการเงินเป็นความลับ · เข้าถึงได้เฉพาะ Admin และฝ่ายบัญชี',
+                        `<div class="filters">
+     <div><label for="fq">ค้นหาคำสั่งซื้อ</label><input id="fq" placeholder="เช่น HPB1001" oninput="renderRows()"></div>
+     <div><label for="fs">สถานะ</label><select id="fs" onchange="renderRows()"><option value="">ทั้งหมด</option><option value="wait">รอตรวจสอบ</option><option value="ok">ยืนยันแล้ว</option><option value="bad">ไม่ผ่าน</option><option value="refund">คืนเงินแล้ว</option></select></div>
+    </div>`
+                        + table(['คำสั่งซื้อ', 'ยอดเงิน', 'หลักฐานการโอน', 'สถานะ', 'หมายเหตุ', 'การดำเนินการ'], payRows(), 'prow'))
+                    + card('ประวัติการดำเนินการ', 'บันทึกทุกครั้งที่อนุมัติ ปฏิเสธ หรือคืนเงิน',
+                        table(['เวลา', 'คำสั่งซื้อ', 'การดำเนินการ', 'จำนวนเงิน', 'หมายเหตุ', 'ผู้ทำรายการ'],
+                            payHist.slice(0, 50).map(h => `<tr><td>${h[0]}</td><td>${h[1]}</td><td>${esc(h[2])}</td><td>${baht(h[3])}</td><td>${esc(h[4])}</td><td>${esc(h[5])}</td></tr>`).join('')));
+            },
+
+            // ---- จัดส่ง & ที่อยู่ลูกค้า (ฝ่ายจัดส่ง) ----
+            shipping() {
+                return card('งานจัดส่ง', 'แสดงเฉพาะคำสั่งซื้อที่ชำระเงินแล้ว · อัปเดตแล้วลูกค้าเห็นทันที',
+                    `<div class="filters">
+     <div><label for="fq">ค้นหา</label><input id="fq" placeholder="เลขคำสั่งซื้อ / ชื่อ / เบอร์" oninput="renderRows()"></div>
+     <div><label for="fs">สถานะ</label><select id="fs" onchange="renderRows()"><option value="">ทั้งหมด</option>${SHIP_STATUS.map(s => `<option>${s}</option>`).join('')}</select></div>
+    </div>`
+                    + table(['คำสั่งซื้อ', 'ผู้รับ & ที่อยู่', 'สถานะการจัดส่ง', 'ขนส่ง', 'เลขพัสดุ', ''], shipRows(), 'prow'))
+                    + card('ประวัติการอัปเดตจัดส่ง', 'บันทึกทุกครั้งที่เปลี่ยนสถานะหรือเลขพัสดุ',
+                        table(['เวลา', 'คำสั่งซื้อ', 'สถานะ', 'ขนส่ง', 'เลขพัสดุ', 'ผู้ทำรายการ'],
+                            shipHist.slice(0, 50).map(h => `<tr><td>${h[0]}</td><td>${h[1]}</td><td>${esc(h[2])}</td><td>${esc(h[3] || '-')}</td><td>${esc(h[4] || '-')}</td><td>${esc(h[5])}</td></tr>`).join('')));
+            },
+
+            // ---- แชทลูกค้า (ฝ่ายบริการลูกค้า-ฝ่ายขาย) ----
+            chat() {
+                const intro = `<div class="note">ลูกค้าจะเห็นข้อความของคุณในชื่อ “${BRAND}” โดยไม่แสดงชื่อพนักงาน</div>`;
+                const list = chats.length ? chats.map((c, i) => {
+                    const last = c.msgs[c.msgs.length - 1];
+                    return `<button class="cl${i === active ? ' on' : ''}" onclick="openChat(${i})">
+    <div class="row"><b>${esc(c.customer)}</b>${c.open ? '<span class="pill w">รอตอบ</span>' : '<span class="pill o">ตอบแล้ว</span>'}</div>
+    <small>${last ? esc(last.text) : ''}</small></button>`
+                }).join('')
+                    : '<div class="note muted">ยังไม่มีแชทจากลูกค้า</div>';
+                return intro + `<div class="chat"><div class="clist">${list}</div>${chatWindow()}</div>`;
+            },
+
+            // ---- ผู้ใช้ & ระบบ (จัดการบัญชีพนักงาน + log) ----
+            users() {
+                const rows = staff.map((s, i) => `<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.email)}</td><td>${ROLES[s.role]}</td>
+  <td>${s.email === me.email ? '<span class="muted">คุณ</span>' : `<button class="btn line sm" onclick="delU(${i})">ลบ</button>`}</td></tr>`).join('');
+                return card('บัญชีพนักงาน', 'เฉพาะ Admin', table(['ชื่อ', 'อีเมล', 'ตำแหน่ง', ''], rows))
+                    + card('เพิ่มบัญชีพนักงาน', '', `
+  <div class="form">
+   <div><label for="un">ชื่อ</label><input id="un"></div>
+   <div><label for="ue">อีเมลบริษัท</label><input id="ue" type="email" placeholder="ชื่อ@hompb.com"></div>
+   <div><label for="ur">ตำแหน่ง</label><select id="ur">${Object.entries(ROLES).map(r => `<option value="${r[0]}">${r[1]}</option>`).join('')}</select></div>
+   <div><label for="up">รหัสผ่านเริ่มต้น</label><input id="up"></div>
+  </div><br>
+  <button class="btn" onclick="addU()">เพิ่มพนักงาน</button>`, 1)
+                    + card('บันทึกการทำงานของระบบ', 'ดูได้อย่างเดียว · ไม่สามารถแก้หรือลบ',
+                        table(['เวลา', 'ผู้ใช้', 'การกระทำ'], logs.slice(0, 50).map(l => `<tr><td>${l[0]}</td><td>${esc(l[1])}</td><td>${esc(l[2])}</td></tr>`).join('')));
+            }
+        };
+
+        // ========== แถวของตาราง ==========
+        function prodRows() {
+            const q = ($('#fq')?.value || '').trim().toLowerCase(), z = $('#fz')?.value || '', s = $('#fs')?.value || '';
+            return products.map((p, i) => ({ p, i }))
+                .filter(({ p }) => (!q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)) && (!z || p.zone === z)
+                    && (!s || (s === 'out' ? p.qty <= 0 : s === 'low' ? p.qty > 0 && p.qty <= LOW : p.qty > LOW)))
+                .map(({ p, i }) => `<tr>
+   <td>${p.id}</td><td><b>${esc(p.name)}</b></td><td>${p.zone}</td><td>${baht(p.price)}</td><td><b>${p.qty}</b></td><td>${stockPill(p.qty)}</td>
+   <td><input class="num" type="number" id="ad${i}" placeholder="+10 / -3" aria-label="ปรับจำนวน"></td>
+   <td><select id="rs${i}">${REASONS.map(r => `<option>${r}</option>`).join('')}</select></td>
+   <td><div class="acts"><button class="btn sm" onclick="adjust(${i})">ปรับ</button><button class="btn line sm" onclick="startEdit(${i})">แก้ไข</button><button class="btn line sm" onclick="recommend(${i})">แนะนำในแชท</button><button class="btn line sm" onclick="delP(${i})">ลบ</button></div></td></tr>`).join('');
+        }
+        function payRows() {
+            const q = ($('#fq')?.value || '').trim().toLowerCase(), s = $('#fs')?.value || '';
+            return payments.map((p, i) => ({ p, i }))
+                .filter(({ p }) => (!q || p.orderId.toLowerCase().includes(q)) && (!s || p.status === s))
+                .map(({ p, i }) => `<tr>
+   <td><b>${p.orderId}</b><br><small class="muted">${p.date}</small></td><td>${baht(p.amt)}</td>
+   <td>${p.slipUrl ? `<a href="${esc(p.slipUrl)}" target="_blank" rel="noopener" style="color:var(--text)">${esc(p.slip)}</a>` : esc(p.slip || '-')}</td>
+   <td>${payPill(p.status)}</td>
+   <td class="muted">${esc(p.note || '-')}${p.status === 'refund' ? ` (คืน ${baht(p.refundAmt)})` : ''}</td>
+   <td>${p.status === 'wait'
+                        ? `<div class="acts"><button class="btn sm" onclick="approve(${i})">ยืนยัน</button><button class="btn line sm" onclick="startReject(${i})">ไม่ผ่าน</button></div>`
+                        : p.status === 'ok' ? `<button class="btn line sm" onclick="startRefund(${i})">คืนเงิน</button>`
+                            : '<span class="muted">ดำเนินการแล้ว</span>'}</td></tr>`).join('');
+        }
+        function shipRows() {
+            const q = ($('#fq')?.value || '').trim().toLowerCase(), s = $('#fs')?.value || '';
+            return shipments.map((x, i) => ({ x, i }))
+                .filter(({ x }) => (!q || x.orderId.toLowerCase().includes(q) || x.name.toLowerCase().includes(q) || x.phone.includes(q)) && (!s || x.status === s))
+                .map(({ x, i }) => `<tr>
+   <td><b>${x.orderId}</b><br><small class="muted">${x.date}</small></td>
+   <td>${esc(x.name)} · ${esc(x.phone)}<br><small class="muted">${esc(x.addr)}</small><br><small class="muted">${esc(x.items)}</small></td>
+   <td><select id="ss${i}" aria-label="สถานะการจัดส่ง">${SHIP_STATUS.map(t => `<option${t === x.status ? ' selected' : ''}>${t}</option>`).join('')}</select><br><span style="display:inline-block;margin-top:6px">${shipPill(x.status)}</span></td>
+   <td><select id="cr${i}" aria-label="ขนส่ง"><option value="">เลือกขนส่ง</option>${CARRIERS.map(c => `<option${c === x.carrier ? ' selected' : ''}>${c}</option>`).join('')}</select></td>
+   <td><input id="tk${i}" value="${esc(x.track || '')}" placeholder="เลขพัสดุ" aria-label="เลขพัสดุ"></td>
+   <td><div class="acts"><button class="btn sm" onclick="saveS(${i})">บันทึก</button><button class="btn line sm" onclick="copyAddr(${i})">คัดลอกที่อยู่</button></div></td></tr>`).join('');
+        }
+
+        // ========== ฟอร์มแก้ไขสินค้า / ไม่ผ่าน / คืนเงิน ==========
+        function editForm() {
+            const p = products[editIdx];
+            return card('แก้ไขรายละเอียดสินค้า ' + p.id, '', `
+  <div class="form">
+   <div><label for="en">ชื่อสินค้า</label><input id="en" value="${esc(p.name)}"></div>
+   <div><label for="ez">โซน</label><select id="ez">${ZONES.map(z => `<option${z === p.zone ? ' selected' : ''}>${z}</option>`).join('')}</select></div>
+   <div><label for="ec">ราคา (฿)</label><input id="ec" type="number" min="0" value="${p.price}"></div>
+  </div><br>
+  <label for="ed">รายละเอียด</label><input id="ed" value="${esc(p.desc || '')}"><br><br>
+  <button class="btn" onclick="saveEdit()">บันทึก</button> <button class="btn line" onclick="cancelEdit()">ยกเลิก</button>`, 1);
+        }
+        function rejectForm() {
+            const p = payments[rejectIdx];
+            return card('ไม่ผ่านการตรวจสอบ ' + p.orderId, '', `
+  <label for="rj">เหตุผล (ลูกค้าจะเห็นข้อความนี้)</label>
+  <input id="rj" placeholder="เช่น ยอดโอนไม่ตรง / สลิปไม่ชัดเจน"><br><br>
+  <button class="btn" onclick="reject()">ยืนยันไม่ผ่าน</button> <button class="btn line" onclick="cancelForm()">ยกเลิก</button>`, 1);
+        }
+        function refundForm() {
+            const p = payments[refundIdx];
+            return card('คืนเงินให้ลูกค้า ' + p.orderId, 'ยอดที่ชำระ ' + baht(p.amt), `
+  <div class="form">
+   <div><label for="ra">จำนวนเงินที่คืน (฿)</label><input id="ra" type="number" min="1" max="${p.amt}" value="${p.amt}"></div>
+   <div><label for="rr">เหตุผล</label><input id="rr" placeholder="เช่น สินค้าหมด / ลูกค้ายกเลิก"></div>
+  </div><br>
+  <button class="btn" onclick="refund()">ยืนยันคืนเงิน</button> <button class="btn line" onclick="cancelForm()">ยกเลิก</button>`, 1);
+        }
+        function cancelForm() { rejectIdx = null; refundIdx = null; go('finance') }
+
+        // ========== หน้าต่างแชท ==========
+        function chatWindow() {
+            if (active === null || !chats[active]) return `<div class="cw"><div class="msgs"><p class="muted">เลือกแชทจากรายการด้านซ้าย</p></div></div>`;
+            const c = chats[active];
+            const msgs = c.msgs.map(m => {
+                const who = m.from === 'cus' ? 'ลูกค้า' : m.from === 'bot' ? 'บอท HomPB' : BRAND, mine = m.from === 'staff';
+                return `<small class="${mine ? 'r' : ''}">${who}${m.time ? ' · ' + m.time : ''}</small><div class="bub${mine ? ' me' : ''}">${esc(m.text)}</div>`
+            }).join('');
+            return `<div class="cw">
+  <header>${esc(c.customer)}<small>${c.open ? 'รอเจ้าหน้าที่ตอบ' : 'ตอบแล้ว'}</small></header>
+  <div class="msgs">${msgs}</div>
+  <div class="quick">${QUICK.map((q, i) => `<button class="btn line sm" onclick="useQuick(${i})">${esc(q.slice(0, 18))}…</button>`).join('')}</div>
+  <div class="cin"><textarea id="cm" rows="2" placeholder="ตอบลูกค้า…" aria-label="ข้อความตอบลูกค้า" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}">${esc(draft)}</textarea><button class="btn" onclick="send()">ส่ง</button></div>
+ </div>`;
+        }
+
+        // ========== สินค้า: จัดการ (จุดที่ต้องเชื่อม API ภายหลัง) ==========
+        function addMove(p, d, reason) { movements.unshift([now(), p.id, p.name, d, reason, p.qty, me.email]) }
+        function addP() {
+            if (!guard('products')) return;
+            const n = $('#np').value.trim(), c = +$('#nc').value, q = +$('#nq').value || 0;
+            if (!n || !c) { toast('กรอกชื่อสินค้าและราคาก่อน'); return }
+            const id = 'p' + (Math.max(0, ...products.map(p => +p.id.slice(1))) + 1);
+            const p = { id, name: n, zone: $('#nz').value, price: c, qty: q, desc: $('#nd').value.trim() };
+            products.push(p); if (q > 0) addMove(p, q, 'เพิ่มสินค้าใหม่');
+            log('เพิ่มสินค้า ' + id); go('products'); toast('เพิ่มสินค้าแล้ว');
+        }
+        function adjust(i) {
+            if (!guard('products')) return;
+            const d = parseInt($('#ad' + i).value, 10);
+            if (!d) { toast('ใส่จำนวนที่ต้องการปรับ เช่น 10 หรือ -3'); return }
+            const p = products[i];
+            if (p.qty + d < 0) { toast('ลดแล้วสต๊อกติดลบไม่ได้'); return }
+            p.qty += d; addMove(p, d, $('#rs' + i).value); log(`ปรับสต๊อก ${p.id} (${d > 0 ? '+' : ''}${d})`);
+            go('products'); toast('ปรับสต๊อกแล้ว');
+        }
+        function startEdit(i) { if (!guard('products')) return; editIdx = i; go('products') }
+        function cancelEdit() { editIdx = null; go('products') }
+        function saveEdit() {
+            if (!guard('products')) return;
+            const p = products[editIdx], n = $('#en').value.trim(), c = +$('#ec').value;
+            if (!n || !c) { toast('กรอกชื่อสินค้าและราคาก่อน'); return }
+            p.name = n; p.zone = $('#ez').value; p.price = c; p.desc = $('#ed').value.trim();
+            log('แก้สินค้า ' + p.id); editIdx = null; go('products'); toast('บันทึกแล้ว');
+        }
+        function delP(i) {
+            if (!guard('products')) return;
+            if (!confirm('ลบสินค้า "' + products[i].name + '" ใช่หรือไม่?')) return;
+            log('ลบสินค้า ' + products[i].id); products.splice(i, 1); editIdx = null; go('products'); toast('ลบสินค้าแล้ว');
+        }
+        // ปุ่มแนะนำสินค้า: ใส่ข้อมูลสินค้าเป็นร่างข้อความในแชทที่เปิดอยู่
+        function recommend(i) {
+            if (active === null || !chats[active]) { toast('เลือกแชทลูกค้าก่อน แล้วค่อยกดแนะนำสินค้า'); go('chat'); return }
+            const p = products[i];
+            draft = `แนะนำ “${p.name}” ค่ะ ราคา ${baht(p.price)}${p.desc ? ' · ' + p.desc : ''}${p.qty <= 0 ? ' (ขณะนี้สินค้าหมดชั่วคราว)' : ''}`;
+            go('chat'); toast('ใส่ข้อความแนะนำสินค้าให้แล้ว แก้ไขก่อนส่งได้');
+        }
+
+        // ========== การเงิน: จัดการ ==========
+        function addPayHist(id, action, amt, note) { payHist.unshift([now(), id, action, amt, note || '-', me.email]) }
+        function approve(i) {
+            if (!guard('finance')) return;
+            const p = payments[i]; p.status = 'ok'; p.note = '';
+            addPayHist(p.orderId, 'อนุมัติยอด', p.amt); log('อนุมัติยอด ' + p.orderId);
+            // TODO: แจ้งระบบคำสั่งซื้อว่าชำระแล้ว เพื่อสร้างงานในหน้าจัดส่ง
+            go('finance'); toast('อนุมัติยอดแล้ว');
+        }
+        function startReject(i) { if (!guard('finance')) return; rejectIdx = i; refundIdx = null; go('finance') }
+        function reject() {
+            if (!guard('finance')) return;
+            const why = $('#rj').value.trim(); if (!why) { toast('กรอกเหตุผลก่อน'); return }
+            const p = payments[rejectIdx]; p.status = 'bad'; p.note = why;
+            addPayHist(p.orderId, 'ไม่ผ่าน', p.amt, why); log('สลิปไม่ผ่าน ' + p.orderId);
+            rejectIdx = null; go('finance'); toast('บันทึกแล้ว');
+        }
+        function startRefund(i) { if (!guard('finance')) return; refundIdx = i; rejectIdx = null; go('finance') }
+        function refund() {
+            if (!guard('finance')) return;
+            const p = payments[refundIdx], amt = +$('#ra').value, why = $('#rr').value.trim();
+            if (!amt || amt <= 0 || amt > p.amt) { toast('จำนวนเงินคืนต้องไม่เกินยอดที่ชำระ'); return }
+            if (!why) { toast('กรอกเหตุผลก่อน'); return }
+            p.status = 'refund'; p.refundAmt = amt; p.note = why;
+            addPayHist(p.orderId, 'คืนเงิน', amt, why); log('คืนเงิน ' + p.orderId);
+            refundIdx = null; go('finance'); toast('บันทึกการคืนเงินแล้ว');
+        }
+
+        // ========== จัดส่ง: จัดการ ==========
+        function saveS(i) {
+            if (!guard('shipping')) return;
+            const x = shipments[i], st = $('#ss' + i).value, cr = $('#cr' + i).value, tk = $('#tk' + i).value.trim();
+            if (st !== 'รอจัดส่ง' && (!cr || !tk)) { toast('เลือกขนส่งและใส่เลขพัสดุก่อนเปลี่ยนสถานะ'); return }
+            x.status = st; x.carrier = cr; x.track = tk;
+            shipHist.unshift([now(), x.orderId, st, cr, tk, me.email]); log(`จัดส่ง ${x.orderId}: ${st}`);
+            // TODO: ส่งสถานะ/เลขพัสดุไปให้ฝั่งลูกค้าเห็น
+            go('shipping'); toast('บันทึกแล้ว');
+        }
+        function copyAddr(i) {
+            const x = shipments[i], t = `${x.name} ${x.phone}\n${x.addr}`;
+            (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('คัดลอกที่อยู่แล้ว')).catch(() => toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง'));
+        }
+
+        // ========== แชท: จัดการ ==========
+        function openChat(i) { draft = ''; active = i; go('chat') }
+        function useQuick(i) { $('#cm').value = QUICK[i]; $('#cm').focus() }
+        function send() {
+            if (!guard('chat')) return;
+            const v = $('#cm').value.trim(); if (!v) return;
+            if (active === null || !chats[active]) { toast('เลือกแชทก่อน'); return }
+            chats[active].msgs.push({ from: 'staff', text: v, time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) });
+            chats[active].open = false; draft = ''; log('ตอบแชทลูกค้า');
+            // TODO: ส่งข้อความไปให้ฝั่งลูกค้า (ใช้ชื่อ BRAND ไม่ส่งชื่อพนักงาน)
+            go('chat');
+        }
+
+        // ========== ผู้ใช้: จัดการ ==========
+        function addU() {
+            if (!guard('users')) return;
+            const n = $('#un').value.trim(), e = $('#ue').value.trim().toLowerCase(), p = $('#up').value;
+            if (!n || !e || p.length < 4) { toast('กรอกชื่อ อีเมล และรหัสผ่านอย่างน้อย 4 ตัว'); return }
+            if (staff.some(s => s.email === e)) { toast('อีเมลนี้มีในระบบแล้ว'); return }
+            staff.push({ name: n, email: e, role: $('#ur').value, pw: p }); // TODO: ส่งรหัสผ่านไปเข้ารหัสที่ฝั่ง Server
+            log('เพิ่มพนักงาน ' + e); go('users'); toast('เพิ่มพนักงานแล้ว');
+        }
+        function delU(i) {
+            if (!guard('users')) return;
+            if (!confirm('ลบบัญชี ' + staff[i].email + ' ใช่หรือไม่?')) return;
+            log('ลบพนักงาน ' + staff[i].email); staff.splice(i, 1); go('users');
+        }
+
+        // ========== เริ่มทำงาน ==========
+        $('#tn').textContent = me.name; $('#te').textContent = me.email;
+        go('overview');
+    </script>
 </body>
+
 </html>
