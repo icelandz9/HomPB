@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HOMPB ระบบหลังบ้าน (ฝ่ายคลังสินค้า)</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="warehouse.css" />
+  </head>
+
+  <body>
+    <!-- ========== โครงหน้า: Sidebar + เนื้อหา ========== -->
+    <div id="app">
+      <aside>
+        <h1 class="logo">HOMPB</h1>
+        <p class="sub">ระบบหลังบ้าน</p>
+        <nav id="nav"></nav>
+        <button class="out" onclick="logout()">⎋ ออกจากระบบ</button>
+      </aside>
+      <main>
+        <div class="top">
+          <div><b id="tn"></b><small id="te"></small></div>
+          <button class="btn line" onclick="toast('ใส่ลิงก์หน้าร้านภายหลัง')">
+            ดูหน้าร้าน
+          </button>
+        </div>
+        <div class="pg" id="pg"></div>
+      </main>
+    </div>
+
+    <script src="warehouse.js"></script>
+  </body>
+</html>
