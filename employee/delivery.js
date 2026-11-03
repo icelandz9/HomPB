@@ -1,5 +1,5 @@
 // ========== ผู้ใช้ปัจจุบัน (เชื่อมกับ Login ภายหลัง) ==========
-const me = { name: "ฝ่ายจัดส่ง", email: "ship@hompb.com", role: "ฝ่ายจัดส่ง" };
+let me = null; // ได้ค่าจริงตอนเริ่มทำงาน (ดูท้ายไฟล์)
 
 // ========== สิทธิ์ของฝ่ายจัดส่ง: M = จัดการ, V = ดูอย่างเดียว ==========
 const ACL = { overview: "V", orders: "V", shipping: "M" };
@@ -45,7 +45,7 @@ function toast(t) {
   setTimeout(() => e.remove(), 2200);
 }
 function logout() {
-  toast("เชื่อมปุ่มออกจากระบบกับหน้า Login ภายหลัง");
+  staffLogout();
 }
 function guard(p) {
   if (!canM(p)) {
@@ -79,7 +79,7 @@ function go(p) {
     .join("");
   const t = PAGES.find((x) => x[0] === p)[1];
   $("#pg").innerHTML =
-    `<h1>${t}</h1><p class="who">${me.role} · สิทธิ์: ${canM(p) ? "จัดการ" : "ดูอย่างเดียว"}</p>` +
+    `<h1>${t}</h1><p class="who">${ROLE_NAME[me.role]} · สิทธิ์: ${canM(p) ? "จัดการ" : "ดูอย่างเดียว"}</p>` +
     VIEWS[p]();
   window.scrollTo(0, 0);
 }
@@ -231,6 +231,9 @@ function copyAddr(i) {
 }
 
 // ========== เริ่มทำงาน ==========
-$("#tn").textContent = me.name;
-$("#te").textContent = me.email;
-go("overview");
+(async () => {
+  me = await requireStaff("shipping");
+  $("#tn").textContent = me.full_name || ROLE_NAME[me.role];
+  $("#te").textContent = me.email;
+  go("overview");
+})();

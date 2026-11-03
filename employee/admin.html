@@ -18,19 +18,25 @@
         <h1 class="logo">HOMPB</h1>
         <p class="sub">ระบบหลังบ้าน</p>
         <nav id="nav"></nav>
-        <button class="out" onclick="logout()">⎋ ออกจากระบบ</button>
+        <button class="out" onclick="logout()"><img src="/img/Dark/logout-box-r-line.png" alt="">ออกจากระบบ</button>
       </aside>
       <main>
         <div class="top">
           <div><b id="tn"></b><small id="te"></small></div>
-          <button class="btn line" onclick="toast('ใส่ลิงก์หน้าร้านภายหลัง')">
-            ดูหน้าร้าน
-          </button>
+          <a
+            class="btn line"
+            href="../index.html"
+            target="_blank"
+            rel="noopener"
+            >ดูหน้าร้าน</a
+          >
         </div>
         <div class="pg" id="pg"></div>
       </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
     <script src="admin.js"></script>
   </body>
 </html>

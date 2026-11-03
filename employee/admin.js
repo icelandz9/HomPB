@@ -1,5 +1,5 @@
 // ========== ผู้ใช้ปัจจุบัน (เชื่อมกับ Login ภายหลัง) ==========
-const me = { name: "Admin", email: "admin@hompb.com", role: "admin" };
+let me = null;
 const BRAND = "ฝ่ายบริการลูกค้า HomPB"; // ชื่อที่ลูกค้าเห็นในแชท (ไม่แสดงชื่อพนักงาน)
 
 // ========== ตำแหน่ง และสิทธิ์ (M = จัดการ, V = ดูอย่างเดียว) ==========
@@ -70,7 +70,7 @@ let orders = []; // {id,cust,phone,items,amt,addr,status,date}
 let payments = []; // {orderId,date,amt,slip,slipUrl,status:'wait'|'ok'|'bad'|'refund',refundAmt,note}
 let shipments = []; // เฉพาะคำสั่งซื้อที่ชำระแล้ว {orderId,name,phone,addr,items,date,status,carrier,track}
 let chats = []; // {id,customer,open,msgs:[{from:'cus'|'bot'|'staff',text,time}]}
-let staff = [{ name: me.name, email: me.email, role: "admin" }]; // บัญชีพนักงาน (มีแค่ Admin ปัจจุบัน)
+let staff = []; // บัญชีพนักงาน (มีแค่ Admin ปัจจุบัน)
 let movements = []; // ประวัติปรับสต๊อก [เวลา,รหัส,ชื่อ,ปรับ,เหตุผล,คงเหลือใหม่,ผู้ทำ]
 let payHist = []; // ประวัติการเงิน   [เวลา,คำสั่งซื้อ,การดำเนินการ,จำนวนเงิน,หมายเหตุ,ผู้ทำ]
 let shipHist = []; // ประวัติจัดส่ง    [เวลา,คำสั่งซื้อ,สถานะ,ขนส่ง,เลขพัสดุ,ผู้ทำ]
@@ -106,7 +106,7 @@ function toast(t) {
   setTimeout(() => e.remove(), 2200);
 }
 function logout() {
-  toast("เชื่อมปุ่มออกจากระบบกับหน้า Login ภายหลัง");
+  staffLogout();
 }
 function guard(p) {
   if (!canM(p)) {
@@ -871,6 +871,11 @@ function delU(i) {
 }
 
 // ========== เริ่มทำงาน ==========
-$("#tn").textContent = me.name;
-$("#te").textContent = me.email;
-go("overview");
+(async () => {
+  me = await requireStaff("admin");
+  staff = [{ name: me.full_name, email: me.email, role: "admin" }];
+  $("#tn").textContent = me.full_name || ROLE_NAME[me.role];
+  $("#te").textContent = me.email;
+  go("overview");
+})();
+

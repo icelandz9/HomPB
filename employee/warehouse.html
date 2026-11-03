@@ -18,7 +18,9 @@
         <h1 class="logo">HOMPB</h1>
         <p class="sub">ระบบหลังบ้าน</p>
         <nav id="nav"></nav>
-        <button class="out" onclick="logout()">⎋ ออกจากระบบ</button>
+        <button class="out" onclick="logout()">
+          <img src="/img/Dark/logout-box-r-line.png" alt="" />ออกจากระบบ
+        </button>
       </aside>
       <main>
         <div class="top">
@@ -31,6 +33,8 @@
       </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
     <script src="warehouse.js"></script>
   </body>
 </html>

@@ -1,10 +1,5 @@
-// ========== ผู้ใช้ปัจจุบัน (เชื่อมกับ Login ภายหลัง) ==========
-const me = {
-  name: "ฝ่ายคลังสินค้า",
-  email: "stock@hompb.com",
-  role: "ฝ่ายคลังสินค้า",
-};
-
+// ========== ผู้ใช้ปัจจุบัน (ได้จาก requireStaff ตอนเริ่มทำงาน) ==========
+let me = null; // ได้ค่าจริงตอนเริ่มทำงาน (ดูท้ายไฟล์)
 // ========== สิทธิ์ของฝ่ายคลัง: M = จัดการ, V = ดูอย่างเดียว ==========
 const ACL = { overview: "V", products: "M", orders: "V" };
 const PAGES = [
@@ -27,12 +22,28 @@ const REASONS = [
   "อื่น ๆ",
 ];
 const LOW = 10; // ต่ำกว่าหรือเท่ากับค่านี้ถือว่า "ใกล้หมด"
+const STOCK_REASON = {
+  order: "ลูกค้าสั่งซื้อ",
+  cancel: "ยกเลิกคำสั่งซื้อ",
+  adjust: "ปรับสต๊อก",
+  return: "รับคืนสินค้า",
+};
+const ORDER_STATUS = {
+  pending_payment: "รอชำระเงิน",
+  awaiting_approval: "รอตรวจสลิป",
+  approved: "ชำระแล้ว",
+  shipping: "กำลังจัดส่ง",
+  delivered: "ส่งถึงแล้ว",
+  cancelled: "ยกเลิก",
+  refunded: "คืนเงินแล้ว",
+};
 
 // ========== ข้อมูล (ว่างไว้ก่อน ค่อยเชื่อม API/ฐานข้อมูลภายหลัง) ==========
 let products = []; // {id,name,zone,price,qty,desc}
 let orders = []; // {id,items,status,date}  (ฝ่ายคลังเห็นแค่นี้)
 let movements = []; // ประวัติการปรับสต๊อก [เวลา, รหัส, ชื่อ, จำนวนที่ปรับ, เหตุผล, คงเหลือใหม่, ผู้ทำ]
 let editIdx = null; // แถวที่กำลังแก้รายละเอียด
+let catId = {}; // ชื่อโซน id เช่น {ห้องนอน = 1, ห้องน้ำ = 2}
 
 // ========== ฟังก์ชันช่วย ==========
 const $ = (s) => document.querySelector(s);
@@ -54,7 +65,7 @@ function toast(t) {
   setTimeout(() => e.remove(), 2200);
 }
 function logout() {
-  toast("เชื่อมปุ่มออกจากระบบกับหน้า Login ภายหลัง");
+  staffLogout();
 }
 function guard(p) {
   if (!canM(p)) {
@@ -77,6 +88,89 @@ function stockPill(q) {
       : '<span class="pill o">ปกติ</span>';
 }
 
+// ========== โหลดข้อมูลจาก supabase ==========
+async function loadProducts() {
+  const { data, error } = await sb
+    .from("products")
+    .select(
+      "id, name, description, product_variants (id, sku, price, stock_qty), product_categories (categories (name))",
+    )
+
+    .eq("is_active", true);
+  if (error) {
+    toast("โหลดสินค้าไม่สำเร็จ: " + errText(error));
+    return;
+  }
+
+  const { data: cats } = await sb.from("categories").select("id, name");
+  catId = Object.fromEntries((cats || []).map((c) => [c.name, c.id]));
+
+  products = data.map((p) => {
+    const v = p.product_variants[0] || {}; // 1 สินค้า = 1 variant
+    return {
+      id: p.id,
+      variantId: v.id, // ใช้ตอนปรับสต๊อก
+      sku: v.sku || "-",
+      name: p.name,
+      zone: p.product_categories[0]?.categories?.name || "-",
+      price: v.price || 0,
+      qty: v.stock_qty || 0,
+      desc: p.description || "",
+    };
+  });
+
+  // ประวัติสต๊อก 50 รายการล่าสุด
+  const { data: logs } = await sb
+    .from("stock_logs")
+    .select("variant_id, change_qty, reason, actor_id, created_at")
+    .order("id", { ascending: false })
+    .limit(50);
+
+  const byVariant = Object.fromEntries(products.map((x) => [x.variantId, x]));
+  movements = (logs || [])
+    .filter((m) => byVariant[m.variant_id]) // ข้ามสินค้าที่ลบไปแล้ว
+    .map((m) => {
+      const pr = byVariant[m.variant_id];
+      return [
+        new Date(m.created_at).toLocaleString("th-TH"),
+        pr.sku,
+        pr.name,
+        m.change_qty,
+        STOCK_REASON[m.reason] || m.reason,
+        "-",
+        m.actor_id === me.id ? me.email : "พนักงานคนอื่น",
+      ];
+    });
+}
+
+async function loadOrders() {
+  const [o, it] = await Promise.all([
+    sb
+      .from("orders_for_staff")
+      .select("id, order_no, status, created_at")
+      .order("created_at", { ascending: false }),
+    sb
+      .from("order_items")
+      .select("order_id, product_name, variant_name, quantity"),
+  ]);
+  if (o.error || it.error)
+    return toast("โหลดคำสั่งซื้อไม่สำเร็จ: " + errText(o.error || it.error));
+
+  // จัดกลุ่มสินค้าตามคำสั่งซื้อ
+  const items = {};
+  for (const x of it.data) {
+    (items[x.order_id] ||= []).push(`${x.product_name} ×${x.quantity}`);
+  }
+
+  orders = o.data.map((x) => ({
+    id: x.id,
+    code: "HPB" + x.order_no,
+    items: (items[x.id] || []).join(", ") || "-",
+    status: ORDER_STATUS[x.status] || x.status,
+    date: new Date(x.created_at).toLocaleString("th-TH"),
+  }));
+}
+
 // ========== เปลี่ยนหน้า (เมนูแสดงตามสิทธิ์) ==========
 function go(p) {
   if (!ACL[p]) p = "overview";
@@ -88,7 +182,7 @@ function go(p) {
     .join("");
   const t = PAGES.find((x) => x[0] === p)[1];
   $("#pg").innerHTML =
-    `<h1>${t}</h1><p class="who">${me.role} · สิทธิ์: ${canM(p) ? "จัดการ" : "ดูอย่างเดียว"}</p>` +
+    `<h1>${t}</h1><p class="who">${ROLE_NAME[me.role]} · สิทธิ์: ${canM(p) ? "จัดการ" : "ดูอย่างเดียว"}</p>` +
     VIEWS[p]();
   window.scrollTo(0, 0);
 }
@@ -178,7 +272,7 @@ ${k("สินค้าหมดสต๊อก", products.filter((p) => p.qty <
     const rows = orders
       .map(
         (o) =>
-          `<tr><td><b>${o.id}</b></td><td>${esc(o.items)}</td><td>${esc(o.status)}</td><td>${o.date}</td></tr>`,
+          `<tr><td><b>${o.code}</b></td><td>${esc(o.items)}</td><td>${esc(o.status)}</td><td>${o.date}</td></tr>`,
       )
       .join("");
     return card(
@@ -200,7 +294,7 @@ function rowsHtml() {
       ({ p }) =>
         (!q ||
           p.name.toLowerCase().includes(q) ||
-          p.id.toLowerCase().includes(q)) &&
+          p.sku.toLowerCase().includes(q)) &&
         (!z || p.zone === z) &&
         (!s ||
           (s === "out"
@@ -211,7 +305,7 @@ function rowsHtml() {
     )
     .map(
       ({ p, i }) => `<tr>
-<td>${p.id}</td><td><b>${esc(p.name)}</b></td><td>${p.zone}</td><td>${baht(p.price)}</td>
+<td>${esc(p.sku)}</td><td><b>${esc(p.name)}</b></td><td>${p.zone}</td><td>${baht(p.price)}</td>
 <td><b>${p.qty}</b></td><td>${stockPill(p.qty)}</td>
 <td><input class="num" type="number" id="ad${i}" placeholder="+10 / -3" aria-label="ปรับจำนวน"></td>
 <td><select id="rs${i}">${REASONS.map((r) => `<option>${r}</option>`).join("")}</select></td>
@@ -255,30 +349,45 @@ function addMove(p, delta, reason) {
     me.email,
   ]);
 }
-function addP() {
+async function addP() {
   if (!guard("products")) return;
   const n = $("#np").value.trim(),
     c = +$("#nc").value,
-    q = +$("#nq").value || 0;
+    q = +$("#nq").value || 0,
+    zone = $("#nz").value,
+    d = $("#nd").value.trim();
   if (!n || !c) {
     toast("กรอกชื่อสินค้าและราคาก่อน");
     return;
   }
-  const id = "p" + (Math.max(0, ...products.map((p) => +p.id.slice(1))) + 1);
-  const p = {
-    id,
-    name: n,
-    zone: $("#nz").value,
-    price: c,
-    qty: q,
-    desc: $("#nd").value.trim(),
-  };
-  products.push(p);
-  if (q > 0) addMove(p, q, "เพิ่มสินค้าใหม่");
+
+  // 1) products → ได้ id กลับมา
+  const { data: p, error: e1 } = await sb
+    .from("products")
+    .insert({ name: n, description: d })
+    .select("id")
+    .single();
+  if (e1) return toast("เพิ่มไม่สำเร็จ: " + errText(e1));
+
+  // product_variants (SKU ห้ามซ้ำ สร้างจากเวลา)
+  const sku = "HPB-" + Date.now().toString(36).toUpperCase();
+  const { error: e2 } = await sb
+    .from("product_variants")
+    .insert({ product_id: p.id, sku, price: c, stock_qty: q });
+  if (e2) return toast("เพิ่มราคา/สต๊อกไม่สำเร็จ: " + errText(e2));
+
+  // product_categories (โซน)
+  if (catId[zone]) {
+    await sb
+      .from("product_categories")
+      .insert({ product_id: p.id, category_id: catId[zone] });
+  }
+
+  await loadProducts();
   go("products");
   toast("เพิ่มสินค้าแล้ว");
 }
-function adjust(i) {
+async function adjust(i) {
   if (!guard("products")) return;
   const d = parseInt($("#ad" + i).value, 10);
   if (!d) {
@@ -290,8 +399,18 @@ function adjust(i) {
     toast("ลดแล้วสต๊อกติดลบไม่ได้");
     return;
   }
-  p.qty += d;
-  addMove(p, d, $("#rs" + i).value);
+
+  // บันทึกลงฐานข้อมูล (trigger จะเขียน stock_logs ให้เอง)
+  const { error } = await sb
+    .from("product_variants")
+    .update({ stock_qty: p.qty + d })
+    .eq("id", p.variantId);
+  if (error) {
+    toast("ปรับไม่สำเร็จ: " + errText(error));
+    return;
+  }
+
+  await loadProducts(); // โหลดยอดล่าสุดจาก server
   go("products");
   toast("ปรับสต๊อกแล้ว");
 }
@@ -304,33 +423,68 @@ function cancelEdit() {
   editIdx = null;
   go("products");
 }
-function saveEdit() {
+async function saveEdit() {
   if (!guard("products")) return;
   const p = products[editIdx],
     n = $("#en").value.trim(),
-    c = +$("#ec").value;
+    c = +$("#ec").value,
+    zone = $("#ez").value,
+    d = $("#ed").value.trim();
   if (!n || !c) {
     toast("กรอกชื่อสินค้าและราคาก่อน");
     return;
   }
-  p.name = n;
-  p.zone = $("#ez").value;
-  p.price = c;
-  p.desc = $("#ed").value.trim();
+  // 1) ชื่อ + รายละเอียด
+  const { error: e1 } = await sb
+    .from("products")
+    .update({ name: n, description: d })
+    .eq("id", p.id);
+  if (e1) return toast("บันทึกไม่สำเร็จ: " + errText(e1));
+
+  // 2) ราคา
+  const { error: e2 } = await sb
+    .from("product_variants")
+    .update({ price: c })
+    .eq("id", p.variantId);
+  if (e2) return toast("บันทึกราคาไม่สำเร็จ: " + errText(e2));
+
+  // 3) โซน: ลบของเก่า แล้วใส่ใหม่ (เฉพาะตอนเปลี่ยนโซน)
+  if (zone !== p.zone) {
+    await sb.from("product_categories").delete().eq("product_id", p.id);
+    if (catId[zone]) {
+      await sb
+        .from("product_categories")
+        .insert({ product_id: p.id, category_id: catId[zone] });
+    }
+  }
+
   editIdx = null;
+  await loadProducts();
   go("products");
   toast("บันทึกแล้ว");
 }
-function delP(i) {
+async function delP(i) {
   if (!guard("products")) return;
   if (!confirm('ลบสินค้า "' + products[i].name + '" ใช่หรือไม่?')) return;
-  products.splice(i, 1);
+
+  const { error } = await sb
+    .from("products")
+    .update({ is_active: false })
+    .eq("id", products[i].id);
+  if (error) return toast("ลบไม่สำเร็จ: " + errText(error));
+
   editIdx = null;
+  await loadProducts();
   go("products");
   toast("ลบสินค้าแล้ว");
 }
 
 // ========== เริ่มทำงาน ==========
-$("#tn").textContent = me.name;
-$("#te").textContent = me.email;
-go("overview");
+(async () => {
+  me = await requireStaff("warehouse");
+  $("#tn").textContent = me.full_name || ROLE_NAME[me.role];
+  $("#te").textContent = me.email;
+  await loadProducts();
+  await loadOrders();
+  go("overview");
+})();
