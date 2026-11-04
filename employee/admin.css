@@ -91,6 +91,17 @@ a.btn {
   font-size: 34px;
   font-weight: 700;
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: .3em;
+}
+
+/* HomPB icon in front of the word logo (img/Logo/hompb-icon.svg) */
+.logo-ic {
+  width: auto;
+  height: 1.15em;
+  flex: none;
+  border-radius: .22em
 }
 
 .sub {

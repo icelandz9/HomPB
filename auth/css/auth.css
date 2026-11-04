@@ -113,6 +113,17 @@ body {
   letter-spacing: -.02em;
   color: var(--cream);
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .3em;
+}
+
+/* HomPB icon in front of the word logo (img/Logo/hompb-icon.svg) */
+.logo-ic {
+  width: auto;
+  height: 1.15em;
+  flex: none;
+  border-radius: .22em
 }
 
 .brand h1 {
@@ -329,7 +340,7 @@ input:focus {
 .back {
   display: inline-block;
   margin-bottom: 24px;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 /* ---------- small screens: stack, short brand strip on top ---------- */
