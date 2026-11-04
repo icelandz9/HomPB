@@ -1,47 +1,1288 @@
-<!doctype html>
+<!DOCTYPE html>
+<!-- index.html : static page (HTML + CSS only, no JavaScript).
+     Styling comes from main_page.css. Pages are joined with normal <a href="..."> links. -->
 <html lang="th">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home Page</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;800&display=swap" />
-  <link rel="stylesheet" href="main_page.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>หน้าแรก | HomPB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Archivo:wdth,wght@62..125,100..900&display=swap">
+  <link rel="stylesheet" href="main_page.css">
 </head>
 
 <body>
-  <nav class="navbar">
-    <div class="container-nav">
-      <a href="/" class="logo">HOMPB</a>
-
-      <ul class="menu">
-        <li><a href="#">ช้อปสินค้า</a></li>
-        <li><a href="#">ห้องต่างๆ</a></li>
-        <li><a href="#">บริการต่างๆ</a></li>
-      </ul>
-
-      <form action="search" method="get" role="search" class="search">
-        <input type="search" name="q" aria-label="ค้นหาสินค้า" placeholder="ค้นหาสินค้า เช่น หมอน โซฟา กาต้มน้ำ" />
-        <button type="submit" aria-label="ค้นหา" class="search-btn">
-          <img src="img/Light/search_icon_light.png" alt="" />
-        </button>
-      </form>
-
-      <div class="actions">
-        <a href="profile/profile.html" class="act-btn" aria-label="บัญชีของฉัน"><img src="img/Light/profile-light_icon.png"
-            alt="" /></a>
-        <a href="/wishlist" class="act-btn" aria-label="รายการโปรด"><img src="img/Light/heart-light_icon.png"
-            alt="" /></a>
-        <a href="/cart" class="act-btn" aria-label="ตะกร้า"><img src="img/Light/shopping-light_icon.png" alt="" /></a>
-        <a href="/track" class="act-btn" aria-label="ติดตามพัสดุ"><img src="img/Light/truck-light_icon.png"
-            alt="" /></a>
-        <!-- <button type="button" class="act-btn" aria-label="เปลี่ยนธีม"><img src="img/Light/sun-light_icon.png"
-            alt="" /></button> -->
+  <div id="app">
+    <div style="display:flex;flex-direction:column;min-height:100vh">
+      <div class="topbar">
+        <div class="wrap topbar-in">
+          <span class="tb-l">
+            <svg class="ic " viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0 M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18" />
+            </svg>
+            <span>
+              TH
+            </span>
+            <span class="tb-sep" aria-hidden="true"></span>
+            <span>
+              ไทย
+            </span>
+          </span>
+          <span class="tb-c">
+            <svg class="ic " viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5" />
+            </svg>
+            <span>
+              แชทกับฝ่ายบริการลูกค้าได้ตลอดช่วงเวลาทำการ
+            </span>
+          </span>
+          <span class="tb-r">
+            <label class="theme-btn" title="เปลี่ยนธีม สว่าง / มืด">
+              <input type="checkbox" id="theme-toggle" class="sr" aria-label="เปลี่ยนธีม สว่าง / มืด">
+              <span class="t-to-dark">
+                <svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />
+                </svg>
+                <span class="tb-lbl">
+                  ธีมมืด
+                </span>
+              </span>
+              <span class="t-to-light"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path
+                    d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4" />
+                </svg>
+                <span class="tb-lbl">
+                  ธีมสว่าง
+                </span>
+              </span>
+            </label><a href="orders.html">
+              <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path
+                  d="M2 6h12v10H2z M14 9h4l3 3v4h-7 M4 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
+              </svg>
+              ติดตามพัสดุ
+            </a>
+          </span>
+        </div>
       </div>
+      <!-- Header -->
+      <header class="hdr">
+        <div class="wrap">
+          <div class="hdr-row">
+            <a href="index.html" class="logo" aria-label="HomPB หน้าแรก">
+              HOMPB
+            </a>
+            <!-- Navigation -->
+            <nav class="nav-top" aria-label="เมนูหลัก">
+              <a href="index.html#prod-h" class="nt" id="nt-shop">
+                ช้อปสินค้า
+              </a>
+              <a href="index.html#rooms" class="nt" id="nt-rooms">
+                ห้องต่างๆ
+              </a>
+              <a href="index.html#svc-h" class="nt" id="nt-svc">
+                บริการต่างๆ
+              </a>
+            </nav>
+            <form action="search.html" method="get" class="search" role="search">
+              <span class="s-ico">
+                <svg class="ic " viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path d="M4 11a7 7 0 1 0 14 0a7 7 0 1 0-14 0 M20 20l-4-4" />
+                </svg>
+              </span>
+              <label for="q" class="sr">
+                ค้นหาสินค้า
+              </label>
+              <input id="q" name="q" type="search" placeholder="ค้นหาสินค้า เช่น หมอน โซฟา กาต้มน้ำ" value="">
+              <span class="s-ctl">
+                <a href="search.html" class="s-x" aria-label="ล้างคำค้นหา">
+                  <svg class="ic " viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path d="M6 6l12 12 M18 6L6 18" />
+                  </svg>
+                </a>
+                <span class="s-div" aria-hidden="true"></span>
+                <button type="submit" class="s-sub" aria-label="ค้นหา">
+                  <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M4 11a7 7 0 1 0 14 0a7 7 0 1 0-14 0 M20 20l-4-4" />
+                  </svg>
+                </button>
+              </span>
+              <button class="btn btn-dark sm s-go-m" type="submit">
+                ค้นหา
+              </button>
+            </form>
+            <!-- Navigation -->
+            <nav class="hdr-icons" aria-label="บัญชีและตะกร้า">
+              <a href="favorites.html" class="i-fav" aria-label="รายการโปรด">
+                <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                  <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                </svg>
+                <span class="lbl">
+                  รายการโปรด
+                </span>
+              </a>
+              <a href="cart.html" class="i-cart" aria-label="ตะกร้า">
+                <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                  <path
+                    d="M3 4h2l2.2 11h11l2-8H6.2 M7.7 20a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0 M15.7 20a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0" />
+                </svg>
+                <span class="lbl">
+                  ตะกร้า
+                </span>
+              </a>
+              <a href="orders.html" class="i-orders" aria-label="ติดตามพัสดุ">
+                <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                  <path
+                    d="M2 6h12v10H2z M14 9h4l3 3v4h-7 M4 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
+                </svg>
+                <span class="lbl">
+                  ติดตามพัสดุ
+                </span>
+              </a>
+              <a href="account.html" class="i-account" aria-label="สวัสดี! เข้าสู่ระบบ หรือ สมัครสมาชิก">
+                <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                  <path d="M8 8a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21c0-4 4-6 8-6s8 2 8 6" />
+                </svg>
+                <span class="lbl">
+                  สวัสดี! เข้าสู่ระบบ หรือ สมัครสมาชิก
+                </span>
+              </a>
+            </nav>
+            <label class="menu-btn" id="menu-btn" aria-label="เปิดเมนูช้อปสินค้า">
+              <input type="checkbox" id="menu-toggle" class="sr" aria-label="เปิด/ปิดเมนูช้อปสินค้า">
+              <svg class="ic " viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+                <path d="M4 7h16 M4 12h16 M4 17h16" />
+              </svg>
+            </label>
+          </div>
+        </div>
+        <div class="mega" id="mega-shop" role="region" aria-label="เมนูช้อปสินค้า">
+          <div class="wrap">
+            <div class="mchips">
+              <a href="index.html#rooms" class="mchip">
+                ทุกห้อง
+              </a>
+              <a href="zone-bed.html" class="mchip">
+                ห้องนอน
+              </a>
+              <a href="zone-bath.html" class="mchip">
+                ห้องน้ำ
+              </a>
+              <a href="zone-living.html" class="mchip">
+                ห้องนั่งเล่น
+              </a>
+              <a href="zone-kitchen.html" class="mchip">
+                ห้องครัว
+              </a>
+              <a href="zone-appliance.html" class="mchip">
+                เครื่องใช้ไฟฟ้า
+              </a>
+            </div>
+            <div class="mgrid">
+              <div class="mbig">
+                <a href="index.html#prod-h">
+                  ดูสินค้าทั้งหมด
+                </a>
+                <a href="favorites.html">
+                  รายการโปรดของฉัน
+                </a>
+                <a href="cart.html">
+                  ตะกร้าสินค้า
+                </a>
+              </div>
+              <div class="mstack">
+                <div class="mcol">
+                  <h3><a href="zone-bed.html">
+                      ห้องนอน
+                    </a>
+                  </h3>
+                  <ul>
+                    <li><a href="product-p1.html">
+                        หมอน
+                      </a>
+                    </li>
+                    <li><a href="product-p2.html">
+                        ผ้าห่ม
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="mcol">
+                  <h3><a href="zone-bath.html">
+                      ห้องน้ำ
+                    </a>
+                  </h3>
+                  <ul>
+                    <li><a href="product-p3.html">
+                        ผ้าขี้ริ้ว
+                      </a>
+                    </li>
+                    <li><a href="product-p4.html">
+                        ชักโครก
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="mcol">
+                  <h3><a href="zone-appliance.html">
+                      เครื่องใช้ไฟฟ้า
+                    </a>
+                  </h3>
+                  <ul>
+                    <li><a href="product-p9.html">
+                        กาต้มน้ำไฟฟ้า
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="mstack">
+                <div class="mcol">
+                  <h3><a href="zone-living.html">
+                      ห้องนั่งเล่น
+                    </a>
+                  </h3>
+                  <ul>
+                    <li><a href="product-p5.html">
+                        โซฟา
+                      </a>
+                    </li>
+                    <li><a href="product-p6.html">
+                        ทีวี
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="mcol">
+                  <h3><a href="zone-kitchen.html">
+                      ห้องครัว
+                    </a>
+                  </h3>
+                  <ul>
+                    <li><a href="product-p7.html">
+                        ชาม
+                      </a>
+                    </li>
+                    <li><a href="product-p8.html">
+                        ตะหลิว
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="mcards">
+                <a href="index.html#rooms" class="mcard">
+                  <span class="art">
+                    <svg class="ic " viewBox="0 0 24 24" width="96" height="96" aria-hidden="true">
+                      <path
+                        d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3 M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M5 17v2 M19 17v2" />
+                    </svg>
+                  </span>
+                  <span class="cap">
+                    ช้อปตามห้อง ครบทุกโซน
+                  </span>
+                </a>
+                <a href="orders.html" class="mcard">
+                  <span class="art">
+                    <svg class="ic " viewBox="0 0 24 24" width="96" height="96" aria-hidden="true">
+                      <path
+                        d="M2 6h12v10H2z M14 9h4l3 3v4h-7 M4 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
+                    </svg>
+                  </span>
+                  <span class="cap dk">
+                    ติดตามคำสั่งซื้อ
+                  </span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mega" id="mega-rooms" role="region" aria-label="เมนูห้องต่างๆ">
+          <div class="wrap">
+            <div class="mrooms">
+              <a href="zone-bed.html" class="rtile">
+                <span class="rart">
+                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                    <path
+                      d="M3 18V7 M3 14h18v4 M21 14v-2a3 3 0 0 0-3-3h-7v5 M6 11a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0" />
+                  </svg>
+                </span>
+                <span class="rname">
+                  <span>
+                    ห้องนอน
+                  </span>
+                  <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M5 12h14 M13 6l6 6-6 6" />
+                  </svg>
+                </span>
+              </a>
+              <a href="zone-bath.html" class="rtile">
+                <span class="rart">
+                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                    <path d="M3 12h18v2a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z M6 12V6a2 2 0 0 1 4 0 M7 19l-1 2 M17 19l1 2" />
+                  </svg>
+                </span>
+                <span class="rname">
+                  <span>
+                    ห้องน้ำ
+                  </span>
+                  <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M5 12h14 M13 6l6 6-6 6" />
+                  </svg>
+                </span>
+              </a>
+              <a href="zone-living.html" class="rtile">
+                <span class="rart">
+                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                    <path
+                      d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3 M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M5 17v2 M19 17v2" />
+                  </svg>
+                </span>
+                <span class="rname">
+                  <span>
+                    ห้องนั่งเล่น
+                  </span>
+                  <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M5 12h14 M13 6l6 6-6 6" />
+                  </svg>
+                </span>
+              </a>
+              <a href="zone-kitchen.html" class="rtile">
+                <span class="rart">
+                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                    <path
+                      d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M2 10h2 M20 10h2 M9 6c0-1 1-2 3-2s3 1 3 2 M12 4v2" />
+                  </svg>
+                </span>
+                <span class="rname">
+                  <span>
+                    ห้องครัว
+                  </span>
+                  <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M5 12h14 M13 6l6 6-6 6" />
+                  </svg>
+                </span>
+              </a>
+              <a href="zone-appliance.html" class="rtile">
+                <span class="rart">
+                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                    <path d="M9 3v5 M15 3v5 M6 8h12v3a6 6 0 0 1-12 0z M12 17v4" />
+                  </svg>
+                </span>
+                <span class="rname">
+                  <span>
+                    เครื่องใช้ไฟฟ้า
+                  </span>
+                  <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M5 12h14 M13 6l6 6-6 6" />
+                  </svg>
+                </span>
+              </a width="20" height="20" aria-hidden="true">
+              <path d="M5 12h14 M13 6l6 6-6 6" />
+              </svg>
+              </span>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="mega" id="mega-svc" role="region" aria-label="เมนูบริการต่างๆ">
+          <div class="wrap">
+            <div class="mgrid g3">
+              <div class="mbig">
+                <a href="orders.html">
+                  ติดตามคำสั่งซื้อ
+                </a>
+                <a href="chat.html">
+                  แชทกับฝ่ายบริการลูกค้า
+                </a>
+                <a href="cart.html">
+                  ชำระเงิน &amp; แนบสลิป
+                </a>
+              </div>
+              <div class="mcol">
+                <h3>
+                  บัญชีของฉัน
+                </h3>
+                <ul>
+                  <li>
+                    <a href="account.html">
+                      เข้าสู่ระบบ / สมัครสมาชิก
+                    </a>
+                  </li>
+                  <li>
+                    <a href="favorites.html">
+                      รายการโปรด
+                    </a>
+                  </li>
+                  <li>
+                    <a href="orders.html">
+                      คำสั่งซื้อของฉัน
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div class="mcards">
+                <a href="chat.html" class="mcard">
+                  <span class="art">
+                    <svg class="ic " viewBox="0 0 24 24" width="96" height="96" aria-hidden="true">
+                      <path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5" />
+                    </svg>
+                  </span>
+                  <span class="cap">
+                    แชท &amp; บอทตอบคำถามที่พบบ่อย
+                  </span>
+                </a>
+                <a href="orders.html" class="mcard">
+                  <span class="art">
+                    <svg class="ic " viewBox="0 0 24 24" width="96" height="96" aria-hidden="true">
+                      <path
+                        d="M2 6h12v10H2z M14 9h4l3 3v4h-7 M4 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
+                    </svg>
+                  </span>
+                  <span class="cap dk">
+                    ติดตามสถานะการจัดส่ง
+                  </span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <!-- Main content -->
+      <main class="store wrap" id="main">
+        <!-- Section -->
+        <section class="hero" aria-label="แนะนำ HomPB">
+          <div class="hero-copy">
+            <span class="eyebrow">
+              เครื่องใช้ไฟฟ้า &amp; ของใช้ในบ้าน
+            </span>
+            <h1>
+              ทุกห้องในบ้าน
+              <br>
+              ครบที่
+              <span class="disp">
+                HOMPB
+              </span>
+            </h1>
+            <p>
+              เลือกซื้อสินค้าตามโซนของบ้าน สั่งซื้อ ชำระเงิน และติดตามการจัดส่งได้สะดวก รวดเร็ว ผ่านระบบออนไลน์
+            </p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap"><a href="#rooms"
+                class="btn btn-cream lg">เลือกซื้อตามห้อง</a><a href="orders.html"
+                class="btn btn-outline-cream lg">ติดตามคำสั่งซื้อ</a>
+            </div>
+          </div>
+          <div class="hero-art">
+            <span class="bg" aria-hidden="true">
+              HOM
+            </span>
+            <svg class="ic " viewBox="0 0 24 24" width="300" height="300" aria-hidden="true">
+              <path d="M6 9h11l1 11H5z M17 11.5c3 0 3 5.5 0 5.5 M9 9V6h5v3 M4 9h2" />
+            </svg>
+          </div>
+        </section>
+        <!-- Section -->
+        <section class="sec" id="rooms" aria-labelledby="rooms-h">
+          <div class="sec-head">
+            <h2 id="rooms-h">
+              เลือกซื้อตามห้อง
+            </h2>
+          </div>
+          <div class="rooms">
+            <a href="zone-bed.html" class="room">
+              <span class="bub">
+                <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                  <path d="M3 18V7 M3 14h18v4 M21 14v-2a3 3 0 0 0-3-3h-7v5 M6 11a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0" />
+                </svg>
+              </span>
+              <span>
+                <b>
+                  ห้องนอน
+                </b>
+                <small>
+                  หมอน, ผ้าห่ม
+                </small>
+              </span>
+            </a>
+            <a href="zone-bath.html" class="room">
+              <span class="bub">
+                <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                  <path d="M3 12h18v2a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z M6 12V6a2 2 0 0 1 4 0 M7 19l-1 2 M17 19l1 2" />
+                </svg>
+              </span>
+              <span>
+                <b>
+                  ห้องน้ำ
+                </b>
+                <small>
+                  ผ้าขี้ริ้ว, ชักโครก
+                </small>
+              </span>
+            </a>
+            <a href="zone-living.html" class="room">
+              <span class="bub">
+                <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                  <path
+                    d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3 M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M5 17v2 M19 17v2" />
+                </svg>
+              </span>
+              <span>
+                <b>
+                  ห้องนั่งเล่น
+                </b>
+                <small>
+                  โซฟา, ทีวี
+                </small>
+              </span>
+            </a>
+            <a href="zone-kitchen.html" class="room">
+              <span class="bub">
+                <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                  <path
+                    d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M2 10h2 M20 10h2 M9 6c0-1 1-2 3-2s3 1 3 2 M12 4v2" />
+                </svg>
+              </span>
+              <span>
+                <b>
+                  ห้องครัว
+                </b>
+                <small>
+                  ชาม, ตะหลิว
+                </small>
+              </span>
+            </a>
+            <a href="zone-appliance.html" class="room">
+              <span class="bub">
+                <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                  <path d="M9 3v5 M15 3v5 M6 8h12v3a6 6 0 0 1-12 0z M12 17v4" />
+                </svg>
+              </span>
+              <span>
+                <b>
+                  เครื่องใช้ไฟฟ้า
+                </b>
+                <small>
+                  เครื่องใช้ไฟฟ้าสำหรับแต่ละห้อง
+                </small>
+              </span>
+            </a>
+          </div>
+        </section>
+        <!-- Section -->
+        <section class="sec" aria-labelledby="prod-h">
+          <div class="sec-head">
+            <h2 id="prod-h">
+              สินค้าแนะนำ
+            </h2>
+          </div>
+          <div class="chips" role="group" aria-label="กรองตามโซน">
+            <label class="chip">
+              <input type="radio" name="hz" id="hz-all" class="sr" checked>
+              ทั้งหมด
+            </label>
+            <label class="chip">
+              <input type="radio" name="hz" id="hz-bed" class="sr">
+              ห้องนอน
+            </label>
+            <label class="chip">
+              <input type="radio" name="hz" id="hz-bath" class="sr">
+              ห้องน้ำ
+            </label>
+            <label class="chip">
+              <input type="radio" name="hz" id="hz-living" class="sr">
+              ห้องนั่งเล่น
+            </label>
+            <label class="chip">
+              <input type="radio" name="hz" id="hz-kitchen" class="sr">
+              ห้องครัว
+            </label>
+            <label class="chip">
+              <input type="radio" name="hz" id="hz-appliance" class="sr">
+              เครื่องใช้ไฟฟ้า
+            </label>
+          </div>
+          <div class="grid">
+            <article class="card z-bed">
+              <div class="img">
+                <svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path d="M4 7c3-2 13-2 16 0c1 3.5 1 6.5 0 10c-3 2-13 2-16 0c-1-3.5-1-6.5 0-10z M8 9.5c2 1 6 1 8 0" />
+                </svg>
+                <label class="icon-btn fav">
+                  <input type="checkbox" class="sr" aria-label="บันทึก หมอน ในรายการโปรด">
+                  <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg>
+                </label>
+              </div>
+              <span class="zone">
+                ห้องนอน
+              </span>
+              <a href="product-p1.html" class="name">
+                หมอน
+              </a>
+              <span class="stock ">
+                <svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>
+                มีสินค้า
+              </span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    390
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม หมอน ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+            <article class="card z-bed">
+              <div class="img">
+                <svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path d="M3 6h18v12H3z M3 10h18 M7 14h.01 M12 14h.01 M17 14h.01" />
+                </svg>
+                <label class="icon-btn fav">
+                  <input type="checkbox" class="sr" aria-label="บันทึก ผ้าห่ม ในรายการโปรด">
+                  <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg>
+                </label>
+              </div>
+              <span class="zone">
+                ห้องนอน
+              </span>
+              <a href="product-p2.html" class="name">
+                ผ้าห่ม
+              </a>
+              <span class="stock ">
+                <svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>
+                มีสินค้า
+              </span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    890
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม ผ้าห่ม ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+            <article class="card z-bath">
+              <div class="img"><svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path d="M5 4h14v16H5z M5 9h14 M5 14h14 M10 4v16" />
+                </svg><label class="icon-btn fav"><input type="checkbox" class="sr"
+                    aria-label="บันทึก ผ้าขี้ริ้ว ในรายการโปรด"><svg class="ic " viewBox="0 0 24 24" width="22"
+                    height="22" aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg></label>
+              </div><span class="zone">ห้องน้ำ</span><a href="product-p3.html" class="name">ผ้าขี้ริ้ว</a><span
+                class="stock "><svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>มีสินค้า</span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    59
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม ผ้าขี้ริ้ว ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+            <article class="card z-bath">
+              <div class="img"><svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path d="M7 3h7v7H7z M4 10h15c0 4-3 6.5-6 6.5V21H9v-4.5C6 16 4 14 4 10z" />
+                </svg><label class="icon-btn fav"><input type="checkbox" class="sr"
+                    aria-label="บันทึก ชักโครก ในรายการโปรด"><svg class="ic " viewBox="0 0 24 24" width="22" height="22"
+                    aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg></label>
+              </div><span class="zone">ห้องน้ำ</span><a href="product-p4.html" class="name">ชักโครก</a><span
+                class="stock "><svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>มีสินค้า</span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    4,590
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม ชักโครก ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+            <article class="card z-living">
+              <div class="img"><svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path
+                    d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3 M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M5 17v2 M19 17v2" />
+                </svg><label class="icon-btn fav"><input type="checkbox" class="sr"
+                    aria-label="บันทึก โซฟา ในรายการโปรด"><svg class="ic " viewBox="0 0 24 24" width="22" height="22"
+                    aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg></label>
+              </div><span class="zone">ห้องนั่งเล่น</span><a href="product-p5.html" class="name">โซฟา</a><span
+                class="stock "><svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>มีสินค้า</span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    12,900
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม โซฟา ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+            <article class="card z-living">
+              <div class="img"><svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path d="M3 5h18v12H3z M8 21h8 M12 17v4" />
+                </svg><label class="icon-btn fav"><input type="checkbox" class="sr"
+                    aria-label="บันทึก ทีวี ในรายการโปรด"><svg class="ic " viewBox="0 0 24 24" width="22" height="22"
+                    aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg></label>
+              </div><span class="zone">ห้องนั่งเล่น</span><a href="product-p6.html" class="name">ทีวี</a><span
+                class="stock "><svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>มีสินค้า</span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    9,990
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม ทีวี ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+            <article class="card z-kitchen">
+              <div class="img"><svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path d="M3 11h18c0 5-4 8-9 8s-9-3-9-8z M9 19v2h6v-2" />
+                </svg><label class="icon-btn fav"><input type="checkbox" class="sr"
+                    aria-label="บันทึก ชาม ในรายการโปรด"><svg class="ic " viewBox="0 0 24 24" width="22" height="22"
+                    aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg></label>
+              </div><span class="zone">ห้องครัว</span><a href="product-p7.html" class="name">ชาม</a><span
+                class="stock "><svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>มีสินค้า</span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    89
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม ชาม ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+            <article class="card z-kitchen">
+              <div class="img">
+                <svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path d="M9 3h6v7a3 3 0 0 1-6 0z M12 13v8 M11 5v3 M13 5v3" />
+                </svg>
+                <label class="icon-btn fav">
+                  <input type="checkbox" class="sr" aria-label="บันทึก ตะหลิว ในรายการโปรด">
+                  <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg>
+                </label>
+              </div>
+              <span class="zone">
+                ห้องครัว
+              </span>
+              <a href="product-p8.html" class="name">
+                ตะหลิว
+              </a>
+              <span class="stock ">
+                <svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>
+                มีสินค้า
+              </span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    129
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม ตะหลิว ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+            <article class="card z-appliance">
+              <div class="img">
+                <svg class="ic art" viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
+                  <path d="M6 9h11l1 11H5z M17 11.5c3 0 3 5.5 0 5.5 M9 9V6h5v3 M4 9h2" />
+                </svg>
+                <label class="icon-btn fav">
+                  <input type="checkbox" class="sr" aria-label="บันทึก กาต้มน้ำไฟฟ้า ในรายการโปรด">
+                  <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                  </svg>
+                </label>
+              </div>
+              <span class="zone">
+                เครื่องใช้ไฟฟ้า
+              </span>
+              <a href="product-p9.html" class="name">
+                กาต้มน้ำไฟฟ้า
+              </a>
+              <span class="stock ">
+                <svg class="ic " viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>
+                มีสินค้า
+              </span>
+              <div class="foot">
+                <span class="price num">
+                  <span class="cur">
+                    ฿
+                  </span>
+                  <span class="amt">
+                    790
+                  </span>
+                </span>
+                <a href="cart.html" class="btn sm" aria-label="เพิ่ม กาต้มน้ำไฟฟ้า ลงตะกร้า">
+                  <svg class="ic " viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14 M5 12h14" />
+                  </svg>
+                  <span>
+                    ตะกร้า
+                  </span>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+        <!-- Section -->
+        <section class="member" aria-label="สมัครสมาชิก">
+          <div>
+            <h2>
+              บันทึกของที่ชอบไว้ในรายการโปรด
+            </h2>
+            <p>
+              สมัครสมาชิก HomPB เพื่อบันทึกสินค้า ดูประวัติคำสั่งซื้อ และติดตามพัสดุได้ทุกเมื่อ
+              ข้อมูลส่วนตัวของคุณถูกเก็บเป็นความลับ
+            </p>
+          </div>
+          <a href="register.html" class="btn btn-cream lg">
+            สมัครสมาชิก
+          </a>
+        </section>
+        <!-- Section -->
+        <section class="sec" aria-labelledby="svc-h">
+          <div class="sec-head">
+            <h2 id="svc-h">
+              ช้อปง่าย ครบในที่เดียว
+            </h2>
+          </div>
+          <div class="services">
+            <a href="index.html#rooms" class="svc">
+              <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                <path d="M4 11a7 7 0 1 0 14 0a7 7 0 1 0-14 0 M20 20l-4-4" />
+              </svg>
+              <b>
+                ค้นหาตามโซนบ้าน
+              </b>
+              <span>
+                ห้องนอน ห้องน้ำ ห้องนั่งเล่น ห้องครัว และเครื่องใช้ไฟฟ้า
+              </span>
+            </a>
+            <a href="chat.html" class="svc">
+              <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                <path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5" />
+              </svg>
+              <b>
+                แชท &amp; บอทตอบคำถาม
+              </b>
+              <span>
+                คุยกับฝ่ายบริการลูกค้าในเวลาทำการ
+                บอทช่วยตอบคำถามที่พบบ่อยอัตโนมัติ
+              </span>
+            </a>
+            <a href="cart.html" class="svc">
+              <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                <path d="M6 3h9l4 4v14H6z M15 3v4h4 M12 17v-6 M9.5 13.5L12 11l2.5 2.5" />
+              </svg>
+              <b>
+                ชำระเงิน &amp; แนบสลิป
+              </b>
+              <span>
+                โอนเงินแล้วแนบหลักฐานการโอนในคำสั่งซื้อได้ทันที
+              </span>
+            </a>
+            <a href="orders.html" class="svc">
+              <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+                <path
+                  d="M2 6h12v10H2z M14 9h4l3 3v4h-7 M4 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
+              </svg>
+              <b>
+                ติดตามการจัดส่ง
+              </b>
+              <span>
+                ดูสถานะคำสั่งซื้อตั้งแต่ตรวจสลิปจนถึงมือคุณ
+              </span>
+            </a>
+          </div>
+        </section>
+      </main>
+      <!-- Footer -->
+      <footer class="site">
+        <div class="wrap">
+          <div class="fcols">
+            <div>
+              <span class="disp" style="font-size:28px;color:var(--red-fg)">
+                HOMPB
+              </span>
+              <p style="color:var(--ink-2)">
+                แพลตฟอร์ม E-Commerce สำหรับเครื่องใช้ไฟฟ้าและอุปกรณ์ภายในบ้าน
+                เลือกซื้อได้สะดวก รวดเร็ว ผ่านระบบออนไลน์
+              </p>
+            </div>
+            <div>
+              <b>
+                ช้อปตามห้อง
+              </b>
+              <a href="zone-bed.html">
+                ห้องนอน
+              </a>
+              <a href="zone-bath.html">
+                ห้องน้ำ
+              </a>
+              <a href="zone-living.html">
+                ห้องนั่งเล่น
+              </a>
+              <a href="zone-kitchen.html">
+                ห้องครัว
+              </a>
+              <a href="zone-appliance.html">
+                เครื่องใช้ไฟฟ้า
+              </a>
+            </div>
+            <div>
+              <b>
+                บริการลูกค้า
+              </b>
+              <a href="chat.html">
+                แชทกับฝ่ายบริการลูกค้า
+              </a>
+              <a href="orders.html">
+                ติดตามสถานะการจัดส่ง
+              </a>
+              <a href="cart.html">
+                วิธีชำระเงิน &amp; แนบสลิป
+              </a>
+            </div>
+            <div>
+              <b>
+                เกี่ยวกับ HomPB
+              </b>
+              <a href="index.html">
+                เกี่ยวกับเรา
+              </a>
+            </div>
+            <div>
+              <b>
+                ติดต่อเรา
+              </b>
+              <span>
+                www.HOM_PB.com
+              </span>
+              <span>
+                hom_pb@HOMPB.com
+              </span>
+            </div>
+          </div>
+          <div class="fbot">
+            <span>
+              © 2026 HomPB · โปรเจกต์รายวิชา CPE230 มหาวิทยาลัยศรีนครินทรวิโรฒ
+            </span>
+            <span>
+              เว็บเดโม:
+              ราคาและข้อมูลเป็นตัวอย่าง เก็บในเบราว์เซอร์นี้เท่านั้น
+            </span>
+          </div>
+        </div>
+      </footer>
     </div>
-  </nav>
+    <a href="chat.html" class="fab" aria-label="เปิดแชทกับ HomPB">
+      <svg class="ic " viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+        <path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5" />
+      </svg>
+    </a>
+    <div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-h">
+      <div class="drawer-top">
+        <h2 id="drawer-h">
+          ช้อปสินค้า
+        </h2>
+        <label for="menu-toggle" class="icon-btn" id="drawer-close" aria-label="ปิดเมนู">
+          <svg class="ic " viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+            <path d="M6 6l12 12 M18 6L6 18" />
+          </svg>
+        </label>
+      </div>
+      <!-- Navigation -->
+      <nav class="drawer-list" aria-label="เมนูหลัก">
+        <h3 class="dhead">
+          ช้อปตามห้อง
+        </h3>
+        <a href="zone-bed.html" class="drow">
+          <span class="bub">
+            <svg class="ic " viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+              <path d="M3 18V7 M3 14h18v4 M21 14v-2a3 3 0 0 0-3-3h-7v5 M6 11a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              ห้องนอน
+            </b>
+            <small>
+              หมอน, ผ้าห่ม
+            </small>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a href="zone-bath.html" class="drow">
+          <span class="bub">
+            <svg class="ic " viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+              <path d="M3 12h18v2a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z M6 12V6a2 2 0 0 1 4 0 M7 19l-1 2 M17 19l1 2" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              ห้องน้ำ
+            </b>
+            <small>
+              ผ้าขี้ริ้ว, ชักโครก
+            </small>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a href="zone-living.html" class="drow">
+          <span class="bub">
+            <svg class="ic " viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+              <path
+                d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3 M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M5 17v2 M19 17v2" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              ห้องนั่งเล่น
+            </b>
+            <small>
+              โซฟา, ทีวี
+            </small>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a href="zone-kitchen.html" class="drow">
+          <span class="bub">
+            <svg class="ic " viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+              <path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M2 10h2 M20 10h2 M9 6c0-1 1-2 3-2s3 1 
+
+              width=" 28" height="28" aria-hidden="true">
+                <path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M2 10h2 M20 10h2 M9 6c0-1 1-2 3-2s3 1 3 2 M12 4v2" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              ห้องครัว
+            </b>
+            <small>
+              ชาม, ตะหลิว
+            </small>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a href="zone-appliance.html" class="drow">
+          <span class="bub">
+            <svg class="ic " viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+              <path d="M9 3v5 M15 3v5 M6 8h12v3a6 6 0 0 1-12 0z M12 17v4" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              เครื่องใช้ไฟฟ้า
+            </b>
+            <small>
+              เครื่องใช้ไฟฟ้าสำหรับแต่ละห้อง
+            </small>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <h3 class="dhead">
+          บริการต่างๆ
+        </h3>
+        <a href="orders.html" class="drow minor">
+          <span class="dic">
+            <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path
+                d="M2 6h12v10H2z M14 9h4l3 3v4h-7 M4 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              ติดตามคำสั่งซื้อ
+            </b>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a href="cart.html" class="drow minor">
+          <span class="dic">
+            <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path d="M6 3h9l4 4v14H6z M15 3v4h4 M12 17v-6 M9.5 13.5L12 11l2.5 2.5" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              ชำระเงิน &amp; แนบสลิป
+            </b>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a href="favorites.html" class="drow minor">
+          <span class="dic">
+            <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              รายการโปรด
+            </b>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a href="chat.html" class="drow minor">
+          <span class="dic">
+            <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              แชทกับฝ่ายบริการลูกค้า
+            </b>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <a href="account.html" class="drow minor">
+          <span class="dic">
+            <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path d="M8 8a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21c0-4 4-6 8-6s8 2 8 6" />
+            </svg>
+          </span>
+          <span class="dtx">
+            <b>
+              เข้าสู่ระบบ / สมัครสมาชิก
+            </b>
+          </span>
+          <svg class="ic " viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M5 12h14 M13 6l6 6-6 6" />
+          </svg>
+        </a>
+      </nav>
+    </div>
+  </div>
 </body>
 
 </html>
