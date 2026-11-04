@@ -88,7 +88,9 @@ async function register() {
     // Supabase เช็กว่าโดเมนรับอีเมลได้จริง (ต้องส่งลิงก์ยืนยัน) เช่น @hompb.com ไม่มีระบบอีเมล
     if (error.code === "email_address_invalid" || /email address .* invalid/i.test(error.message))
       return "อีเมลนี้รับอีเมลไม่ได้ ใช้อีเมลจริงที่เปิดอ่านได้ เช่น Gmail";
-    if (/rate limit/i.test(error.message)) return "สมัครบ่อยเกินไป รอสักครู่แล้วลองใหม่";
+    // ระบบอีเมลฟรีของ Supabase ส่งอีเมลยืนยันได้ไม่กี่ฉบับต่อชั่วโมง (แก้ที่ Dashboard ไม่ใช่ในโค้ด)
+    if (/rate limit/i.test(error.message))
+      return "ตอนนี้มีคนสมัครเยอะ ระบบส่งอีเมลยืนยันไม่ทัน ลองใหม่อีกครั้งในอีกประมาณ 1 ชั่วโมง";
     return "สมัครไม่สำเร็จ: " + error.message;
   }
   // ถ้าเปิดยืนยันอีเมลไว้ อีเมลที่สมัครแล้วจะไม่ error แต่ได้ identities ว่าง
