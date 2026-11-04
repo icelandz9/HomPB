@@ -510,6 +510,12 @@ create trigger set_updated_at before update on faq_entries
 create trigger set_updated_at before update on store_settings
   for each row execute function public.set_updated_at();
 
+-- กันพิมพ์เลขพัสดุซ้ำ
+create unique index shipments_tracking_unique
+  on shipments (carrier, tracking_no)
+  where tracking_no is not null;
+
+
 -- INDEX ---------------------------------------------------------------
 -- Index คือสารบัญของตาราง ทำให้ค้นหาข้อมูลได้เร็วขึ้น
 

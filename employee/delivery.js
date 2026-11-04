@@ -8,7 +8,7 @@ const PAGES = [
   ["orders", "คำสั่งซื้อ", "☰"],
   ["shipping", "จัดส่ง & ที่อยู่ลูกค้า", "⛟"],
 ];
-const STATUSES = ["รอจัดส่ง", "กำลังจัดส่ง", "จัดส่งสำเร็จ"];
+const STATUSES = ["รอจัดส่ง", "กำลังจัดส่ง", "จัดส่งสำเร็จ", "ส่งไม่สำเร็จ"];
 const CARRIERS = [
   "ไปรษณีย์ไทย",
   "Flash Express",
@@ -16,6 +16,14 @@ const CARRIERS = [
   "Kerry Express",
   "อื่น ๆ",
 ];
+
+// สถานะใน shipments → ภาษาไทย
+const SHIP_STATUS = {
+  preparing: "รอจัดส่ง",
+  in_transit: "กำลังจัดส่ง",
+  delivered: "จัดส่งสำเร็จ",
+  failed: "ส่งไม่สำเร็จ",
+};
 
 // ========== ข้อมูล (ว่างไว้ก่อน ค่อยเชื่อม API/ฐานข้อมูลภายหลัง) ==========
 // shipments: เฉพาะคำสั่งซื้อที่ชำระเงินแล้ว
@@ -60,6 +68,86 @@ function card(title, note, body, pad) {
 function table(heads, rowsHtml, id) {
   return `<div class="tw"><table><tr>${heads.map((h) => `<th>${h}</th>`).join("")}</tr><tbody${id ? ` id="${id}"` : ""}>${rowsHtml || `<tr><td class="empty" colspan="${heads.length}">ยังไม่มีข้อมูล</td></tr>`}</tbody></table></div>`;
 }
+
+// ========== โหลดข้อมูลจาก Supabase ==========
+// ดึง shipments พร้อม orders (ที่อยู่ลูกค้า) และ order_items ในคำขอเดียว
+// RLS: ฝ่ายจัดส่งเห็นเฉพาะงานของตัวเอง + งานที่ยังไม่มีคนรับ
+async function loadData() {
+  const { data, error } = await sb
+    .from("shipments")
+    .select(
+      "order_id, carrier, tracking_no, status, handled_by, shipped_at, delivered_at,orders ( order_no, shipping_address, created_at, order_items ( product_name, quantity ) )",
+    );
+  if (error) return toast("โหลดงานจัดส่งไม่สำเร็จ: " + errText(error));
+
+  shipments = data
+    .filter((x) => x.orders)
+    .map((x) => {
+      const o = x.orders,
+        a = o.shipping_address || {};
+      return {
+        orderId: x.order_id, // uuid ใช้ตอนเรียก RPC
+        code: "HPB" + o.order_no, // แสดงให้คนอ่าน
+        name: a.recipient_name || "-",
+        phone: a.phone || "-",
+        addr: [
+          a.address_line,
+          a.subdistrict,
+          a.district,
+          a.province,
+          a.postcode,
+        ].join(" "),
+        items: o.order_items
+          .map((i) => `${i.product_name} ×${i.quantity}`)
+          .join(", "),
+        date: new Date(o.created_at).toLocaleString("th-TH"),
+        status: SHIP_STATUS[x.status] || x.status,
+        carrier: x.carrier || "",
+        track: x.tracking_no || "",
+        handledBy: x.handled_by, // null = ยังไม่มีคนรับ
+        shippedAt: x.shipped_at,
+        deliveredAt: x.delivered_at,
+      };
+    });
+
+  // หน้า "คำสั่งซื้อ" ใช้ข้อมูลชุดเดียวกับงานจัดส่ง
+  orders = shipments.map((x) => ({
+    id: x.code,
+    name: x.name,
+    phone: x.phone,
+    items: x.items,
+    addr: x.addr,
+    status: x.status,
+    date: x.date,
+  }));
+
+  // ประวัติ: สร้างจากเวลาเริ่มส่ง / ส่งถึง ที่ฐานข้อมูลบันทึกไว้
+  history = [];
+  shipments.forEach((x) => {
+    const who = x.handledBy ? me.full_name || "ฉัน" : "-";
+    if (x.shippedAt)
+      history.push([
+        x.shippedAt,
+        x.code,
+        "กำลังจัดส่ง",
+        x.carrier,
+        x.track,
+        who,
+      ]);
+    if (x.deliveredAt)
+      history.push([
+        x.deliveredAt,
+        x.code,
+        "จัดส่งสำเร็จ",
+        x.carrier,
+        x.track,
+        who,
+      ]);
+  });
+  history.sort((a, b) => new Date(b[0]) - new Date(a[0])); // ใหม่สุดขึ้นก่อน
+  history.forEach((h) => (h[0] = new Date(h[0]).toLocaleString("th-TH")));
+}
+
 function shipPill(s) {
   return s === "จัดส่งสำเร็จ"
     ? `<span class="pill o">${s}</span>`
@@ -78,9 +166,23 @@ function go(p) {
     )
     .join("");
   const t = PAGES.find((x) => x[0] === p)[1];
+  // ช่องค้นหา/ตัวกรอง: วาดหน้าเดิมซ้ำ (เช่น หลังกดบันทึก) เก็บค่าไว้ / เปลี่ยนหน้า ล้างทิ้ง
+  // (ตารางอ่านค่าจากช่องเดิมก่อนวางหน้าใหม่ ถ้าไม่ทำ ตารางจะกรองอยู่แต่ช่องว่าง)
+  const same = $("#pg").dataset.page === p;
+  const filters = [...document.querySelectorAll("#pg .filters input, #pg .filters select")].map((e) => {
+    const v = e.value;
+    if (!same) e.value = "";
+    return [e.id, v];
+  });
+  $("#pg").dataset.page = p;
   $("#pg").innerHTML =
     `<h1>${t}</h1><p class="who">${ROLE_NAME[me.role]} · สิทธิ์: ${canM(p) ? "จัดการ" : "ดูอย่างเดียว"}</p>` +
     VIEWS[p]();
+  if (same)
+    filters.forEach(([id, v]) => {
+      const e = document.getElementById(id);
+      if (e) e.value = v;
+    });
   window.scrollTo(0, 0);
 }
 
@@ -174,19 +276,19 @@ function rowsHtml() {
     .filter(
       ({ x }) =>
         (!q ||
-          x.orderId.toLowerCase().includes(q) ||
+          x.code.toLowerCase().includes(q) ||
           x.name.toLowerCase().includes(q) ||
           x.phone.includes(q)) &&
         (!s || x.status === s),
     )
     .map(
       ({ x, i }) => `<tr>
-<td><b>${x.orderId}</b><br><small class="muted">${x.date}</small></td>
+<td><b>${x.code}</b><br><small class="muted">${x.date}</small></td>
 <td>${esc(x.name)} · ${esc(x.phone)}<br><small class="muted">${esc(x.addr)}</small><br><small class="muted">${esc(x.items)}</small></td>
 <td><select id="ss${i}" aria-label="สถานะการจัดส่ง">${STATUSES.map((s) => `<option${s === x.status ? " selected" : ""}>${s}</option>`).join("")}</select><br><span style="display:inline-block;margin-top:6px">${shipPill(x.status)}</span></td>
 <td><select id="cr${i}" aria-label="ขนส่ง"><option value="">เลือกขนส่ง</option>${CARRIERS.map((c) => `<option${c === x.carrier ? " selected" : ""}>${c}</option>`).join("")}</select></td>
 <td><input id="tk${i}" value="${esc(x.track || "")}" placeholder="เลขพัสดุ" aria-label="เลขพัสดุ"></td>
-<td><div class="acts"><button class="btn sm" onclick="saveS(${i})">บันทึก</button><button class="btn line sm" onclick="copyAddr(${i})">คัดลอกที่อยู่</button></div></td></tr>`,
+<td><div class="acts">${x.handledBy ? `<button class="btn sm" onclick="saveS(${i})">บันทึก</button>` : `<button class="btn sm" onclick="claim(${i})">รับงาน</button>`}<button class="btn line sm" onclick="copyAddr(${i})">คัดลอกที่อยู่</button></div></td></tr>`,
     )
     .join("");
 }
@@ -196,7 +298,19 @@ function renderRows() {
 }
 
 // ========== ฟังก์ชันจัดการจัดส่ง (จุดที่ต้องเชื่อม API ภายหลัง) ==========
-function saveS(i) {
+// รับงาน: งานนี้จะเป็นของเรา คนอื่นในฝ่ายจะไม่เห็นอีก
+async function claim(i) {
+  if (!guard("shipping")) return;
+  const { error } = await sb.rpc("claim_shipment", {
+    p_order_id: shipments[i].orderId,
+  });
+  if (error) return toast("รับงานไม่สำเร็จ: " + errText(error));
+
+  await loadData();
+  go("shipping");
+  toast("รับงานแล้ว");
+}
+async function saveS(i) {
   if (!guard("shipping")) return;
   const x = shipments[i],
     st = $("#ss" + i).value,
@@ -207,18 +321,19 @@ function saveS(i) {
     toast("เลือกขนส่งและใส่เลขพัสดุก่อนเปลี่ยนสถานะ");
     return;
   }
-  x.status = st;
-  x.carrier = cr;
-  x.track = tk;
-  history.unshift([
-    new Date().toLocaleString("th-TH"),
-    x.orderId,
-    st,
-    cr,
-    tk,
-    me.email,
-  ]);
-  // TODO: ส่งสถานะ/เลขพัสดุไปให้ฝั่งลูกค้าเห็น
+
+  // แปลงภาษาไทยกลับเป็นรหัส เช่น "กำลังจัดส่ง" → "in_transit"
+  const code = Object.keys(SHIP_STATUS).find((k) => SHIP_STATUS[k] === st);
+
+  const { error } = await sb.rpc("update_shipment", {
+    p_order_id: x.orderId,
+    p_status: code,
+    p_carrier: cr || null,
+    p_tracking_no: tk || null,
+  });
+  if (error) return toast("บันทึกไม่สำเร็จ: " + errText(error));
+
+  await loadData();
   go("shipping");
   toast("บันทึกแล้ว");
 }
@@ -235,5 +350,6 @@ function copyAddr(i) {
   me = await requireStaff("shipping");
   $("#tn").textContent = me.full_name || ROLE_NAME[me.role];
   $("#te").textContent = me.email;
+  await loadData();
   go("overview");
 })();
