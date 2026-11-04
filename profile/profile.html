@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="profile.css">
+</head>
+
+<body>
+
+    <div class="profile-container">
+
+        <div class="profile-header">
+            <div class="header-left">
+                <a href="../index.html" class="back-link">&#8592; Home</a>
+                <h2>Your Profile</h2>
+            </div>
+            <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()"
+                aria-label="Toggle Theme">
+                <span id="themeIcon">☀️</span> <span id="themeText">Light</span>
+            </button>
+        </div>
+        <!--theme-toggle-btn is a class for styling(ตกแต่ง) the button, 
+        onclick="toggleTheme()" calls the theme change function (ฟังก์ชันเปลี่ยนธีม) when clicked, 
+        themeIcon is used to display a sun or moon icon (ใช้แสดงไอคอนพระอาทิตย์หรือพระจันทร์).
+        themeText is used to display Light or Dark text (ใช้แสดงข้อความ Light หรือ Dark).-->
+
+        <div class="profile-card">
+
+            <!-- Profile Image -->
+            <div class="profile-image" id="profileImageWrapper">
+                <img src="https://i.pravatar.cc/150" alt="Profile Picture" id="profileImg"
+                    onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23A91B0D\'/%3E%3Ccircle cx=\'50\' cy=\'38\' r=\'18\' fill=\'%23FFF5E1\'/%3E%3Cpath d=\'M20 85 C 20 65, 80 65, 80 85\' fill=\'%23FFF5E1\'/%3E%3C/svg%3E';">
+                <div class="image-overlay" onclick="document.getElementById('avatarInput').click()">
+                    <span>&#9998;</span>
+                </div>
+                <input type="file" id="avatarInput" accept="image/*" style="display:none"
+                    onchange="changeAvatar(event)">
+            </div>
+
+            <!-- https://i.pravatar.cc/150 is pr-avatar (Pr-avatar is random profile avatar),
+             oneerror is function if picture is eror in loading Execute the commands contained in command ( command is oneerror).
+             image-overlay is a part that displays a pencil icon when hovering or clicking on the image,
+             type="file" is a type for upload picture , image/* is surname file EX. .PNG , .PDF -->
+
+            <!-- Display Name & Username -->
+            <div class="name-block">
+                <h2 id="displayFullName">John Doe</h2>
+                <p class="username" id="displayUsername">@johndoe</p>
+            </div>
+
+            <!-- Edit Profile Button -->
+            <button type="button" class="edit-btn" id="editBtn" onclick="toggleEdit()">&#9998; Edit Profile</button>
+
+            <!-- ===== VIEW MODE ===== -->
+            <div class="profile-info" id="viewMode">
+                <div class="info-group">
+                    <label>Full Name</label>
+                    <p id="viewFullName">John Doe</p>
+                </div>
+                <div class="info-group">
+                    <label>Email Address</label>
+                    <p id="viewEmail">johndoe@gmail.com</p>
+                </div>
+                <div class="info-group">
+                    <label>Phone Number</label>
+                    <p id="viewPhone">012-345-6789</p>
+                </div>
+                <div class="info-group">
+                    <label>Addresses</label>
+                    <div id="viewAddresses"></div>
+                </div>
+            </div>
+
+            <!-- ===== EDIT MODE ===== -->
+            <div class="edit-form" id="editMode" style="display:none;">
+
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="editFullName" placeholder="Full Name">
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="editEmail" placeholder="email@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="editPhone" placeholder="0xx-xxx-xxxx">
+                </div>
+
+                <!-- Multiple Addresses -->
+                <div class="form-group">
+                    <label>Addresses</label>
+                    <div id="addressList"></div>
+                    <button type="button" class="add-address-btn" onclick="addAddressField()">
+                        &#43; Add Address
+                    </button>
+                </div>
+
+                <!-- Save / Cancel Buttons -->
+                <div class="form-actions">
+                    <button type="button" class="save-btn" onclick="saveProfile()">&#10003; Save</button>
+                    <button type="button" class="cancel-btn" onclick="cancelEdit()">&#10005; Cancel</button>
+                </div>
+                <!-- onclick if click button excute command -->
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===================== DATA =====================
+        let profile = {
+            name: 'johndoe',
+            fullName: 'John Doe',
+            email: 'johndoe@gmail.com',
+            phone: '012-345-6789',
+            addresses: [
+                { id: 1, text: '3 Main St, Anytown, USA', isDefault: true }
+            ],
+            avatar: 'https://i.pravatar.cc/150'
+        };
+
+        // Temporary working copy during edit mode (prevents corruption on Cancel)
+        let tempAddresses = [];
+        let isEditing = false;
+        let toastTimer = null;
+        // tempAdress is Store temporary address data(ข้อมูลชั่วคราว) while editing.
+        //  isEditing Use this to check if you are in edit mode. (true = editing, false = view).
+        // toastTimer Used to store a timer for hiding notification messages.
+
+
+
+        // ===================== INIT =====================
+        window.onload = function () {
+            initTheme();
+            loadProfileData();
+            renderView();
+        };
+
+        function loadProfileData() {
+            try {
+                const saved = localStorage.getItem('userProfile');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    profile = { ...profile, ...parsed };
+                }
+            } catch (e) {}
+        }
+        // initTheme() loads and sets the theme for the webpage.
+        // renderView() displays the profile information on the webpage.
+
+        // ===================== THEME =====================
+        function initTheme() {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                applyTheme(savedTheme);
+            } catch (e) {
+                applyTheme('dark');
+            }
+        }
+        // If a saved theme exists(หากมีธีมที่บันทึกไว้แล้ว), it will be applied(จะทำการโหลดขึ้นมาใช้).
+        // If not, Dark Mode will be used by default.
+        // In the event of an error, it will default to Dark Mode(ถ้าเกิดข้อผิดพลาดจะกำหนดให้เป็น Darkmode).
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(nextTheme);
+            try {
+                localStorage.setItem('theme', nextTheme);
+            } catch (e) { }
+        }
+        // Switches between Dark Mode and Light Mode when the user presses the button.
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+            if (theme === 'dark') {
+                if (icon) icon.textContent = '☀️';
+                if (text) text.textContent = 'Light';
+            } else {
+                if (icon) icon.textContent = '🌙';
+                if (text) text.textContent = 'Dark';
+            }
+        }
+        // If you change the CSS theme, the colors will be adjusted to suit the theme you have selected.
+
+        // ===================== AVATAR =====================
+        function changeAvatar(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                profile.avatar = e.target.result;
+                document.getElementById('profileImg').src = e.target.result;
+                try {
+                    localStorage.setItem('userProfile', JSON.stringify(profile));
+                } catch (err) {}
+                showToast('Profile picture updated ✓');
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        // edit avatar profile
+
+        // ===================== TOGGLE EDIT =====================
+        function toggleEdit() {
+            if (!isEditing) {
+                openEdit();
+            } else {
+                cancelEdit();
+            }
+        }
+
+        function openEdit() {
+            isEditing = true;
+            // Clone addresses for safe editing
+            tempAddresses = JSON.parse(JSON.stringify(profile.addresses));
+
+            document.getElementById('editFullName').value = profile.fullName;
+            document.getElementById('editEmail').value = profile.email;
+            document.getElementById('editPhone').value = profile.phone;
+            renderAddressFields();
+
+            document.getElementById('viewMode').style.display = 'none';
+            document.getElementById('editMode').style.display = 'block';
+            const btn = document.getElementById('editBtn');
+            btn.innerHTML = '&#10005; Cancel';
+            btn.classList.add('active');
+        }
+
+        function cancelEdit() {
+            isEditing = false;
+            tempAddresses = [];
+            document.getElementById('editMode').style.display = 'none';
+            document.getElementById('viewMode').style.display = 'block';
+            const btn = document.getElementById('editBtn');
+            btn.innerHTML = '&#9998; Edit Profile';
+            btn.classList.remove('active');
+        }
+
+        // ===================== VIEW RENDER =====================
+        function renderView() {
+            document.getElementById('displayFullName').textContent = profile.fullName;
+            document.getElementById('displayUsername').textContent = '@' + profile.name;
+            document.getElementById('viewFullName').textContent = profile.fullName;
+            document.getElementById('viewEmail').textContent = profile.email;
+            document.getElementById('viewPhone').textContent = profile.phone;
+            document.getElementById('profileImg').src = profile.avatar;
+
+            // Render address list in view mode
+            const viewAddr = document.getElementById('viewAddresses');
+            viewAddr.innerHTML = '';
+            profile.addresses.forEach(addr => {
+                const div = document.createElement('div');
+                div.className = 'address-view-item';
+                div.innerHTML = `
+                    <span class="addr-text">${escapeHtml(addr.text)}</span>
+                    ${addr.isDefault ? '<span class="badge-default">Default</span>' : ''}
+                `;
+                viewAddr.appendChild(div);
+            });
+        }
+
+        // ===================== ADDRESS FIELDS (EDIT MODE) =====================
+        function renderAddressFields() {
+            const list = document.getElementById('addressList');
+            list.innerHTML = '';
+            tempAddresses.forEach((addr, idx) => {
+                list.appendChild(createAddressRow(addr.text, idx, addr.isDefault));
+            });
+        }
+
+        function createAddressRow(text, idx, isDefault) {
+            const row = document.createElement('div');
+            row.className = 'address-row';
+            row.dataset.idx = idx;
+            row.innerHTML = `
+                <div class="addr-input-wrap">
+                    <input type="text" class="addr-input" value="${escapeHtml(text)}" placeholder="Enter address..." oninput="updateAddressText(${idx}, this.value)">
+                    <label class="default-label">
+                        <input type="radio" name="defaultAddr" ${isDefault ? 'checked' : ''} onchange="setDefault(${idx})">
+                        <span>Default</span>
+                    </label>
+                </div>
+                <button type="button" class="remove-addr-btn" onclick="removeAddress(${idx})" title="Delete address">&#128465;</button>
+            `;
+            return row;
+        }
+
+        function updateAddressText(idx, val) {
+            if (tempAddresses[idx]) {
+                tempAddresses[idx].text = val;
+            }
+        }
+
+        function addAddressField() {
+            syncAddressInputs();
+            const hasDefault = tempAddresses.some(a => a.isDefault);
+            tempAddresses.push({
+                id: Date.now(),
+                text: '',
+                isDefault: !hasDefault
+            });
+            renderAddressFields();
+            const inputs = document.querySelectorAll('.addr-input');
+            if (inputs.length) inputs[inputs.length - 1].focus();
+        }
+
+        function removeAddress(idx) {
+            if (tempAddresses.length <= 1) {
+                showToast('At least one address is required', 'error');
+                return;
+            }
+            syncAddressInputs();
+            const wasDefault = tempAddresses[idx].isDefault;
+            tempAddresses.splice(idx, 1);
+            if (wasDefault && tempAddresses.length > 0) {
+                tempAddresses[0].isDefault = true;
+            }
+            renderAddressFields();
+        }
+
+        function setDefault(idx) {
+            syncAddressInputs();
+            tempAddresses.forEach((a, i) => a.isDefault = (i === idx));
+        }
+
+        function syncAddressInputs() {
+            const inputs = document.querySelectorAll('.addr-input');
+            inputs.forEach((input, i) => {
+                if (tempAddresses[i]) {
+                    tempAddresses[i].text = input.value.trim();
+                }
+            });
+        }
+
+        // ===================== SAVE =====================
+        function saveProfile() {
+            const fullName = document.getElementById('editFullName').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+
+            // Validation
+            if (!fullName) { showToast('Please enter Full Name', 'error'); return; }
+            if (!email || !email.includes('@')) { showToast('Invalid email address', 'error'); return; }
+            if (!phone) { showToast('Please enter phone number', 'error'); return; }
+
+            syncAddressInputs();
+
+            if (tempAddresses.length === 0) {
+                showToast('At least one address is required', 'error');
+                return;
+            }
+
+            const hasEmpty = tempAddresses.some(a => !a.text || a.text.trim() === '');
+            if (hasEmpty) {
+                showToast('Please fill in all address fields', 'error');
+                return;
+            }
+
+            // Ensure at least one default is selected
+            if (!tempAddresses.some(a => a.isDefault)) {
+                tempAddresses[0].isDefault = true;
+            }
+
+            // Commit changes
+            profile.fullName = fullName;
+            profile.email = email;
+            profile.phone = phone;
+            profile.addresses = JSON.parse(JSON.stringify(tempAddresses));
+
+            try {
+                localStorage.setItem('userProfile', JSON.stringify(profile));
+            } catch (err) {}
+
+            renderView();
+            cancelEdit();
+            showToast('Profile saved successfully ✓');
+        }
+
+        // ===================== TOAST =====================
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.textContent = msg;
+            toast.className = 'toast show ' + (type === 'error' ? 'toast-error' : 'toast-success');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.className = 'toast';
+            }, 3000);
+        }
+
+        // ===================== HELPER =====================
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+
+</body>
+
+</html>

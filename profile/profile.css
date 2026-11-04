@@ -1,0 +1,510 @@
+:root {
+  /* HomPB Dark Theme (Default) */
+  --red: #A91B0D;
+  --red-dk: #7E1208;
+  --red-tint: #3D1B17;
+  --red-deep: #F08A78;
+  --ground: #17110E;
+  --surface: #221813;
+  --cream: #FFF5E1;
+  --sand: #2A1F19;
+  --sand-2: #342720;
+  --hero-art: #2B201A;
+  --hero-ghost: #3A2B23;
+  --staff-bg: #1B1411;
+  --ink: #FFF5E1;
+  --ink-2: #E2D4C8;
+  --muted: #A8937F;
+  --muted-2: #806E5E;
+  --ink-bg: #221813;
+  --line: #3A2D25;
+  --line-2: #4F3E34;
+  --line-3: #40322A;
+  --line-4: #33261F;
+  --line-5: #281D17;
+  --ok-bg: #1F3A2A;
+  --ok: #9FD8A8;
+  --warn-bg: #3B2F14;
+  --warn: #F1CD6B;
+  --bad-bg: #3B1714;
+  --bad: #F87171;
+  --focus: #3B82F6;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  /* HomPB Light Theme */
+  --red: #A91B0D;
+  --red-dk: #7E1208;
+  --red-tint: #F7E4DE;
+  --red-deep: #7E1208;
+  --ground: #FBF6EE;
+  --surface: #FFFFFF;
+  --cream: #FFF5E1;
+  --sand: #F4ECE0;
+  --sand-2: #F1E6D4;
+  --hero-art: #F3E7D3;
+  --hero-ghost: #EADBC2;
+  --staff-bg: #F6F0E6;
+  --ink: #221612;
+  --ink-2: #4A3A30;
+  --muted: #5E4A3E;
+  --muted-2: #7A5F4D;
+  --ink-bg: #221612;
+  --line: #EADFCF;
+  --line-2: #CDBBA3;
+  --line-3: #E8DCCB;
+  --line-4: #EFE4D4;
+  --line-5: #E3D5C0;
+  --ok-bg: #EAF3EA;
+  --ok: #1F4D28;
+  --warn-bg: #FFF1D6;
+  --warn: #7A4B00;
+  --bad-bg: #FBE3DF;
+  --bad: #8A1409;
+  --focus: #1B5FBF;
+  color-scheme: light;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: var(--ground);
+    color: var(--ink);
+    min-height: 100vh;
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* ===================== CONTAINER ===================== */
+.profile-container {
+    max-width: 620px;
+    margin: 50px auto;
+    padding: 20px;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.back-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.back-link:hover {
+    color: var(--ink);
+    background: var(--sand);
+    border-color: var(--line-2);
+}
+
+.profile-header h2 {
+    font-size: 26px;
+    color: var(--ink);
+}
+
+.theme-toggle-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--sand);
+    border-color: var(--line-2);
+}
+
+/* ===================== CARD ===================== */
+.profile-card {
+    background: var(--surface);
+    padding: 35px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid var(--line);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+/* ===================== AVATAR ===================== */
+#profileImageWrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+#profileImageWrapper img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    border: 3px solid var(--line-2);
+    transition: filter 0.2s, border-color 0.2s;
+}
+
+.image-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(19, 15, 14, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: var(--cream);
+    font-size: 16px;
+    font-weight: 600;
+    user-select: none;
+}
+
+#profileImageWrapper:hover .image-overlay {
+    opacity: 1;
+}
+
+#profileImageWrapper:hover img {
+    filter: brightness(0.8);
+    border-color: var(--red);
+}
+
+/* ===================== NAME BLOCK ===================== */
+.name-block h2 {
+    font-size: 22px;
+    color: var(--ink);
+}
+
+.username {
+    color: var(--muted);
+    margin: 6px 0 20px;
+    font-size: 14px;
+}
+
+/* ===================== EDIT BUTTON ===================== */
+.edit-btn {
+    background: var(--red);
+    color: var(--cream);
+    border: none;
+    padding: 10px 26px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 28px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.edit-btn:hover {
+    background: var(--red-dk);
+}
+
+.edit-btn.active {
+    background: var(--sand-2);
+    color: var(--cream);
+    border: 1px solid var(--line-2);
+}
+
+/* ===================== VIEW MODE ===================== */
+.profile-info {
+    text-align: left;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+}
+
+.info-group {
+    margin-bottom: 18px;
+}
+
+.info-group label {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.info-group p {
+    margin-top: 5px;
+    font-size: 15px;
+    color: var(--ink);
+}
+
+/* Address items in view */
+.address-view-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 10px 14px;
+    background: var(--sand);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.addr-text {
+    flex: 1;
+}
+
+.badge-default {
+    background: var(--red);
+    color: var(--cream);
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ===================== EDIT FORM ===================== */
+.edit-form {
+    text-align: left;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    color: var(--ink-2);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="tel"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--line-2);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: var(--sand);
+}
+
+.form-group input::placeholder {
+    color: var(--muted-2);
+}
+
+.form-group input:focus {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* ===================== ADDRESS ROWS ===================== */
+.address-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.addr-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1.5px solid var(--line-2);
+    border-radius: 8px;
+    background: var(--sand);
+    padding: 6px 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.addr-input-wrap:focus-within {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.addr-input {
+    flex: 1;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    font-size: 14px;
+    color: var(--ink);
+    box-shadow: none !important;
+    padding: 4px 0 !important;
+}
+
+.addr-input::placeholder {
+    color: var(--muted-2);
+}
+
+.default-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--ink-2);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.default-label input[type="radio"] {
+    accent-color: var(--red);
+    cursor: pointer;
+}
+
+.remove-addr-btn {
+    background: var(--bad-bg);
+    border: 1.5px solid var(--line-2);
+    color: var(--bad);
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.remove-addr-btn:hover {
+    background: #501F1B;
+    color: #FFA39E;
+}
+
+.add-address-btn {
+    margin-top: 4px;
+    background: transparent;
+    border: 1.5px dashed var(--red);
+    color: var(--salmon, #F08A78);
+    border-radius: 8px;
+    padding: 9px 18px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    width: 100%;
+}
+
+.add-address-btn:hover {
+    background: var(--red-tint);
+    border-color: var(--red);
+    color: var(--cream);
+}
+
+/* ===================== FORM ACTIONS ===================== */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.save-btn,
+.cancel-btn {
+    flex: 1;
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.save-btn {
+    background: var(--red);
+    color: var(--cream);
+}
+
+.save-btn:hover {
+    background: var(--red-dk);
+}
+
+.cancel-btn {
+    background: var(--sand);
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+}
+
+.cancel-btn:hover {
+    background: var(--sand-2);
+}
+
+/* ===================== TOAST ===================== */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 9999;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-success {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border: 1px solid var(--ok);
+}
+
+.toast-error {
+    background: var(--bad-bg);
+    color: var(--bad);
+    border: 1px solid var(--bad);
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 600px) {
+    .profile-container {
+        margin: 15px auto;
+    }
+
+    .profile-card {
+        padding: 25px 18px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+}
