@@ -17,10 +17,14 @@
                 <a href="../index.html" class="back-link">&#8592; Home</a>
                 <h2>Your Profile</h2>
             </div>
-            <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()"
-                aria-label="Toggle Theme">
-                <span id="themeIcon">☀️</span> <span id="themeText">Light</span>
-            </button>
+            <div class="header-actions">
+                <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()"
+                    aria-label="Toggle Theme">
+                    <span id="themeIcon">☀️</span> <span id="themeText">Light</span>
+                </button>
+                <!-- signOut() อยู่ใน js/supabase.js: ออกจากระบบแล้วไปหน้า login -->
+                <button type="button" class="theme-toggle-btn" onclick="signOut()">Logout</button>
+            </div>
         </div>
         <!--theme-toggle-btn is a class for styling(ตกแต่ง) the button, 
         onclick="toggleTheme()" calls the theme change function (ฟังก์ชันเปลี่ยนธีม) when clicked, 
@@ -84,7 +88,8 @@
 
                 <div class="form-group">
                     <label>Email Address</label>
-                    <input type="email" id="editEmail" placeholder="email@example.com">
+                    <input type="email" id="editEmail" placeholder="email@example.com" disabled
+                        title="อีเมลใช้เข้าสู่ระบบ เปลี่ยนในหน้านี้ไม่ได้">
                 </div>
 
                 <div class="form-group">
@@ -116,6 +121,8 @@
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="../js/supabase.js"></script>
     <script>
         // ===================== DATA =====================
         let profile = {
@@ -140,19 +147,34 @@
 
 
         // ===================== INIT =====================
-        window.onload = function () {
+        let me = null; // profile จาก Supabase (requireLogin ใน js/supabase.js)
+
+        window.onload = async function () {
             initTheme();
-            loadProfileData();
+            me = await requireLogin(); // ยังไม่ล็อกอิน → ไปหน้า login แล้วกลับมาหน้านี้
+            await loadProfileData();
             renderView();
         };
 
-        function loadProfileData() {
+        // ข้อมูลจริงจากตาราง profiles + addresses (รูปโปรไฟล์ยังเก็บในเบราว์เซอร์ เพราะฐานข้อมูลไม่มีช่องรูป)
+        async function loadProfileData() {
+            const { data: addrs, error } = await sb
+                .from('addresses')
+                .select('id, address_line, subdistrict, district, province, postcode, is_default')
+                .eq('user_id', me.id)
+                .order('created_at');
+            if (error) showToast('Load addresses failed: ' + errText(error), 'error');
+            profile.name = me.email.split('@')[0];
+            profile.fullName = me.full_name || '';
+            profile.email = me.email;
+            profile.phone = me.phone || '';
+            profile.addresses = (addrs || []).map(x => ({
+                id: x.id,
+                text: [x.address_line, x.subdistrict, x.district, x.province, x.postcode].filter(Boolean).join(' '),
+                isDefault: x.is_default,
+            }));
             try {
-                const saved = localStorage.getItem('userProfile');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    profile = { ...profile, ...parsed };
-                }
+                profile.avatar = localStorage.getItem('avatar:' + me.id) || profile.avatar;
             } catch (e) {}
         }
         // initTheme() loads and sets the theme for the webpage.
@@ -204,7 +226,7 @@
                 profile.avatar = e.target.result;
                 document.getElementById('profileImg').src = e.target.result;
                 try {
-                    localStorage.setItem('userProfile', JSON.stringify(profile));
+                    localStorage.setItem('avatar:' + me.id, e.target.result);
                 } catch (err) {}
                 showToast('Profile picture updated ✓');
             };
@@ -319,10 +341,6 @@
         }
 
         function removeAddress(idx) {
-            if (tempAddresses.length <= 1) {
-                showToast('At least one address is required', 'error');
-                return;
-            }
             syncAddressInputs();
             const wasDefault = tempAddresses[idx].isDefault;
             tempAddresses.splice(idx, 1);
@@ -347,47 +365,66 @@
         }
 
         // ===================== SAVE =====================
-        function saveProfile() {
+        // ชื่อ + เบอร์ → profiles / ที่อยู่ → addresses (ทั้งบรรทัดเก็บใน address_line ช่องอื่นเว้นว่าง
+        // จนกว่าจะมีฟอร์มแยก ตำบล/อำเภอ/จังหวัด/รหัสไปรษณีย์) ตอนสั่งซื้อระบบคัดลอกที่อยู่นี้ไปเก็บในคำสั่งซื้อ
+        async function saveProfile() {
             const fullName = document.getElementById('editFullName').value.trim();
-            const email = document.getElementById('editEmail').value.trim();
             const phone = document.getElementById('editPhone').value.trim();
 
-            // Validation
             if (!fullName) { showToast('Please enter Full Name', 'error'); return; }
-            if (!email || !email.includes('@')) { showToast('Invalid email address', 'error'); return; }
             if (!phone) { showToast('Please enter phone number', 'error'); return; }
 
             syncAddressInputs();
-
-            if (tempAddresses.length === 0) {
-                showToast('At least one address is required', 'error');
-                return;
-            }
-
-            const hasEmpty = tempAddresses.some(a => !a.text || a.text.trim() === '');
-            if (hasEmpty) {
+            if (tempAddresses.some(a => !a.text || a.text.trim() === '')) {
                 showToast('Please fill in all address fields', 'error');
                 return;
             }
-
-            // Ensure at least one default is selected
-            if (!tempAddresses.some(a => a.isDefault)) {
+            if (tempAddresses.length && !tempAddresses.some(a => a.isDefault)) {
                 tempAddresses[0].isDefault = true;
             }
 
-            // Commit changes
-            profile.fullName = fullName;
-            profile.email = email;
-            profile.phone = phone;
-            profile.addresses = JSON.parse(JSON.stringify(tempAddresses));
+            const saveBtn = document.querySelector('.save-btn');
+            saveBtn.disabled = true;
+            const err = await saveToDb(fullName, phone);
+            saveBtn.disabled = false;
+            if (err) { showToast('Save failed: ' + err, 'error'); return; }
 
-            try {
-                localStorage.setItem('userProfile', JSON.stringify(profile));
-            } catch (err) {}
-
+            me.full_name = fullName;
+            me.phone = phone;
+            await loadProfileData(); // โหลด id ของที่อยู่ใหม่จากฐานข้อมูล
             renderView();
             cancelEdit();
             showToast('Profile saved successfully ✓');
+        }
+
+        // คืนข้อความ error หรือ '' ถ้าบันทึกครบ
+        async function saveToDb(fullName, phone) {
+            const { error: e1 } = await sb.from('profiles').update({ full_name: fullName, phone }).eq('id', me.id);
+            if (e1) return errText(e1);
+
+            // ที่อยู่หลักมีได้ทีละ 1 ที่ (unique index) ปลดของเดิมก่อน แล้วค่อยตั้งใหม่ทีหลังสุด
+            const { error: e2 } = await sb.from('addresses').update({ is_default: false }).eq('user_id', me.id);
+            if (e2) return errText(e2);
+
+            const isDb = (a) => typeof a.id === 'string'; // id จากฐานข้อมูลเป็น uuid, ที่เพิ่มใหม่เป็นตัวเลข
+            const keep = tempAddresses.filter(isDb).map(a => a.id);
+            const removed = profile.addresses.filter(a => !keep.includes(a.id)).map(a => a.id);
+            if (removed.length) {
+                const { error } = await sb.from('addresses').delete().in('id', removed);
+                if (error) return errText(error);
+            }
+            const row = (a) => ({
+                user_id: me.id, recipient_name: fullName, phone, address_line: a.text.trim(),
+                subdistrict: '', district: '', province: '', postcode: '', is_default: a.isDefault,
+            });
+            const ordered = [...tempAddresses.filter(a => !a.isDefault), ...tempAddresses.filter(a => a.isDefault)];
+            for (const a of ordered) {
+                const { error } = isDb(a)
+                    ? await sb.from('addresses').update(row(a)).eq('id', a.id)
+                    : await sb.from('addresses').insert(row(a));
+                if (error) return errText(error);
+            }
+            return '';
         }
 
         // ===================== TOAST =====================

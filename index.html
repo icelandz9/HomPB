@@ -143,7 +143,7 @@
                   ติดตามพัสดุ
                 </span>
               </a>
-              <a href="account.html" class="i-account" aria-label="สวัสดี! เข้าสู่ระบบ หรือ สมัครสมาชิก">
+              <a href="auth/login.html" class="i-account" data-account aria-label="สวัสดี! เข้าสู่ระบบ หรือ สมัครสมาชิก">
                 <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                   <path d="M8 8a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21c0-4 4-6 8-6s8 2 8 6" />
                 </svg>
@@ -409,7 +409,7 @@
                 </h3>
                 <ul>
                   <li>
-                    <a href="account.html">
+                    <a href="auth/login.html" data-account>
                       เข้าสู่ระบบ / สมัครสมาชิก
                     </a>
                   </li>
@@ -906,7 +906,7 @@
               ข้อมูลส่วนตัวของคุณถูกเก็บเป็นความลับ
             </p>
           </div>
-          <a href="register.html" class="btn btn-cream lg">
+          <a href="auth/register.html" class="btn btn-cream lg" data-register>
             สมัครสมาชิก
           </a>
         </section>
@@ -1125,10 +1125,7 @@
         <a href="zone-kitchen.html" class="drow">
           <span class="bub">
             <svg class="ic " viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
-              <path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M2 10h2 M20 10h2 M9 6c0-1 1-2 3-2s3 1 
-
-              width=" 28" height="28" aria-hidden="true">
-                <path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M2 10h2 M20 10h2 M9 6c0-1 1-2 3-2s3 1 3 2 M12 4v2" />
+              <path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M2 10h2 M20 10h2 M9 6c0-1 1-2 3-2s3 1 3 2 M12 4v2" />
             </svg>
           </span>
           <span class="dtx">
@@ -1225,7 +1222,7 @@
             <path d="M5 12h14 M13 6l6 6-6 6" />
           </svg>
         </a>
-        <a href="account.html" class="drow minor">
+        <a href="auth/login.html" class="drow minor" data-account>
           <span class="dic">
             <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <path d="M8 8a4 4 0 1 0 8 0a4 4 0 1 0-8 0 M4 21c0-4 4-6 8-6s8 2 8 6" />
@@ -1243,6 +1240,10 @@
       </nav>
     </div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/store-nav.js"></script>
 </body>
 
 </html>

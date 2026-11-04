@@ -14,21 +14,30 @@
 
 ### 1. ใส่ script ในหน้า html ตามลำดับนี้
 
+ตัวเชื่อม Supabase อยู่ที่ `js/supabase.js` ใช้ร่วมกันทุกหน้า (หน้าร้าน, auth, profile, employee) path ขึ้นกับว่าหน้าอยู่ชั้นไหน:
+
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="supabase.js"></script>
+<script src="js/supabase.js"></script>      <!-- index.html (ชั้นบนสุด) -->
+<script src="../js/supabase.js"></script>   <!-- หน้าในโฟลเดอร์ เช่น employee/, auth/, profile/ -->
 <script src="ชื่อหน้า.js"></script>
 ```
 
-`employee/supabase.js` เตรียมของพวกนี้ไว้ให้ใช้ได้เลย:
+`js/supabase.js` เตรียมของพวกนี้ไว้ให้ใช้ได้เลย:
 
 | ชื่อ | ใช้ทำอะไร |
 |---|---|
 | `sb` | ตัวเชื่อม Supabase ใช้เรียกทุกอย่าง |
-| `requireStaff("role")` | เช็กว่าล็อกอินและมีสิทธิ์เข้าหน้านี้ ถ้าไม่ผ่านจะเด้งไปหน้า login คืนค่า `{ id, email, full_name, role }` |
-| `staffLogout()` | ออกจากระบบ |
+| `currentProfile()` | profile ของคนที่ล็อกอิน `{ id, email, full_name, phone, role, is_active }` หรือ `null` ถ้ายังไม่ล็อกอิน (ใช้ในหน้าที่ไม่บังคับล็อกอิน เช่น หน้าแรก) |
+| `requireLogin()` | หน้าที่ต้องล็อกอิน (เช่น profile, ตะกร้า, คำสั่งซื้อ) ถ้ายังไม่ล็อกอินเด้งไป `auth/login.html` แล้วพากลับมาหน้าเดิม |
+| `requireStaff("role")` | หน้าพนักงาน ต้องเป็น role ที่กำหนด (Admin เข้าได้ทุกหน้า) |
+| `signOut()` | ออกจากระบบแล้วไปหน้า login (`staffLogout()` ชื่อเดิม ยังใช้ได้) |
+| `site("path")` | ลิงก์เทียบจากชั้นบนสุดของเว็บ เช่น `site("cart.html")` ได้ลิงก์ถูกไม่ว่าอยู่หน้าไหน |
+| `ROLE_HOME`, `ROLE_NAME` | หน้าแรกหลังล็อกอิน และชื่อภาษาไทยของแต่ละ role |
 | `errText(error)` | แปลง error เป็นข้อความไทยสำหรับ toast |
-| `ROLE_NAME` | ชื่อฝ่ายภาษาไทย |
+
+**Login:** ทุกคนใช้ `auth/login.html` หน้าเดียว ลูกค้ากลับหน้าเดิม (หรือหน้าแรก) พนักงานไปหน้าฝ่ายตาม role · `employee/login.html` เด้งไปหน้านี้ให้เอง
+**สมัครสมาชิก:** `auth/register.html` ได้บัญชีลูกค้าเสมอ ถ้าเปิดยืนยันอีเมลใน Supabase ต้องกดลิงก์ในอีเมลก่อนล็อกอิน
 
 > ⚠️ ห้ามใส่ `service_role` key หรือ secret key ในโค้ดหน้าเว็บเด็ดขาด ใช้ได้แค่ publishable key ที่อยู่ใน `supabase.js`
 
