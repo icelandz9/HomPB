@@ -1,0 +1,588 @@
+/* =====================================================================
+   Shop pages (product, zone, search, cart, orders, chat, favorites)
+   Load after main_page.css: colors, .btn, .card, .grid, .pill, .chip come from there.
+   ===================================================================== */
+
+/* ---------- header ---------- */
+.shop-hdr {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--ground);
+  border-bottom: 1px solid var(--line);
+}
+
+.shop-hdr-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 72px;
+}
+
+.shop-search {
+  flex: 1 1 320px;
+  display: flex;
+  align-items: center;
+  max-width: 560px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--surface);
+  padding-left: 18px;
+}
+
+.shop-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+}
+
+.shop-search button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.shop-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.sh-ic {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.sh-ic:hover {
+  background: var(--sand);
+}
+
+.sh-ic .badge {
+  position: absolute;
+  top: 2px;
+  left: 22px;
+  right: auto; /* main_page.css .badge sets right */
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--red);
+  color: var(--cream);
+  font-size: 12px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+.shop-zones {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.shop-zones a {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.shop-zones a:hover,
+.shop-zones a[aria-current="page"] {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+@media (max-width: 900px) {
+  .sh-ic .lbl {
+    display: none;
+  }
+
+  .shop-hdr-row {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding-block: 10px;
+  }
+
+  .shop-search {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
+
+/* ---------- page ---------- */
+.shop {
+  padding-block: 28px 64px;
+  display: grid;
+  gap: 24px;
+}
+
+.shop h1 {
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.2;
+}
+
+.crumb {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.crumb a {
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.panel h2 {
+  font-size: 20px;
+  margin-bottom: 14px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.empty-state {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--muted);
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+/* card without photo */
+.card .img .noimg {
+  color: var(--line-2);
+}
+
+.card .fav {
+  cursor: pointer;
+}
+
+/* favorite button that is on (card heart and product page button) */
+[data-fav].on svg {
+  fill: currentColor;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* ---------- forms ---------- */
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--ground);
+  color: var(--ink);
+  font: inherit;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+}
+
+.qty button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.qty input {
+  width: 44px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: center;
+  font: inherit;
+}
+
+/* ---------- product page ---------- */
+.pd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.pd-img {
+  aspect-ratio: 1;
+  border-radius: 24px;
+  background: var(--sand);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.pd-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-info {
+  display: grid;
+  gap: 16px;
+}
+
+.pd-price {
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.pd-buy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (max-width: 760px) {
+  .pd {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* ---------- cart ---------- */
+.cart {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+.line-item {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.line-item:last-child {
+  border-bottom: 0;
+}
+
+.line-item .thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--sand);
+}
+
+.line-item .acts {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.sum-row.total {
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 12px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.addr {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.addr:has(input:checked) {
+  border-color: var(--red-fg);
+}
+
+.link-btn {
+  border: 0;
+  background: none;
+  color: var(--red-fg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+@media (max-width: 900px) {
+  .cart {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- orders ---------- */
+.order {
+  display: grid;
+  gap: 14px;
+}
+
+.order-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.order-items {
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+}
+
+.steps {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.steps span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--sand);
+  color: var(--muted);
+}
+
+.steps span.done {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.pay-box {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 18px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--sand);
+}
+
+.pay-box img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.acts-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .pay-box {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- chat ---------- */
+.chat-ui {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  min-height: 520px;
+}
+
+.conv-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.conv {
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.conv[aria-current="true"] {
+  border-color: var(--red-fg);
+}
+
+.conv small {
+  display: block;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-win {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  overflow: hidden;
+  min-height: 520px;
+}
+
+.chat-win header {
+  padding: 14px 18px;
+  background: var(--red);
+  color: var(--cream);
+  font-weight: 700;
+}
+
+.chat-win header small {
+  display: block;
+  font-weight: 400;
+  opacity: .9;
+}
+
+.msgs {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: 460px;
+}
+
+.msgs small {
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.msgs small.me {
+  align-self: flex-end;
+}
+
+.bub {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--sand);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bub.me {
+  align-self: flex-end;
+  background: var(--red);
+  color: var(--cream);
+}
+
+.send {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.send textarea {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--ground);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+
+@media (max-width: 760px) {
+  .chat-ui {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- toast ---------- */
+.shop-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--ink-bg);
+  color: var(--on-dark);
+  font-size: 15px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+}
+
+.shop-toast.bad {
+  background: var(--bad);
+  color: #fff;
+}

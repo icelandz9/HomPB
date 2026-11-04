@@ -280,6 +280,21 @@ sb.from("store_settings").update({ shipping_fee: 50 }).eq("id", true)
 
 ---
 
+## หน้าร้าน (ทำแล้ว)
+
+| หน้า | ใช้อะไร |
+|---|---|
+| `index.html` | "สินค้าแนะนำ" ดึงจากฐานข้อมูล (`js/store-home.js`) ถ้าไม่มีสินค้าในระบบ ใช้การ์ดตัวอย่างใน html |
+| `zone.html?z=bed` / `search.html?q=` | สินค้าตามห้อง / ค้นหาชื่อ (`js/shop-listing.js`) โซน: `bed bath living kitchen appliance` |
+| `product.html?id=` | รายละเอียด เลือกแบบ (variant) จำนวน เพิ่มลงตะกร้า รายการโปรด สินค้าห้องเดียวกัน |
+| `favorites.html` | ตาราง `favorites` |
+| `cart.html` | `cart_items` + เลือก/เพิ่มที่อยู่ (`addresses` แยกช่องตำบล อำเภอ จังหวัด) แล้วเรียก `place_order` |
+| `orders.html` | คำสั่งซื้อของฉัน แนบสลิป (`slips/{user_id}/{order_id}/ไฟล์` + `submit_payment`) ติดตามพัสดุ ยกเลิก/ขอคืนเงิน (`request_refund`) |
+| `chat.html?order=` | แชทกับฝ่ายบริการลูกค้า (`conversations`, `messages`) รับข้อความใหม่แบบ realtime |
+
+ทุกหน้าใช้ `js/shop.js` (หัวเว็บ, โหลดสินค้า, การ์ดสินค้า, ตะกร้า, รายการโปรด) และ `shop.css` ต่อจาก `main_page.css`
+ตะกร้า คำสั่งซื้อ แชท รายการโปรด ต้องล็อกอินเป็นลูกค้า (พนักงานใช้ไม่ได้ เพราะ `place_order` รับเฉพาะ role customer)
+
 ## FE1 / FE2: อ่านข้อมูลที่หลังบ้านตั้งไว้
 
 **รูปสินค้า:** bucket `product-images` เป็น public ไม่ต้องล็อกอินก็เปิดได้ ใช้รูปที่ `sort_order` น้อยสุดเป็นรูปหลัก
