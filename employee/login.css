@@ -1,0 +1,143 @@
+:root {
+  --bg: #130f0e;
+  --panel: #211a18;
+  --line: #3a2f2b;
+  --acc: #a52c1c;
+  --text: #f6efeb;
+  --mute: #b9aaa3;
+  --bad: #f2a69b;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Anuphan", "Noto Sans Thai", system-ui, sans-serif;
+  font-size: 16px;
+}
+
+.box {
+  width: 100%;
+  max-width: 380px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 32px 28px;
+}
+
+.logo {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: 2px;
+}
+
+.sub {
+  margin: 4px 0 24px;
+  color: var(--mute);
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  margin: 14px 0 6px;
+}
+
+input,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 11px 14px;
+}
+
+input:focus,
+button:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+/* ช่องรหัสผ่าน + ปุ่มแสดง/ซ่อน ด้านขวา */
+.pw {
+  position: relative;
+}
+
+.pw input {
+  padding-right: 52px;
+}
+
+.eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  color: var(--mute);
+  cursor: pointer;
+}
+
+.eye:hover {
+  color: var(--text);
+}
+
+.eye svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ซ่อนอยู่ → โชว์ตาเปิด / แสดงอยู่ → โชว์ตาปิด */
+.eye .i-hide,
+.eye[aria-pressed="true"] .i-show {
+  display: none;
+}
+
+.eye[aria-pressed="true"] .i-hide {
+  display: block;
+}
+
+.btn {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--acc);
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.err {
+  min-height: 1.4em;
+  margin: 12px 0 0;
+  color: var(--bad);
+}

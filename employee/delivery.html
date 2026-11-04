@@ -1,34 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>HOMPB ระบบหลังบ้าน (ฝ่ายจัดส่ง)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="delivery.css">
-</head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="delivery.css" />
+  </head>
 
-<body>
-
+  <body>
     <!-- ========== โครงหน้า: Sidebar + เนื้อหา ========== -->
     <div id="app">
-        <aside>
-            <h1 class="logo">HOMPB</h1>
-            <p class="sub">ระบบหลังบ้าน</p>
-            <nav id="nav"></nav>
-            <button class="out" onclick="logout()">⎋ ออกจากระบบ</button>
-        </aside>
-        <main>
-            <div class="top">
-                <div><b id="tn"></b><small id="te"></small></div>
-                <button class="btn line" onclick="toast('ใส่ลิงก์หน้าร้านภายหลัง')">ดูหน้าร้าน</button>
-            </div>
-            <div class="pg" id="pg"></div>
-        </main>
+      <aside>
+        <h1 class="logo">HOMPB</h1>
+        <p class="sub">ระบบหลังบ้าน</p>
+        <nav id="nav"></nav>
+        <button class="out" onclick="logout()">
+          <img src="/img/Dark/logout-box-r-line.png" alt="" />ออกจากระบบ
+        </button>
+      </aside>
+      <main>
+        <div class="top">
+          <div><b id="tn"></b><small id="te"></small></div>
+          <button class="btn line" onclick="toast('ใส่ลิงก์หน้าร้านภายหลัง')">
+            ดูหน้าร้าน
+          </button>
+        </div>
+        <div class="pg" id="pg"></div>
+      </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="supabase.js"></script>
     <script src="delivery.js"></script>
-</body>
-
+  </body>
 </html>
