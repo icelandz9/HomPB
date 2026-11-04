@@ -298,6 +298,31 @@ td input.num {
     align-items: end
 }
 
+/* รูปสินค้าเล็ก ข้างชื่อในตาราง และในฟอร์มแก้ไข */
+.pname {
+    display: flex;
+    align-items: center;
+    gap: 10px
+}
+
+.pname input {
+    flex: 1
+}
+
+.thumb {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    background: var(--bg)
+}
+
+.thumb.none {
+    display: inline-block
+}
+
 .filters {
     display: flex;
     gap: 14px;

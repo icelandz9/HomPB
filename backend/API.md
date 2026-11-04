@@ -260,19 +260,32 @@ sb.from("store_settings").update({ shipping_fee: 50 }).eq("id", true)
 
 ---
 
-### งานเพิ่มที่ยังไม่มี UI (ถ้ามีเวลา)
+### งานเพิ่มที่ทำแล้ว
 
-**ตรวจของคืน (หน้า warehouse):** เมื่อลูกค้าขอคืนเพราะสินค้าชำรุดหรือส่งผิด และบัญชีอนุมัติแล้ว คลังต้องตรวจของ
+**ตรวจของคืน (หน้า warehouse เมนู "ตรวจของคืน"):** ✅ แสดง `refund_items` ที่ `return_status = pending_check` แล้วเรียก `check_return` ถ้าเลือกเข้าสต๊อก ระบบบวกสต๊อกและบันทึก `stock_logs` (reason `return`) ให้เอง
+ฝ่ายคลังอ่าน `refunds` ไม่ได้ จึงเห็นรายการที่บัญชียังไม่อนุมัติด้วย ถ้ากดตรวจ จะขึ้น error "คำขอคืนเงินยังไม่อนุมัติ"
+
+**รูปสินค้า + วิธีส่ง (หน้า warehouse / admin):** ✅ ฟอร์มเพิ่ม/แก้สินค้ามีช่องรูป (1 สินค้า = รูปหลัก 1 รูป) และวิธีส่ง (`delivery_method`)
+
+**ตั้งค่าร้าน (หน้า admin เมนู "ตั้งค่าร้าน"):** ✅ แก้ `store_settings` ได้ทุกช่อง และอัปโหลด QR พร้อมเพย์ไป bucket `store`
+
+---
+
+## FE1 / FE2: อ่านข้อมูลที่หลังบ้านตั้งไว้
+
+**รูปสินค้า:** bucket `product-images` เป็น public ไม่ต้องล็อกอินก็เปิดได้ ใช้รูปที่ `sort_order` น้อยสุดเป็นรูปหลัก
 ```js
-// รายการที่รอตรวจ
-sb.from("refund_items")
-  .select("id, quantity, return_status, order_items ( product_name, variant_name )")
-  .eq("return_status", "pending_check")
-
-// ตรวจแล้ว: true = เข้าสต๊อก, false = ใช้ไม่ได้
-sb.rpc("check_return", { p_refund_item_id: id, p_restock: true })
+const { data } = await sb
+  .from("products")
+  .select("id, name, description, product_images ( image_path, sort_order ), variants_public ( id, price, in_stock )")
+  .eq("is_active", true);
+const url = sb.storage.from("product-images").getPublicUrl(image_path).data.publicUrl;
 ```
-ถ้าเลือกเข้าสต๊อก ระบบจะบวกสต๊อกและบันทึก `stock_logs` (reason `return`) ให้เอง
+ผู้เยี่ยมชมและลูกค้าอ่าน `product_variants` ไม่ได้ (มี SKU และจำนวนสต๊อก) ให้ใช้ view `variants_public` แทน ถ้า join ผ่าน `products` ไม่ได้ ให้ query `variants_public` แยกแล้วจับคู่ด้วย `product_id`
+
+**ข้อมูลร้าน:**
+- ผู้เยี่ยมชม (ยังไม่ล็อกอิน): `sb.from("store_public").select("*").single()` ได้ชื่อร้าน เวลาทำการ ค่าส่ง
+- ลูกค้าที่ล็อกอินแล้ว (หน้าชำระเงิน): `sb.from("store_settings").select("*").single()` ได้เลขบัญชีและ `promptpay_qr_path` ด้วย รูป QR อยู่ใน bucket `store` (private) ต้องขอ `createSignedUrl` ก่อนแสดง
 
 ---
 
