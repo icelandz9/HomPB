@@ -2600,13 +2600,25 @@ tr.me td {
 a.nt {
   display: inline-flex;
   align-items: center;
-  text-decoration: none;
+  /* The underline is always there but transparent. Turning text-decoration
+     on/off can't animate, so the open state below only changes its color
+     (transparent -> currentColor) and offset (12px -> 8px), which can. */
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 12px;
+}
+
+@media (prefers-reduced-motion:no-preference) {
+  a.nt {
+    transition: color .2s, text-decoration-color .2s, text-underline-offset .2s;
+  }
 }
 
 .mega {
   visibility: hidden;
   opacity: 0;
-  transition: opacity .15s ease .25s, visibility 0s linear .25s;
+  transition: opacity .2s ease .25s, visibility 0s linear .25s;
 }
 
 /* while any menu is being used, other panels hide immediately */
