@@ -18,6 +18,7 @@ const PAGES = [
   ["shipping", "จัดส่ง & ที่อยู่ลูกค้า", "⛟"],
   ["chat", "แชทลูกค้า", "✉"],
   ["users", "ผู้ใช้ & ระบบ", "♙"],
+  ["settings", "ตั้งค่าร้าน", "⚙"],
 ];
 // ตารางสิทธิ์ทุกฝ่าย (ใช้แสดงในหน้าภาพรวม และใช้ตอนทำระบบสิทธิ์จริง)
 const ACL = {
@@ -29,6 +30,7 @@ const ACL = {
     shipping: "M",
     chat: "M",
     users: "M",
+    settings: "M",
   },
   warehouse: { overview: "V", products: "M", orders: "V" },
   accounting: { overview: "V", orders: "V", finance: "M" },
@@ -77,6 +79,10 @@ const STOCK_REASON = {
   adjust: "ปรับสต๊อก",
   return: "รับคืนสินค้า",
 };
+// วิธีส่ง (products.delivery_method) มีชิ้นไหนส่งรถร้าน คำสั่งซื้อนั้นส่งรถร้านทั้งหมด
+const DELIVERY = { carrier: "บริษัทขนส่ง", store_truck: "รถของร้าน" };
+const IMG_TYPES = ["image/jpeg", "image/png", "image/webp"]; // ตรงกับ bucket product-images
+const IMG_MAX = 5 * 1024 * 1024; // 5 MB
 
 const ORDER_STATUS = {
   pending_payment: "รอชำระเงิน",
@@ -123,6 +129,7 @@ let staff = []; // บัญชีพนักงาน {id,name,email,role,acti
 let movements = []; // ประวัติปรับสต๊อก [เวลา,รหัส,ชื่อ,ปรับ,เหตุผล,คงเหลือใหม่,ผู้ทำ]
 let catId = {}; // ใช้แปลงชื่อโซนเป็น id ของหมวดหมู่ {ชื่อโซน: id}
 let shipHist = []; // ประวัติจัดส่ง [เวลา,คำสั่งซื้อ,สถานะ,ขนส่ง,เลขพัสดุ,ผู้ทำ] (สร้างจาก shipped_at / delivered_at)
+let store = null; // ตั้งค่าร้าน (store_settings มีแถวเดียว) + qrUrl ลิงก์ชั่วคราวของรูป QR
 let logs = []; // บันทึกการทำงานของระบบ [เวลา,ผู้ทำ,การกระทำ,รายละเอียด] จาก audit_logs (ดูอย่างเดียว)
 
 // ตัวแปรสถานะหน้าจอ
@@ -234,6 +241,15 @@ async function loadStaff() {
   }));
 }
 
+// ตั้งค่าร้าน: หน้าชำระเงินของลูกค้าใช้ค่าส่ง QR พร้อมเพย์ เลขบัญชี และเวลาให้โอน
+async function loadStore() {
+  const { data, error } = await sb.from("store_settings").select("*").single();
+  if (error) return toast("โหลดตั้งค่าร้านไม่สำเร็จ: " + errText(error));
+  // bucket store เป็น private ต้องขอลิงก์ชั่วคราวก่อนแสดงรูป
+  const urls = data.promptpay_qr_path ? await signedUrls("store", [data.promptpay_qr_path]) : {};
+  store = { ...data, qrUrl: urls[data.promptpay_qr_path] || "" };
+}
+
 // บันทึกการทำงานของระบบ 50 รายการล่าสุด (trigger เขียนให้เอง หน้าเว็บอ่านอย่างเดียว)
 async function loadLogs() {
   const { data, error } = await sb
@@ -278,7 +294,7 @@ async function loadProducts() {
   const { data, error } = await sb
     .from("products")
     .select(
-      "id, name, description, product_variants (id, sku, price, stock_qty), product_categories (categories (name))",
+      "id, name, description, delivery_method, product_variants (id, sku, price, stock_qty), product_categories (categories (name)), product_images (id, image_path, sort_order)",
     )
 
     .eq("is_active", true);
@@ -301,6 +317,9 @@ async function loadProducts() {
       price: v.price || 0,
       qty: v.stock_qty || 0,
       desc: p.description || "",
+      delivery: p.delivery_method,
+      // รูปแรกตาม sort_order (1 สินค้าใช้รูปหลัก 1 รูป)
+      imgPath: [...p.product_images].sort((a, b) => a.sort_order - b.sort_order)[0]?.image_path || "",
     };
   });
 
@@ -696,6 +715,8 @@ ${k("สินค้าหมดสต๊อก", products.filter((p) => p.qty <
 <div><label for="nz">โซน</label><select id="nz">${ZONES.map((z) => `<option>${z}</option>`).join("")}</select></div>
 <div><label for="nc">ราคา (฿)</label><input id="nc" type="number" min="0"></div>
 <div><label for="nq">จำนวน</label><input id="nq" type="number" min="0"></div>
+<div><label for="nm">วิธีส่ง</label><select id="nm">${deliveryOptions("carrier")}</select></div>
+<div><label for="ni">รูปสินค้า (JPG/PNG/WebP ไม่เกิน 5 MB)</label><input id="ni" type="file" accept="${IMG_TYPES.join(",")}"></div>
 </div><br>
 <label for="nd">รายละเอียด</label><input id="nd"><br><br>
 <button class="btn" onclick="addP()">เพิ่มสินค้า</button>`,
@@ -922,6 +943,43 @@ ${k("สินค้าหมดสต๊อก", products.filter((p) => p.qty <
       )
     );
   },
+
+  // ---- ตั้งค่าร้าน (เฉพาะ Admin) ----
+  settings() {
+    if (!store) return '<p class="muted">โหลดตั้งค่าร้านไม่สำเร็จ ลองรีเฟรชหน้า</p>';
+    const f = (id, label, val, attrs = "") =>
+      `<div><label for="${id}">${label}</label><input id="${id}" value="${esc(val ?? "")}" ${attrs}></div>`;
+    return (
+      card(
+        "ข้อมูลร้าน",
+        "แสดงบนหน้าร้าน",
+        `<div class="form">
+${f("s_name", "ชื่อร้าน", store.store_name)}
+${f("s_hours", "เวลาทำการ", store.business_hours, 'placeholder="เช่น ทุกวัน 09:00–18:00"')}
+${f("s_fee", "ค่าส่ง (฿)", store.shipping_fee, 'type="number" min="0" step="0.01"')}
+</div>`,
+        1,
+      ) +
+      card(
+        "การชำระเงิน",
+        "ลูกค้าที่ล็อกอินแล้วเห็นเลขบัญชีและ QR ตอนชำระเงิน",
+        `<div class="form">
+${f("s_bank", "ธนาคาร", store.bank_name)}
+${f("s_acc", "เลขบัญชี", store.bank_account_no, 'inputmode="numeric"')}
+${f("s_accname", "ชื่อบัญชี", store.bank_account_name)}
+${f("s_pay", "เวลาให้โอน หลังสั่งซื้อ (ชั่วโมง)", store.payment_window_hours, 'type="number" min="1" step="1"')}
+${f("s_reup", "เวลาให้ส่งสลิปใหม่ หลังสลิปไม่ผ่าน (ชั่วโมง)", store.reupload_window_hours, 'type="number" min="1" step="1"')}
+</div><br>
+<label for="s_qr">QR พร้อมเพย์ (JPG/PNG ไม่เกิน 2 MB)</label>
+<div class="pname">${store.qrUrl ? `<a href="${esc(store.qrUrl)}" target="_blank" rel="noopener"><img class="qr" src="${esc(store.qrUrl)}" alt="QR พร้อมเพย์ปัจจุบัน"></a>` : '<span class="muted">ยังไม่มี QR</span>'}<input id="s_qr" type="file" accept="image/jpeg,image/png"></div>`,
+        1,
+      ) +
+      `<button class="btn" id="s_save" onclick="saveStore()">บันทึกตั้งค่าร้าน</button>` +
+      (store.updated_at
+        ? ` <span class="muted">แก้ล่าสุด ${thDate(store.updated_at)} โดย ${esc(actor(store.updated_by))}</span>`
+        : "")
+    );
+  },
 };
 
 // ========== แถวของตาราง ==========
@@ -946,7 +1004,7 @@ function prodRows() {
     )
     .map(
       ({ p, i }) => `<tr>
-<td>${p.sku}</td><td><b>${esc(p.name)}</b></td><td>${p.zone}</td><td>${baht(p.price)}</td><td><b>${p.qty}</b></td><td>${stockPill(p.qty)}</td>
+<td>${esc(p.sku)}</td><td><div class="pname">${thumb(p)}<b>${esc(p.name)}</b></div></td><td>${p.zone}<br><small class="muted">${DELIVERY[p.delivery] || "-"}</small></td><td>${baht(p.price)}</td><td><b>${p.qty}</b></td><td>${stockPill(p.qty)}</td>
 <td><input class="num" type="number" id="ad${i}" placeholder="+10 / -3" aria-label="ปรับจำนวน"></td>
 <td><select id="rs${i}">${REASONS.map((r) => `<option>${r}</option>`).join("")}</select></td>
 <td><div class="acts"><button class="btn sm" onclick="adjust(${i})">ปรับ</button><button class="btn line sm" onclick="startEdit(${i})">แก้ไข</button><button class="btn line sm" onclick="recommend(${i})">แนะนำในแชท</button><button class="btn line sm" onclick="delP(${i})">ลบ</button></div></td></tr>`,
@@ -1055,6 +1113,45 @@ function shipRows() {
     .join("");
 }
 
+// ========== รูปสินค้า (bucket product-images เป็น public เปิดดูได้ไม่ต้องล็อกอิน) ==========
+const imgUrl = (path) =>
+  path ? sb.storage.from("product-images").getPublicUrl(path).data.publicUrl : "";
+function thumb(p) {
+  return p.imgPath
+    ? `<img class="thumb" src="${esc(imgUrl(p.imgPath))}" alt="" loading="lazy">`
+    : '<span class="thumb none" aria-hidden="true"></span>';
+}
+function deliveryOptions(cur) {
+  return Object.entries(DELIVERY)
+    .map(([k, v]) => `<option value="${k}"${k === cur ? " selected" : ""}>${v}</option>`)
+    .join("");
+}
+// เช็กไฟล์ก่อนอัปโหลด คืนข้อความ error หรือ "" ถ้าผ่าน
+function checkImg(file) {
+  if (!file) return "";
+  if (!IMG_TYPES.includes(file.type)) return "รูปต้องเป็น JPG, PNG หรือ WebP";
+  if (file.size > IMG_MAX) return "รูปต้องไม่เกิน 5 MB";
+  return "";
+}
+// อัปโหลดรูปหลักแทนรูปเดิม: path {product_id}/เวลา.นามสกุล (ชื่อไฟล์ภาษาไทยใช้เป็น path ไม่ได้)
+async function setImage(productId, file) {
+  const ext = file.type.split("/")[1].replace("jpeg", "jpg");
+  const path = `${productId}/${Date.now()}.${ext}`;
+  const { error: e1 } = await sb.storage.from("product-images").upload(path, file);
+  if (e1) return "อัปโหลดรูปไม่สำเร็จ: " + errText(e1);
+
+  // ลบรูปเก่า (แถวในตาราง + ไฟล์) แล้วบันทึกรูปใหม่
+  const { data: old } = await sb.from("product_images").select("id, image_path").eq("product_id", productId);
+  if (old?.length) {
+    await sb.from("product_images").delete().eq("product_id", productId);
+    await sb.storage.from("product-images").remove(old.map((x) => x.image_path));
+  }
+  const { error: e2 } = await sb
+    .from("product_images")
+    .insert({ product_id: productId, image_path: path, sort_order: 0 });
+  return e2 ? "บันทึกรูปไม่สำเร็จ: " + errText(e2) : "";
+}
+
 // ========== ฟอร์มแก้ไขสินค้า / ไม่ผ่าน / คืนเงิน ==========
 function editForm() {
   const p = products[editIdx];
@@ -1066,6 +1163,8 @@ function editForm() {
 <div><label for="en">ชื่อสินค้า</label><input id="en" value="${esc(p.name)}"></div>
 <div><label for="ez">โซน</label><select id="ez">${ZONES.map((z) => `<option${z === p.zone ? " selected" : ""}>${z}</option>`).join("")}</select></div>
 <div><label for="ec">ราคา (฿)</label><input id="ec" type="number" min="0" value="${p.price}"></div>
+<div><label for="em">วิธีส่ง</label><select id="em">${deliveryOptions(p.delivery)}</select></div>
+<div><label for="ei">เปลี่ยนรูป (ไม่เลือก = ใช้รูปเดิม)</label><div class="pname">${thumb(p)}<input id="ei" type="file" accept="${IMG_TYPES.join(",")}"></div></div>
 </div><br>
 <label for="ed">รายละเอียด</label><input id="ed" value="${esc(p.desc || "")}"><br><br>
 <button class="btn" onclick="saveEdit()">บันทึก</button> <button class="btn line" onclick="cancelEdit()">ยกเลิก</button>`,
@@ -1147,16 +1246,20 @@ async function addP() {
     c = +$("#nc").value,
     q = +$("#nq").value || 0,
     zone = $("#nz").value,
-    d = $("#nd").value.trim();
+    d = $("#nd").value.trim(),
+    m = $("#nm").value,
+    img = $("#ni").files[0];
   if (!n || !c) {
     toast("กรอกชื่อสินค้าและราคาก่อน");
     return;
   }
+  const bad = checkImg(img);
+  if (bad) return toast(bad);
 
   // 1) products → ได้ id กลับมา
   const { data: p, error: e1 } = await sb
     .from("products")
-    .insert({ name: n, description: d })
+    .insert({ name: n, description: d, delivery_method: m })
     .select("id")
     .single();
   if (e1) return toast("เพิ่มไม่สำเร็จ: " + errText(e1));
@@ -1175,9 +1278,12 @@ async function addP() {
       .insert({ product_id: p.id, category_id: catId[zone] });
   }
 
+  // รูป (ไม่บังคับ) ถ้าอัปโหลดไม่ผ่าน สินค้ายังถูกเพิ่มแล้ว แก้รูปทีหลังได้
+  const imgErr = img ? await setImage(p.id, img) : "";
+
   await Promise.all([loadProducts(), loadLogs()]);
   go("products");
-  toast("เพิ่มสินค้าแล้ว");
+  toast(imgErr ? "เพิ่มสินค้าแล้ว แต่" + imgErr : "เพิ่มสินค้าแล้ว");
 }
 async function adjust(i) {
   if (!guard("products")) return;
@@ -1221,15 +1327,19 @@ async function saveEdit() {
     n = $("#en").value.trim(),
     c = +$("#ec").value,
     zone = $("#ez").value,
-    d = $("#ed").value.trim();
+    d = $("#ed").value.trim(),
+    m = $("#em").value,
+    img = $("#ei").files[0];
   if (!n || !c) {
     toast("กรอกชื่อสินค้าและราคาก่อน");
     return;
   }
-  // 1) ชื่อ + รายละเอียด
+  const bad = checkImg(img);
+  if (bad) return toast(bad);
+  // 1) ชื่อ + รายละเอียด + วิธีส่ง
   const { error: e1 } = await sb
     .from("products")
-    .update({ name: n, description: d })
+    .update({ name: n, description: d, delivery_method: m })
     .eq("id", p.id);
   if (e1) return toast("บันทึกไม่สำเร็จ: " + errText(e1));
 
@@ -1248,6 +1358,12 @@ async function saveEdit() {
         .from("product_categories")
         .insert({ product_id: p.id, category_id: catId[zone] });
     }
+  }
+
+  // 4) รูป (เฉพาะตอนเลือกไฟล์ใหม่)
+  if (img) {
+    const imgErr = await setImage(p.id, img);
+    if (imgErr) return toast(imgErr);
   }
 
   editIdx = null;
@@ -1496,6 +1612,57 @@ function recommend(i) {
   go("chat");
   toast("ใส่ข้อความแนะนำสินค้าให้แล้ว แก้ไขก่อนส่งได้");
 }
+// ========== ตั้งค่าร้าน: บันทึก ==========
+async function saveStore() {
+  if (!guard("settings") || busy) return;
+  const num = (id) => Number($("#" + id).value);
+  const fee = num("s_fee"),
+    pay = num("s_pay"),
+    reup = num("s_reup");
+  const name = $("#s_name").value.trim();
+  if (!name) return toast("กรอกชื่อร้านก่อน");
+  if (!(fee >= 0)) return toast("ค่าส่งต้องเป็น 0 หรือมากกว่า");
+  if (!Number.isInteger(pay) || pay < 1 || !Number.isInteger(reup) || reup < 1)
+    return toast("เวลาให้โอน / ส่งสลิปใหม่ ต้องเป็นจำนวนเต็มชั่วโมง อย่างน้อย 1");
+  const qr = $("#s_qr").files[0];
+  if (qr && !["image/jpeg", "image/png"].includes(qr.type))
+    return toast("QR ต้องเป็น JPG หรือ PNG");
+  if (qr && qr.size > 2 * 1024 * 1024) return toast("QR ต้องไม่เกิน 2 MB");
+
+  busy = true;
+  $("#s_save").disabled = true;
+  const row = {
+    store_name: name,
+    business_hours: $("#s_hours").value.trim() || null,
+    shipping_fee: fee,
+    bank_name: $("#s_bank").value.trim() || null,
+    bank_account_no: $("#s_acc").value.trim() || null,
+    bank_account_name: $("#s_accname").value.trim() || null,
+    payment_window_hours: pay,
+    reupload_window_hours: reup,
+  };
+  // QR: อัปโหลดไฟล์ใหม่ทุกครั้ง (ชื่อไม่ซ้ำ ไม่ต้องเขียนทับ) แล้วเก็บ path ไว้ในตั้งค่าร้าน
+  if (qr) {
+    const path = `promptpay-${Date.now()}.${qr.type === "image/png" ? "png" : "jpg"}`;
+    const { error } = await sb.storage.from("store").upload(path, qr);
+    if (error) {
+      busy = false;
+      $("#s_save").disabled = false;
+      return toast("อัปโหลด QR ไม่สำเร็จ: " + errText(error));
+    }
+    row.promptpay_qr_path = path;
+  }
+  const { error } = await sb.from("store_settings").update(row).eq("id", true);
+  busy = false;
+  if (error) {
+    $("#s_save").disabled = false;
+    return toast("บันทึกไม่สำเร็จ: " + errText(error));
+  }
+  await Promise.all([loadStore(), loadLogs()]); // ระบบบันทึก store.update ให้เอง
+  go("settings");
+  toast("บันทึกตั้งค่าร้านแล้ว");
+}
+
 // ========== ผู้ใช้: จัดการ ==========
 // ปุ่มลูกตา: สลับแสดง/ซ่อนรหัสผ่าน (เหมือนหน้า login)
 function togglePw() {
@@ -1578,7 +1745,7 @@ async function toggleActive(i) {
   $("#tn").textContent = me.full_name || ROLE_NAME[me.role];
   $("#te").textContent = me.email;
   await loadStaff(); // ต้องมาก่อน เพราะตารางประวัติใช้ actor()
-  await loadLogs();
+  await Promise.all([loadLogs(), loadStore()]);
   await Promise.all([loadProducts(), loadOrders(), loadShipments()]);
   await loadPayments();
   await loadChats(); // ใช้เลข HPB จาก orders
