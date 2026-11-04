@@ -437,6 +437,17 @@ p {
   letter-spacing: -.02em;
   color: var(--red-fg);
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .3em;
+}
+
+/* HomPB icon in front of the word logo (img/Logo/hompb-icon.svg) */
+.logo-ic {
+  width: auto;
+  height: 1.15em;
+  flex: none;
+  border-radius: .22em
 }
 
 .search {

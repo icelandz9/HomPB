@@ -61,7 +61,7 @@ async function renderHeader() {
   const h = document.createElement("header");
   h.className = "shop-hdr";
   h.innerHTML = `<div class="wrap shop-hdr-row">
-<a href="${site("index.html")}" class="logo" aria-label="HomPB หน้าแรก">HOMPB</a>
+<a href="${site("index.html")}" class="logo" aria-label="HomPB หน้าแรก"><img class="logo-ic" src="${site("img/Logo/hompb-icon.svg")}" alt="" width="36" height="36">HOMPB</a>
 <form action="${site("search.html")}" method="get" class="shop-search" role="search">
   <label for="sq" class="sr">ค้นหาสินค้า</label>
   <input id="sq" name="q" type="search" placeholder="ค้นหาสินค้า เช่น หมอน โซฟา กาต้มน้ำ" value="${esc(param("q"))}">
