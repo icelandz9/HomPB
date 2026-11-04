@@ -2629,6 +2629,7 @@ a.nt {
 .hdr:has(#nt-shop:hover, #nt-shop:focus-visible, #mega-shop:hover, #mega-shop:focus-within) #mega-shop {
   visibility: visible;
   opacity: 1;
+  transition-delay: .45s; /* wait before opening so a passing mouse doesn't flash the menu */
 }
 
 .hdr:has(#nt-shop:hover, #nt-shop:focus-visible, #mega-shop:hover, #mega-shop:focus-within) #nt-shop {
@@ -2641,6 +2642,7 @@ a.nt {
 .hdr:has(#nt-rooms:hover, #nt-rooms:focus-visible, #mega-rooms:hover, #mega-rooms:focus-within) #mega-rooms {
   visibility: visible;
   opacity: 1;
+  transition-delay: .45s; /* wait before opening so a passing mouse doesn't flash the menu */
 }
 
 .hdr:has(#nt-rooms:hover, #nt-rooms:focus-visible, #mega-rooms:hover, #mega-rooms:focus-within) #nt-rooms {
@@ -2653,6 +2655,7 @@ a.nt {
 .hdr:has(#nt-svc:hover, #nt-svc:focus-visible, #mega-svc:hover, #mega-svc:focus-within) #mega-svc {
   visibility: visible;
   opacity: 1;
+  transition-delay: .45s; /* wait before opening so a passing mouse doesn't flash the menu */
 }
 
 .hdr:has(#nt-svc:hover, #nt-svc:focus-visible, #mega-svc:hover, #mega-svc:focus-within) #nt-svc {
