@@ -93,6 +93,26 @@ async function refreshCartCount() {
 // ========== สินค้า ==========
 const imgUrl = (path) => (path ? sb.storage.from("product-images").getPublicUrl(path).data.publicUrl : "");
 
+// สินค้าที่ยังไม่มีรูปในฐานข้อมูล: ใช้รูปในเว็บ (img/store) ที่ชื่อสินค้าตรงกัน ไม่ตรงเลยใช้รูปห้องของโซนนั้น
+// พอคลังอัปโหลดรูปจริงในหน้าสินค้า รูปจริงจะขึ้นแทนเอง
+const LOCAL_IMG = [
+  ["หมอน", "pillow"],
+  ["ผ้าห่ม", "blanket"],
+  ["ผ้าขี้ริ้ว", "rag"],
+  ["ชักโครก", "toilet"],
+  ["โซฟา", "sofa"],
+  ["ทีวี", "tv"],
+  ["ชาม", "bowl"],
+  ["ตะหลิว", "spatula"],
+  ["กาต้มน้ำ", "kettle"],
+];
+function fallbackImg(name, zone) {
+  const hit = LOCAL_IMG.find(([word]) => name.includes(word));
+  if (hit) return site(`img/store/${hit[1]}.jpg`);
+  const slug = zoneSlug(zone);
+  return slug ? site(`img/store/room-${slug}.jpg`) : "";
+}
+
 // สินค้าที่เปิดขาย + ราคา/มีของ จาก view variants_public (ลูกค้าอ่าน product_variants ตรงไม่ได้)
 // opts: { ids: [..], zone: "bed", q: "คำค้น", id: "uuid" }
 async function fetchProducts(opts = {}) {
@@ -127,7 +147,7 @@ async function fetchProducts(opts = {}) {
         desc: p.description || "",
         zone,
         slug: zoneSlug(zone),
-        img: img ? imgUrl(img.image_path) : "",
+        img: img ? imgUrl(img.image_path) : fallbackImg(p.name, zone),
         variants,
         price: variants[0].price,
         inStock: variants.some((v) => v.in_stock),
