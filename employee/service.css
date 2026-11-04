@@ -373,6 +373,20 @@ td.empty {
   font-weight: 700;
 }
 
+.cw header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.bub img {
+  display: block;
+  max-width: 220px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+
 .cw header small {
   display: block;
   font-weight: 400;

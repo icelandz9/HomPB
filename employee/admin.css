@@ -71,6 +71,13 @@ button:focus-visible {
   cursor: pointer;
 }
 
+/* ใช้ class .btn กับ <a> ได้ ให้หน้าตาเหมือนปุ่ม (ไม่มีเส้นใต้ ไม่เป็นสีฟ้า) */
+a.btn {
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+}
+
 .btn.line {
   background: none;
   border: 1px solid var(--line);
@@ -398,6 +405,66 @@ tr.k td {
   background: var(--acc);
   padding: 16px 22px;
   font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.bub img {
+  display: block;
+  max-width: 220px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+
+/* ช่องรหัสผ่าน + ปุ่มลูกตา (เหมือน login.css) */
+.pw {
+  position: relative;
+}
+
+.pw input {
+  padding-right: 52px;
+}
+
+.eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  color: var(--mute);
+  cursor: pointer;
+}
+
+.eye:hover {
+  color: var(--text);
+}
+
+.eye svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ซ่อนอยู่ → โชว์ตาเปิด / แสดงอยู่ → โชว์ตาปิด */
+.eye .i-hide,
+.eye[aria-pressed="true"] .i-show {
+  display: none;
+}
+
+.eye[aria-pressed="true"] .i-hide {
+  display: block;
 }
 
 .cw header small {
