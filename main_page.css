@@ -1380,6 +1380,16 @@ main.store>* {
   color: var(--ink);
 }
 
+/* room photo on top of each room card */
+.room .ph {
+  width: 100%;
+  height: auto; /* let aspect-ratio win over the height="" attribute */
+  aspect-ratio: 16/9;
+  flex: none;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
 .room .bub {
   width: 64px;
   height: 64px;
@@ -1423,6 +1433,13 @@ main.store>* {
   .room .bub {
     width: 48px;
     height: 48px;
+  }
+
+  /* small screens: room cards are rows, so the photo becomes a small square like the old icon */
+  .room .ph {
+    width: 56px;
+    aspect-ratio: 1;
+    border-radius: 12px;
   }
 
   .room b {
@@ -1471,6 +1488,14 @@ main.store>* {
   align-items: center;
   justify-content: center;
   color: var(--red-fg);
+}
+
+/* product photo fills the square box (photos are 4:3, sides get cropped) */
+.card .img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 .card .img svg.art {
