@@ -1,47 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="th">
 
 <head>
-    <!-- contains information required by the browser that is not displayed on the screen -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Make the webpage responsive for mobile devices. -->
-    <title>HomPB - Login</title>
-    <link rel="stylesheet" href="css/auth.css">
-</head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ | HomPB</title>
+  <link rel="icon" href="../img/Logo/hompb-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Archivo:wdth,wght@62..125,100..900&display=swap">
+  <link rel="stylesheet" href="css/auth.css">
+</head> 
 
 <body>
+  <main class="auth">
+    <!-- แถบแบรนด์ (มือถือเหลือแค่โลโก้กับหัวข้อ) -->
+    <section class="brand" aria-label="HomPB">
+      <a href="../index.html" class="logo" aria-label="HomPB หน้าแรก">HOMPB</a>
+      <div>
+        <h1>ยินดีต้อนรับ</h1>
+        <p>เข้าสู่ระบบเพื่อสั่งซื้อ ติดตามพัสดุ และแชทกับฝ่ายบริการลูกค้า</p>
+      </div>
+      <ul>
+        <li>ติดตามคำสั่งซื้อได้ทุกขั้นตอน</li>
+        <li>บันทึกสินค้าที่ชอบไว้ดูทีหลัง</li>
+        <li>แชทกับฝ่ายบริการลูกค้าได้ตลอดช่วงเวลาทำการ</li>
+      </ul>
+    </section>
 
-    <div class="auth-card">
-        <!-- The login card box uses a CSS class to define its styling. -->
-        <h2>Login to HomPB</h2>
-        <p class="subtitle">Login for your funiture</p>
+    <!-- ฟอร์ม -->
+    <section class="panel">
+      <a href="../index.html" class="back">← กลับหน้าแรก</a>
+      <h2>เข้าสู่ระบบ</h2>
+      <p class="subtitle">ใช้อีเมลและรหัสผ่านที่สมัครไว้</p>
 
-        <form id="loginForm" method="POST" action="#">
-            <!-- Data entry form / POST = submit data discreetly / action = backend destination URL -->
-            <div class="form-group">
-                <!-- A group consisting of a label and an input for the username -->
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Username" autocomplete="username"
-                    required>
-            </div>
-
-            <div class="form-group">
-                <!-- A group consisting of a label and an input for the password -->
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Password"
-                    autocomplete="current-password" required>
-                <!--The password manager scans from this point to perform various tasks, such as auto-filling passwords or generating random passwords.-->
-                <!-- type = password masks password as dots ,autocomplete = enables browser autofill for saved passwords , required = makes the field mandatory -->
-            </div>
-
-            <button type="submit" class="btn-submit">Login</button>
-        </form>
-
-        <div class="auth-footer">
-            Don't have an account? <a href="register.html">Register</a>
+      <form id="loginForm" novalidate>
+        <div class="form-group">
+          <label for="email">อีเมล</label>
+          <input type="email" id="email" name="email" placeholder="name@example.com" autocomplete="email" required>
         </div>
-    </div>
+
+        <div class="form-group">
+          <label for="password">รหัสผ่าน</label>
+          <div class="pw">
+            <input type="password" id="password" name="password" placeholder="รหัสผ่าน"
+              autocomplete="current-password" required>
+            <button type="button" class="eye" aria-label="แสดงรหัสผ่าน" aria-pressed="false" data-eye="password">
+              <!-- ตาเปิด: กดเพื่อแสดงรหัส -->
+              <svg class="i-show" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <!-- ตาปิด: กดเพื่อซ่อนรหัส -->
+              <svg class="i-hide" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M3 3l18 18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <p id="error" class="error-message" role="alert"></p>
+        <button type="submit" id="submitBtn" class="btn-submit">เข้าสู่ระบบ</button>
+      </form>
+
+      <p class="auth-footer">ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a></p>
+    </section>
+  </main>
+
+  <script src="js/auth-ui.js"></script>
 </body>
 
 </html>
