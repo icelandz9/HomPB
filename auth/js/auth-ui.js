@@ -84,9 +84,12 @@ async function register() {
     },
   });
   if (error) {
-    return /registered|exists/i.test(error.message)
-      ? "อีเมลนี้มีบัญชีแล้ว ลองเข้าสู่ระบบแทน"
-      : "สมัครไม่สำเร็จ: " + error.message;
+    if (/registered|exists/i.test(error.message)) return "อีเมลนี้มีบัญชีแล้ว ลองเข้าสู่ระบบแทน";
+    // Supabase เช็กว่าโดเมนรับอีเมลได้จริง (ต้องส่งลิงก์ยืนยัน) เช่น @hompb.com ไม่มีระบบอีเมล
+    if (error.code === "email_address_invalid" || /email address .* invalid/i.test(error.message))
+      return "อีเมลนี้รับอีเมลไม่ได้ ใช้อีเมลจริงที่เปิดอ่านได้ เช่น Gmail";
+    if (/rate limit/i.test(error.message)) return "สมัครบ่อยเกินไป รอสักครู่แล้วลองใหม่";
+    return "สมัครไม่สำเร็จ: " + error.message;
   }
   // ถ้าเปิดยืนยันอีเมลไว้ อีเมลที่สมัครแล้วจะไม่ error แต่ได้ identities ว่าง
   if (data.user && data.user.identities?.length === 0) return "อีเมลนี้มีบัญชีแล้ว ลองเข้าสู่ระบบแทน";
