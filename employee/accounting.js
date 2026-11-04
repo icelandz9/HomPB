@@ -182,9 +182,23 @@ function go(p) {
     )
     .join("");
   const t = PAGES.find((x) => x[0] === p)[1];
+  // ช่องค้นหา/ตัวกรอง: วาดหน้าเดิมซ้ำ (เช่น หลังกดบันทึก) เก็บค่าไว้ / เปลี่ยนหน้า ล้างทิ้ง
+  // (ตารางอ่านค่าจากช่องเดิมก่อนวางหน้าใหม่ ถ้าไม่ทำ ตารางจะกรองอยู่แต่ช่องว่าง)
+  const same = $("#pg").dataset.page === p;
+  const filters = [...document.querySelectorAll("#pg .filters input, #pg .filters select")].map((e) => {
+    const v = e.value;
+    if (!same) e.value = "";
+    return [e.id, v];
+  });
+  $("#pg").dataset.page = p;
   $("#pg").innerHTML =
     `<h1>${t}</h1><p class="who">${ROLE_NAME[me.role]} · สิทธิ์: ${canM(p) ? "จัดการ" : "ดูอย่างเดียว"}</p>` +
     VIEWS[p]();
+  if (same)
+    filters.forEach(([id, v]) => {
+      const e = document.getElementById(id);
+      if (e) e.value = v;
+    });
   window.scrollTo(0, 0);
 }
 // โหลดข้อมูลใหม่หลังทำรายการ แล้ววาดหน้าเดิม
