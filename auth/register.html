@@ -1,50 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="th">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign up - HomPB</title>
-    <link rel="stylesheet" href="css/auth.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สมัครสมาชิก | HomPB</title>
+  <link rel="icon" href="../img/Logo/hompb-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Archivo:wdth,wght@62..125,100..900&display=swap">
+  <link rel="stylesheet" href="css/auth.css">
 </head>
 
 <body>
+  <main class="auth">
+    <section class="brand" aria-label="HomPB">
+      <a href="../index.html" class="logo" aria-label="HomPB หน้าแรก">HOMPB</a>
+      <div>
+        <h1>สมัครสมาชิก HomPB</h1>
+        <p>สร้างบัญชีครั้งเดียว ช้อปของใช้ได้ครบทุกห้องในบ้าน</p>
+      </div>
+      <ul>
+        <li>สั่งซื้อและชำระเงินผ่านพร้อมเพย์</li>
+        <li>ติดตามการจัดส่งถึงหน้าบ้าน</li>
+        <li>เก็บที่อยู่ไว้ใช้ครั้งต่อไป</li>
+      </ul>
+    </section>
 
-    <div class="auth-card">
-        <h2>Sign up</h2>
-        <p class="subtitle">Create a new user account for HomPB</p>
+    <section class="panel">
+      <a href="../index.html" class="back">← กลับหน้าแรก</a>
+      <h2>สมัครสมาชิก</h2>
+      <p class="subtitle">กรอกข้อมูลด้านล่างเพื่อสร้างบัญชีใหม่</p>
 
-        <form id="registerForm" method="POST" action="#">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Username" autocomplete="username"
-                    required>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Password" autocomplete="new-password"
-                    minlength="6" required>
-                <!--The password manager scans from this point to perform various tasks, such as auto-filling passwords or generating random passwords.-->
-                <!-- minlength="6" requires at least 6 characters -->
-            </div>
-
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password"
-                    autocomplete="new-password" required>
-                <!-- separate field for re-entering the password to confirm it matches_
-                     autocomplete=new-password groups it with the password field above-->
-            </div>
-
-            <button type="submit" class="btn-submit">Register</button>
-        </form>
-
-        <div class="auth-footer">
-            Already have an account? <a href="login.html">Login</a>
+      <form id="registerForm" novalidate>
+        <div class="form-group">
+          <label for="fullName">ชื่อ-นามสกุล</label>
+          <input type="text" id="fullName" name="fullName" placeholder="ชื่อ นามสกุล" autocomplete="name" required>
         </div>
-    </div>
 
+        <div class="form-group">
+          <label for="email">อีเมล</label>
+          <input type="email" id="email" name="email" placeholder="name@example.com" autocomplete="email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">รหัสผ่าน</label>
+          <div class="pw">
+            <input type="password" id="password" name="password" placeholder="อย่างน้อย 6 ตัว"
+              autocomplete="new-password" minlength="6" required>
+            <button type="button" class="eye" aria-label="แสดงรหัสผ่าน" aria-pressed="false" data-eye="password">
+              <svg class="i-show" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg class="i-hide" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M3 3l18 18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">ยืนยันรหัสผ่าน</label>
+          <div class="pw">
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="พิมพ์รหัสผ่านอีกครั้ง"
+              autocomplete="new-password" required>
+            <button type="button" class="eye" aria-label="แสดงรหัสผ่าน" aria-pressed="false"
+              data-eye="confirmPassword">
+              <svg class="i-show" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg class="i-hide" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M3 3l18 18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <p id="error" class="error-message" role="alert"></p>
+        <p id="success" class="success-message" role="status"></p>
+        <button type="submit" id="submitBtn" class="btn-submit">สมัครสมาชิก</button>
+      </form>
+
+      <p class="auth-footer">มีบัญชีอยู่แล้ว? <a href="login.html">เข้าสู่ระบบ</a></p>
+    </section>
+  </main>
+
+  <script src="js/auth-ui.js"></script>
 </body>
 
 </html>
