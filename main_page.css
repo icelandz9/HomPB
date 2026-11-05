@@ -2659,7 +2659,7 @@ a.nt {
 
 /* while any menu is being used, other panels hide immediately */
 .hdr:has(.nt:hover, .nt:focus-visible, .mega:hover, .mega:focus-within) .mega {
-  transition-delay: 0s;
+  transition-delay: .45s, visibility 0s linear 0s;
 }
 
 .hdr:has(#nt-shop:hover, #nt-shop:focus-visible, #mega-shop:hover, #mega-shop:focus-within) #mega-shop {
