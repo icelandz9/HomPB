@@ -995,6 +995,32 @@ textarea::placeholder {
   }
 }
 
+/* phone: logo, 4 icons and the menu button fit on one row */
+@media (max-width:600px) {
+  .logo {
+    font-size: clamp(18px, 5.4vw, 26px);
+  }
+
+  .hdr-icons a,
+  .menu-btn {
+    min-width: 38px;
+    width: 38px;
+  }
+}
+
+/* small phones (320-360px) */
+@media (max-width:360px) {
+  .logo {
+    font-size: 15px;
+  }
+
+  .hdr-icons a,
+  .menu-btn {
+    min-width: 32px;
+    width: 32px;
+  }
+}
+
 @media (min-width:861px) {
   .hdr-row {
     flex-wrap: nowrap;
@@ -1462,6 +1488,13 @@ main.store>* {
   }
 }
 
+/* small phones: one room per row so names like "ห้องนั่งเล่น" don't break */
+@media (max-width:360px) {
+  .rooms {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* products */
 .chips {
   display: flex;
@@ -1474,6 +1507,14 @@ main.store>* {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 24px;
+}
+
+/* tablet: 3 columns (auto-fill gives only 2 big cards at ~768px) */
+@media (min-width:601px) and (max-width:900px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px 16px;
+  }
 }
 
 @media (max-width:600px) {
@@ -1595,6 +1636,16 @@ main.store>* {
 
   .price .amt {
     font-size: 19px;
+  }
+
+  /* price on top, cart button full width: long prices (฿24,900) no longer push the button out of the card */
+  .card .foot {
+    flex-wrap: wrap;
+  }
+
+  .card .foot .btn {
+    flex: 1 1 100%;
+    justify-content: center;
   }
 }
 
