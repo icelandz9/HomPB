@@ -100,7 +100,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: url("../../img/store/room-living.jpg") center / cover;
+  background: url("../../img/rooms/living.jpg") center / cover;
   opacity: .22;
   mix-blend-mode: luminosity;
 }

@@ -37,8 +37,7 @@
 
             <!-- Profile Image -->
             <div class="profile-image" id="profileImageWrapper">
-                <img src="https://i.pravatar.cc/150" alt="Profile Picture" id="profileImg"
-                    onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23A91B0D\'/%3E%3Ccircle cx=\'50\' cy=\'38\' r=\'18\' fill=\'%23FFF5E1\'/%3E%3Cpath d=\'M20 85 C 20 65, 80 65, 80 85\' fill=\'%23FFF5E1\'/%3E%3C/svg%3E';">
+                <img src="../img/icons/avatar-default.svg" alt="Profile Picture" id="profileImg">
                 <div class="image-overlay" onclick="document.getElementById('avatarInput').click()">
                     <span>&#9998;</span>
                 </div>
@@ -46,8 +45,7 @@
                     onchange="changeAvatar(event)">
             </div>
 
-            <!-- https://i.pravatar.cc/150 is pr-avatar (Pr-avatar is random profile avatar),
-             oneerror is function if picture is eror in loading Execute the commands contained in command ( command is oneerror).
+            <!-- ../img/icons/avatar-default.svg is the default avatar (same picture every time) until the user uploads one,
              image-overlay is a part that displays a pencil icon when hovering or clicking on the image,
              type="file" is a type for upload picture , image/* is surname file EX. .PNG , .PDF -->
 
@@ -135,7 +133,7 @@
             addresses: [
                 { id: 1, text: '3 Main St, Anytown, USA', isDefault: true }
             ],
-            avatar: 'https://i.pravatar.cc/150'
+            avatar: '../img/icons/avatar-default.svg' // รูปเริ่มต้น (เดิมใช้ pravatar.cc ซึ่งสุ่มรูปใหม่ทุกครั้งที่เปิด)
         };
 
         // Temporary working copy during edit mode (prevents corruption on Cancel)

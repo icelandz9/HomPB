@@ -1114,8 +1114,9 @@ function shipRows() {
 }
 
 // ========== รูปสินค้า (bucket product-images เป็น public เปิดดูได้ไม่ต้องล็อกอิน) ==========
+// path ขึ้นต้นด้วย img/ = รูปในเว็บ (สินค้าเริ่มต้นจาก backend/seed_products.sql) ไม่ได้อยู่ใน Storage
 const imgUrl = (path) =>
-  path ? sb.storage.from("product-images").getPublicUrl(path).data.publicUrl : "";
+  !path ? "" : path.startsWith("img/") ? site(path) : sb.storage.from("product-images").getPublicUrl(path).data.publicUrl;
 function thumb(p) {
   return p.imgPath
     ? `<img class="thumb" src="${esc(imgUrl(p.imgPath))}" alt="" loading="lazy">`
@@ -1144,7 +1145,8 @@ async function setImage(productId, file) {
   const { data: old } = await sb.from("product_images").select("id, image_path").eq("product_id", productId);
   if (old?.length) {
     await sb.from("product_images").delete().eq("product_id", productId);
-    await sb.storage.from("product-images").remove(old.map((x) => x.image_path));
+    const files = old.map((x) => x.image_path).filter((x) => !x.startsWith("img/"));
+    if (files.length) await sb.storage.from("product-images").remove(files);
   }
   const { error: e2 } = await sb
     .from("product_images")

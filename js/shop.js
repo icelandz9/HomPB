@@ -91,26 +91,28 @@ async function refreshCartCount() {
 }
 
 // ========== สินค้า ==========
-const imgUrl = (path) => (path ? sb.storage.from("product-images").getPublicUrl(path).data.publicUrl : "");
+// path ขึ้นต้นด้วย img/ = รูปในเว็บ (สินค้าเริ่มต้นจาก backend/seed_products.sql) ไม่ได้อยู่ใน Storage
+const imgUrl = (path) =>
+  !path ? "" : path.startsWith("img/") ? site(path) : sb.storage.from("product-images").getPublicUrl(path).data.publicUrl;
 
-// สินค้าที่ยังไม่มีรูปในฐานข้อมูล: ใช้รูปในเว็บ (img/store) ที่ชื่อสินค้าตรงกัน ไม่ตรงเลยใช้รูปห้องของโซนนั้น
+// สินค้าที่ยังไม่มีรูปในฐานข้อมูล: ใช้รูปในเว็บ (img/products) ที่ชื่อสินค้าตรงกัน ไม่ตรงเลยใช้รูปห้องของโซนนั้น (img/rooms)
 // พอคลังอัปโหลดรูปจริงในหน้าสินค้า รูปจริงจะขึ้นแทนเอง
 const LOCAL_IMG = [
-  ["หมอน", "pillow"],
-  ["ผ้าห่ม", "blanket"],
-  ["ผ้าขี้ริ้ว", "rag"],
-  ["ชักโครก", "toilet"],
-  ["โซฟา", "sofa"],
-  ["ทีวี", "tv"],
-  ["ชาม", "bowl"],
-  ["ตะหลิว", "spatula"],
-  ["กาต้มน้ำ", "kettle"],
+  ["หมอน", "bed/pillow"],
+  ["ผ้าห่ม", "bed/blanket"],
+  ["ผ้าขี้ริ้ว", "bath/rag"],
+  ["ชักโครก", "bath/toilet"],
+  ["โซฟา", "living/sofa"],
+  ["ทีวี", "living/tv"],
+  ["ชาม", "kitchen/bowl"],
+  ["ตะหลิว", "kitchen/spatula"],
+  ["กาต้มน้ำ", "appliance/kettle"],
 ];
 function fallbackImg(name, zone) {
   const hit = LOCAL_IMG.find(([word]) => name.includes(word));
-  if (hit) return site(`img/store/${hit[1]}.jpg`);
+  if (hit) return site(`img/products/${hit[1]}.jpg`);
   const slug = zoneSlug(zone);
-  return slug ? site(`img/store/room-${slug}.jpg`) : "";
+  return slug ? site(`img/rooms/${slug}.jpg`) : "";
 }
 
 // สินค้าที่เปิดขาย + ราคา/มีของ จาก view variants_public (ลูกค้าอ่าน product_variants ตรงไม่ได้)
