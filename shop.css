@@ -133,6 +133,39 @@
   }
 }
 
+/* phone: logo and 5 icons on one row */
+@media (max-width: 600px) {
+  .shop-hdr .logo {
+    font-size: clamp(18px, 5.4vw, 26px);
+  }
+
+  .shop-icons {
+    gap: 0;
+  }
+
+  .sh-ic {
+    padding: 0 7px;
+  }
+
+  .sh-ic .badge {
+    left: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .shop-hdr .logo {
+    font-size: 15px;
+  }
+
+  .sh-ic {
+    padding: 0 4px;
+  }
+
+  .sh-ic .badge {
+    left: 12px;
+  }
+}
+
 /* ---------- page ---------- */
 .shop {
   padding-block: 28px 64px;
