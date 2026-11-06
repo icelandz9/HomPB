@@ -1574,6 +1574,20 @@ main.store>* {
   color: var(--bad);
 }
 
+/* sample product card (js/catalog.js): not for sale yet */
+.card.sample .name:hover {
+  color: var(--ink);
+}
+
+.card .soon {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted-2);
+  background: var(--sand);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
 @media (max-width:600px) {
   .card .name {
     font-size: 16px;
