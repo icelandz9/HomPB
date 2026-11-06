@@ -1,122 +1,171 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="th" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>โปรไฟล์ | HomPB</title>
     <link rel="icon" href="../img/Logo/hompb-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Archivo:wdth,wght@62..125,100..900&display=swap">
     <link rel="stylesheet" href="profile.css">
 </head>
 
 <body>
 
-    <div class="profile-container">
-
-        <div class="profile-header">
-            <div class="header-left">
-                <a href="../index.html" class="logo" aria-label="HomPB หน้าแรก"><img class="logo-ic" src="../img/Logo/hompb-icon.svg" alt="" width="36" height="36">HOMPB</a>
-                <a href="../index.html" class="back-link">&#8592; Home</a>
-                <h2>Your Profile</h2>
-            </div>
+    <!-- แถบบนสุด: โลโก้ + กลับหน้าร้าน + เปลี่ยนธีม + ออกจากระบบ -->
+    <header class="topbar">
+        <div class="topbar-in">
+            <a href="../index.html" class="logo" aria-label="HomPB หน้าแรก"><img class="logo-ic" src="../img/Logo/hompb-icon.svg" alt="" width="36" height="36">HOMPB</a>
             <div class="header-actions">
+                <a href="../index.html" class="back-link">&#8592; กลับไปหน้าร้าน</a>
                 <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()"
-                    aria-label="Toggle Theme">
-                    <span id="themeIcon">☀️</span> <span id="themeText">Light</span>
+                    aria-label="เปลี่ยนธีม">
+                    <span id="themeIcon">☀️</span> <span id="themeText">โหมดสว่าง</span>
                 </button>
                 <!-- signOut() อยู่ใน js/supabase.js: ออกจากระบบแล้วไปหน้า login -->
-                <button type="button" class="theme-toggle-btn" onclick="signOut()">Logout</button>
+                <button type="button" class="theme-toggle-btn logout-btn" onclick="signOut()">ออกจากระบบ</button>
             </div>
         </div>
-        <!--theme-toggle-btn is a class for styling(ตกแต่ง) the button, 
-        onclick="toggleTheme()" calls the theme change function (ฟังก์ชันเปลี่ยนธีม) when clicked, 
-        themeIcon is used to display a sun or moon icon (ใช้แสดงไอคอนพระอาทิตย์หรือพระจันทร์).
-        themeText is used to display Light or Dark text (ใช้แสดงข้อความ Light หรือ Dark).-->
+    </header>
+    <!--theme-toggle-btn is a class for styling(ตกแต่ง) the button,
+    onclick="toggleTheme()" calls the theme change function (ฟังก์ชันเปลี่ยนธีม) when clicked,
+    themeIcon is used to display a sun or moon icon (ใช้แสดงไอคอนพระอาทิตย์หรือพระจันทร์).
+    themeText is used to display Light or Dark text (ใช้แสดงข้อความ Light หรือ Dark).-->
 
-        <div class="profile-card">
+    <main class="profile-container">
 
-            <!-- Profile Image -->
-            <div class="profile-image" id="profileImageWrapper">
-                <img src="../img/icons/avatar-default.svg" alt="Profile Picture" id="profileImg">
-                <div class="image-overlay" onclick="document.getElementById('avatarInput').click()">
-                    <span>&#9998;</span>
+        <div class="page-head">
+            <p class="eyebrow">บัญชีของฉัน</p>
+            <h1>โปรไฟล์</h1>
+        </div>
+
+        <div class="profile-layout">
+
+            <!-- ===== ซ้าย: รูป ชื่อ ปุ่มแก้ไข ทางลัด ===== -->
+            <aside class="profile-card side-card">
+                <div class="cover"></div>
+
+                <!-- Profile Image -->
+                <div class="profile-image" id="profileImageWrapper">
+                    <img src="../img/icons/avatar-default.svg" alt="รูปโปรไฟล์" id="profileImg">
+                    <div class="image-overlay" onclick="document.getElementById('avatarInput').click()">
+                        <span>&#9998; เปลี่ยนรูป</span>
+                    </div>
+                    <input type="file" id="avatarInput" accept="image/*" style="display:none"
+                        onchange="changeAvatar(event)">
                 </div>
-                <input type="file" id="avatarInput" accept="image/*" style="display:none"
-                    onchange="changeAvatar(event)">
-            </div>
 
-            <!-- ../img/icons/avatar-default.svg is the default avatar (same picture every time) until the user uploads one,
-             image-overlay is a part that displays a pencil icon when hovering or clicking on the image,
-             type="file" is a type for upload picture , image/* is surname file EX. .PNG , .PDF -->
+                <!-- ../img/icons/avatar-default.svg is the default avatar (same picture every time) until the user uploads one,
+                 image-overlay is a part that displays a pencil icon when hovering or clicking on the image,
+                 type="file" is a type for upload picture , image/* is surname file EX. .PNG , .PDF -->
 
-            <!-- Display Name & Username -->
-            <div class="name-block">
-                <h2 id="displayFullName">John Doe</h2>
-                <p class="username" id="displayUsername">@johndoe</p>
-            </div>
-
-            <!-- Edit Profile Button -->
-            <button type="button" class="edit-btn" id="editBtn" onclick="toggleEdit()">&#9998; Edit Profile</button>
-
-            <!-- ===== VIEW MODE ===== -->
-            <div class="profile-info" id="viewMode">
-                <div class="info-group">
-                    <label>Full Name</label>
-                    <p id="viewFullName">John Doe</p>
+                <!-- Display Name & Username -->
+                <div class="name-block">
+                    <h2 id="displayFullName">&nbsp;</h2>
+                    <p class="username" id="displayUsername">&nbsp;</p>
                 </div>
-                <div class="info-group">
-                    <label>Email Address</label>
-                    <p id="viewEmail">johndoe@gmail.com</p>
-                </div>
-                <div class="info-group">
-                    <label>Phone Number</label>
-                    <p id="viewPhone">012-345-6789</p>
-                </div>
-                <div class="info-group">
-                    <label>Addresses</label>
+
+                <!-- Edit Profile Button -->
+                <button type="button" class="edit-btn" id="editBtn" onclick="toggleEdit()">&#9998; แก้ไขโปรไฟล์</button>
+
+                <!-- ทางลัดไปหน้าอื่นของลูกค้า -->
+                <nav class="quick-links" aria-label="ทางลัด">
+                    <a href="../orders.html">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>
+                        <span>คำสั่งซื้อของฉัน</span><i>&#8250;</i>
+                    </a>
+                    <a href="../favorites.html">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+                        <span>รายการโปรด</span><i>&#8250;</i>
+                    </a>
+                    <a href="../cart.html">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
+                        <span>ตะกร้าสินค้า</span><i>&#8250;</i>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- ===== ขวา: ข้อมูลส่วนตัว (ดู / แก้ไข) ===== -->
+            <section class="profile-card main-card">
+
+                <!-- ===== VIEW MODE ===== -->
+                <div class="profile-info" id="viewMode">
+                    <h3 class="card-title">ข้อมูลส่วนตัว</h3>
+                    <div class="info-grid">
+                        <div class="info-group">
+                            <span class="info-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg></span>
+                            <div>
+                                <label>ชื่อ-นามสกุล</label>
+                                <p id="viewFullName"></p>
+                            </div>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></span>
+                            <div>
+                                <label>เบอร์โทรศัพท์</label>
+                                <p id="viewPhone"></p>
+                            </div>
+                        </div>
+                        <div class="info-group wide">
+                            <span class="info-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+                            <div>
+                                <label>อีเมล</label>
+                                <p id="viewEmail"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="card-title">ที่อยู่จัดส่ง</h3>
                     <div id="viewAddresses"></div>
                 </div>
-            </div>
 
-            <!-- ===== EDIT MODE ===== -->
-            <div class="edit-form" id="editMode" style="display:none;">
+                <!-- ===== EDIT MODE ===== -->
+                <div class="edit-form" id="editMode" style="display:none;">
+                    <h3 class="card-title">แก้ไขข้อมูลส่วนตัว</h3>
 
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="editFullName" placeholder="Full Name">
+                    <div class="form-group">
+                        <label for="editFullName">ชื่อ-นามสกุล</label>
+                        <input type="text" id="editFullName" placeholder="ชื่อ นามสกุล">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editEmail">อีเมล</label>
+                            <input type="email" id="editEmail" placeholder="email@example.com" disabled
+                                title="อีเมลใช้เข้าสู่ระบบ เปลี่ยนในหน้านี้ไม่ได้">
+                            <small class="hint">อีเมลใช้เข้าสู่ระบบ เปลี่ยนไม่ได้</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editPhone">เบอร์โทรศัพท์</label>
+                            <input type="tel" id="editPhone" placeholder="0xx-xxx-xxxx">
+                        </div>
+                    </div>
+
+                    <!-- Multiple Addresses -->
+                    <div class="form-group">
+                        <label>ที่อยู่จัดส่ง</label>
+                        <div id="addressList"></div>
+                        <button type="button" class="add-address-btn" onclick="addAddressField()">
+                            &#43; เพิ่มที่อยู่
+                        </button>
+                    </div>
+
+                    <!-- Save / Cancel Buttons -->
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="cancelEdit()">ยกเลิก</button>
+                        <button type="button" class="save-btn" onclick="saveProfile()">&#10003; บันทึก</button>
+                    </div>
+                    <!-- onclick if click button excute command -->
+
                 </div>
 
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="editEmail" placeholder="email@example.com" disabled
-                        title="อีเมลใช้เข้าสู่ระบบ เปลี่ยนในหน้านี้ไม่ได้">
-                </div>
-
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" id="editPhone" placeholder="0xx-xxx-xxxx">
-                </div>
-
-                <!-- Multiple Addresses -->
-                <div class="form-group">
-                    <label>Addresses</label>
-                    <div id="addressList"></div>
-                    <button type="button" class="add-address-btn" onclick="addAddressField()">
-                        &#43; Add Address
-                    </button>
-                </div>
-
-                <!-- Save / Cancel Buttons -->
-                <div class="form-actions">
-                    <button type="button" class="save-btn" onclick="saveProfile()">&#10003; Save</button>
-                    <button type="button" class="cancel-btn" onclick="cancelEdit()">&#10005; Cancel</button>
-                </div>
-                <!-- onclick if click button excute command -->
-
-            </div>
-
+            </section>
         </div>
-    </div>
+    </main>
 
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
@@ -163,7 +212,7 @@
                 .select('id, address_line, subdistrict, district, province, postcode, is_default')
                 .eq('user_id', me.id)
                 .order('created_at');
-            if (error) showToast('Load addresses failed: ' + errText(error), 'error');
+            if (error) showToast('โหลดที่อยู่ไม่สำเร็จ: ' + errText(error), 'error');
             profile.name = me.email.split('@')[0];
             profile.fullName = me.full_name || '';
             profile.email = me.email;
@@ -209,10 +258,10 @@
             const text = document.getElementById('themeText');
             if (theme === 'dark') {
                 if (icon) icon.textContent = '☀️';
-                if (text) text.textContent = 'Light';
+                if (text) text.textContent = 'โหมดสว่าง';
             } else {
                 if (icon) icon.textContent = '🌙';
-                if (text) text.textContent = 'Dark';
+                if (text) text.textContent = 'โหมดมืด';
             }
         }
         // If you change the CSS theme, the colors will be adjusted to suit the theme you have selected.
@@ -228,7 +277,7 @@
                 try {
                     localStorage.setItem('avatar:' + me.id, e.target.result);
                 } catch (err) {}
-                showToast('Profile picture updated ✓');
+                showToast('เปลี่ยนรูปโปรไฟล์แล้ว ✓');
             };
             reader.readAsDataURL(file);
             event.target.value = '';
@@ -258,7 +307,7 @@
             document.getElementById('viewMode').style.display = 'none';
             document.getElementById('editMode').style.display = 'block';
             const btn = document.getElementById('editBtn');
-            btn.innerHTML = '&#10005; Cancel';
+            btn.innerHTML = '&#10005; ยกเลิกการแก้ไข';
             btn.classList.add('active');
         }
 
@@ -268,28 +317,29 @@
             document.getElementById('editMode').style.display = 'none';
             document.getElementById('viewMode').style.display = 'block';
             const btn = document.getElementById('editBtn');
-            btn.innerHTML = '&#9998; Edit Profile';
+            btn.innerHTML = '&#9998; แก้ไขโปรไฟล์';
             btn.classList.remove('active');
         }
 
         // ===================== VIEW RENDER =====================
         function renderView() {
-            document.getElementById('displayFullName').textContent = profile.fullName;
+            document.getElementById('displayFullName').textContent = profile.fullName || 'ยังไม่ได้ตั้งชื่อ';
             document.getElementById('displayUsername').textContent = '@' + profile.name;
-            document.getElementById('viewFullName').textContent = profile.fullName;
+            document.getElementById('viewFullName').textContent = profile.fullName || '-';
             document.getElementById('viewEmail').textContent = profile.email;
-            document.getElementById('viewPhone').textContent = profile.phone;
+            document.getElementById('viewPhone').textContent = profile.phone || '-';
             document.getElementById('profileImg').src = profile.avatar;
 
             // Render address list in view mode
             const viewAddr = document.getElementById('viewAddresses');
-            viewAddr.innerHTML = '';
+            viewAddr.innerHTML = profile.addresses.length ? '' : '<p class="empty-addr">ยังไม่มีที่อยู่ กด "แก้ไขโปรไฟล์" เพื่อเพิ่ม</p>';
             profile.addresses.forEach(addr => {
                 const div = document.createElement('div');
                 div.className = 'address-view-item';
                 div.innerHTML = `
+                    <svg class="addr-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
                     <span class="addr-text">${escapeHtml(addr.text)}</span>
-                    ${addr.isDefault ? '<span class="badge-default">Default</span>' : ''}
+                    ${addr.isDefault ? '<span class="badge-default">ที่อยู่หลัก</span>' : ''}
                 `;
                 viewAddr.appendChild(div);
             });
@@ -310,13 +360,13 @@
             row.dataset.idx = idx;
             row.innerHTML = `
                 <div class="addr-input-wrap">
-                    <input type="text" class="addr-input" value="${escapeHtml(text)}" placeholder="Enter address..." oninput="updateAddressText(${idx}, this.value)">
+                    <input type="text" class="addr-input" value="${escapeHtml(text)}" placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์" oninput="updateAddressText(${idx}, this.value)">
                     <label class="default-label">
                         <input type="radio" name="defaultAddr" ${isDefault ? 'checked' : ''} onchange="setDefault(${idx})">
-                        <span>Default</span>
+                        <span>ที่อยู่หลัก</span>
                     </label>
                 </div>
-                <button type="button" class="remove-addr-btn" onclick="removeAddress(${idx})" title="Delete address">&#128465;</button>
+                <button type="button" class="remove-addr-btn" onclick="removeAddress(${idx})" title="ลบที่อยู่" aria-label="ลบที่อยู่">&#128465;</button>
             `;
             return row;
         }
@@ -371,12 +421,12 @@
             const fullName = document.getElementById('editFullName').value.trim();
             const phone = document.getElementById('editPhone').value.trim();
 
-            if (!fullName) { showToast('Please enter Full Name', 'error'); return; }
-            if (!phone) { showToast('Please enter phone number', 'error'); return; }
+            if (!fullName) { showToast('กรุณากรอกชื่อ-นามสกุล', 'error'); return; }
+            if (!phone) { showToast('กรุณากรอกเบอร์โทรศัพท์', 'error'); return; }
 
             syncAddressInputs();
             if (tempAddresses.some(a => !a.text || a.text.trim() === '')) {
-                showToast('Please fill in all address fields', 'error');
+                showToast('กรุณากรอกที่อยู่ให้ครบทุกช่อง', 'error');
                 return;
             }
             if (tempAddresses.length && !tempAddresses.some(a => a.isDefault)) {
@@ -387,14 +437,14 @@
             saveBtn.disabled = true;
             const err = await saveToDb(fullName, phone);
             saveBtn.disabled = false;
-            if (err) { showToast('Save failed: ' + err, 'error'); return; }
+            if (err) { showToast('บันทึกไม่สำเร็จ: ' + err, 'error'); return; }
 
             me.full_name = fullName;
             me.phone = phone;
             await loadProfileData(); // โหลด id ของที่อยู่ใหม่จากฐานข้อมูล
             renderView();
             cancelEdit();
-            showToast('Profile saved successfully ✓');
+            showToast('บันทึกโปรไฟล์แล้ว ✓');
         }
 
         // คืนข้อความ error หรือ '' ถ้าบันทึกครบ
