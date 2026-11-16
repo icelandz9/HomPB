@@ -289,7 +289,7 @@ sb.from("store_settings").update({ shipping_fee: 50 }).eq("id", true)
 | `product.html?id=` | รายละเอียด เลือกแบบ (variant) จำนวน เพิ่มลงตะกร้า รายการโปรด สินค้าห้องเดียวกัน |
 | `favorites.html` | ตาราง `favorites` |
 | `cart.html` | `cart_items` + เลือก/เพิ่มที่อยู่ (`addresses` แยกช่องตำบล อำเภอ จังหวัด) แล้วเรียก `place_order` |
-| `orders.html` | คำสั่งซื้อของฉัน แนบสลิป (`slips/{user_id}/{order_id}/ไฟล์` + `submit_payment`) ติดตามพัสดุ ยกเลิก/ขอคืนเงิน (`request_refund`) |
+| `orders.html` | คำสั่งซื้อของฉัน แนบสลิป (`slips/{user_id}/{order_id}/ไฟล์` + `submit_payment`) ติดตามพัสดุ ยกเลิกก่อนส่ง (`request_refund` ทั้งคำสั่งซื้อ) / ขอคืนสินค้ารายชิ้นหลังได้รับของ (`request_refund` ส่ง `p_items`) |
 | `chat.html?order=` | แชทกับฝ่ายบริการลูกค้า (`conversations`, `messages`) รับข้อความใหม่แบบ realtime |
 
 ทุกหน้าใช้ `js/shop.js` (หัวเว็บ, โหลดสินค้า, การ์ดสินค้า, ตะกร้า, รายการโปรด) และ `shop.css` ต่อจาก `main_page.css`

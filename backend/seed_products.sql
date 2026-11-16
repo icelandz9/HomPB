@@ -5,6 +5,7 @@
 -- รูปใช้ไฟล์ในเว็บ img/products/... (image_path ขึ้นต้นด้วย img/ = รูปในเว็บ ไม่ใช่ Storage ดู imgUrl ใน js/shop.js)
 -- สินค้าที่มีชื่อนี้อยู่แล้ว ไม่สร้างใหม่ แค่เติมส่วนที่ยังไม่มี (รายละเอียด ราคา ห้อง รูป)
 -- ของชิ้นใหญ่ส่งด้วยรถร้าน (store_truck) สต็อกเริ่ม 10 ที่เหลือส่งขนส่ง (carrier) สต็อกเริ่ม 20
+-- หมวดสินค้า (ห้องนอน ห้องน้ำ ห้องนั่งเล่น ห้องครัว เครื่องใช้ไฟฟ้า) สร้างให้ก่อนเสมอ ถ้ามีอยู่แล้วไม่สร้างซ้ำ
 
 begin;
 
@@ -175,6 +176,11 @@ insert into seed values
   ('เครื่องใช้ไฟฟ้า', 'ผ้าห่มไฟฟ้าปรับอุณหภูมิ', 'ผ้าห่มไฟฟ้าปรับความอุ่นได้ 6 ระดับ ตัดไฟอัตโนมัติ', 1990, 'carrier', 20, 'HPB-APPLIANCE-024', 'img/products/appliance/heated-blanket.jpg'),
   ('เครื่องใช้ไฟฟ้า', 'เครื่องนวดฝ่าเท้าไฟฟ้า', 'เครื่องนวดฝ่าเท้าแบบลูกกลิ้งพร้อมความร้อน', 2490, 'carrier', 20, 'HPB-APPLIANCE-025', 'img/products/appliance/foot-massager.jpg'),
   ('เครื่องใช้ไฟฟ้า', 'แท่นชาร์จไร้สายตั้งโต๊ะ', 'แท่นชาร์จไร้สาย 15 วัตต์ ชาร์จโทรศัพท์และหูฟังได้', 590, 'carrier', 20, 'HPB-APPLIANCE-026', 'img/products/appliance/wireless-charger.jpg');
+
+-- 0. หมวดสินค้า 5 ห้อง (ฐานข้อมูลใหม่ยังไม่มี ถ้าไม่สร้างก่อน ข้อ 4 จะข้ามไปเงียบๆ สินค้าไม่อยู่ห้องไหนเลย)
+insert into categories (name)
+select distinct zone from seed
+on conflict (name) do nothing;
 
 -- 1. สินค้าใหม่
 insert into products (name, description, delivery_method)
