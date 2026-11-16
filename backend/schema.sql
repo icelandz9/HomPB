@@ -28,6 +28,11 @@
 --    คอลัมน์ที่ใช้ set null ห้ามมี not null (ไม่งั้นจะ error ตอนลบ)
 --    สรุป: ไม่ใส่อะไร = ลบไม่ได้ / cascade = ลบตาม / set null = แถวอยู่ แต่ค่าเป็น null
 --
+-- 5.1 on delete restrict
+--    ลบแถวหลักไม่ได้ ถ้ายังมีแถวอ้างถึง (ผลเหมือนไม่ใส่ แต่เขียนให้เห็นว่าตั้งใจ)
+--    ใช้กับประวัติและ log ที่ห้ามหาย: order_items, order_status_history, refund_items, shipments, stock_logs, conversations
+--    ของที่เลิกขาย ให้ตั้ง is_active = false แทนการลบ
+--
 -- 6. numeric(10,2)
 --    ตัวเลขรวม 10 หลัก ทศนิยม 2 หลัก (สูงสุด 99,999,999.99) ใช้เก็บราคา
 --
@@ -35,7 +40,7 @@
 --    บังคับให้ตารางมีได้แค่ 1 แถว ใช้กับตารางตั้งค่าที่มีชุดเดียว (เช่น store_settings)
 --    primary key = ห้ามซ้ำ / check (id) = ห้ามเป็น false / default true = ไม่ต้องส่ง id ตอน insert
 --    ถ้าไม่ใส่ check (id) จะยังมีได้ 2 แถว (true กับ false)
---    ไม่ใช้กับตารางที่เก็บหลายแถว (เช่น faq_entries) ให้ใช้ uuid หรือ identity แทน
+--    ไม่ใช้กับตารางที่เก็บหลายแถว (เช่น orders) ให้ใช้ uuid หรือ identity แทน
 --
 -- 8. check (...)
 --    ตรวจค่าก่อนบันทึก ถ้าเงื่อนไขในวงเล็บเป็นเท็จ จะ insert/update ไม่ได้ (error)
@@ -243,7 +248,7 @@ create table orders(
 
 create table order_items(
     id uuid primary key default gen_random_uuid(),
-    order_id uuid not null references orders(id) on delete cascade,
+    order_id uuid not null references orders(id) on delete restrict, -- รายการในคำสั่งซื้อเป็นประวัติการขาย ห้ามหายตามคำสั่งซื้อ
     variant_id uuid references product_variants(id) on delete set null, -- ว่างได้ ถ้าลบตัวเลือกสินค้าออกภายหลัง
     product_name text not null,
     variant_name text not null,
@@ -253,7 +258,7 @@ create table order_items(
 
 create table order_status_history (
     id bigint generated always as identity primary key,
-    order_id uuid not null references orders(id) on delete cascade,
+    order_id uuid not null references orders(id) on delete restrict, -- log สถานะ ห้ามหาย
     from_status order_status,
     to_status order_status not null,
     actor_id uuid references profiles(id) on delete set null,
@@ -291,8 +296,8 @@ create table refunds(
 
 create table refund_items(
     id uuid primary key default gen_random_uuid(),
-    refund_id uuid not null references refunds(id) on delete cascade,
-    order_item_id uuid not null references order_items(id) on delete cascade,
+    refund_id uuid not null references refunds(id) on delete restrict, -- ข้อมูลการเงิน ห้ามหาย
+    order_item_id uuid not null references order_items(id) on delete restrict,
     quantity integer not null check (quantity > 0),
     amount numeric(10,2) not null check (amount > 0),
     return_status return_status not null default 'pending_check', -- ยกเลิกก่อนส่ง trigger จะเปลี่ยนเป็น no_return
@@ -305,7 +310,7 @@ create table refund_items(
 
 create table shipments(
     id uuid primary key default gen_random_uuid(),
-    order_id uuid unique not null references orders(id) on delete cascade,
+    order_id uuid unique not null references orders(id) on delete restrict, -- ประวัติการจัดส่ง ห้ามหาย
     method delivery_method not null,
     carrier text,
     tracking_no text,
@@ -319,7 +324,7 @@ create table shipments(
 
 create table conversations(
     id uuid primary key default gen_random_uuid(),
-    customer_id uuid not null references profiles(id) on delete cascade,
+    customer_id uuid not null references profiles(id) on delete restrict, -- แชทต้องไม่หายเมื่อปิดบัญชี (ปิดบัญชีใช้ is_active = false)
     staff_id uuid references profiles(id) on delete set null,
     order_id uuid references orders(id) on delete set null,
     status conversation_status not null default 'waiting_staff',
@@ -336,18 +341,6 @@ create table messages(
     image_path text,
     created_at timestamptz not null default now(),
     check (body is not null or image_path is not null) -- ต้องมีข้อความหรือรูปอย่างน้อย 1 อย่าง
-);
-
-create table faq_entries(
-    id uuid primary key default gen_random_uuid(),
-    question text not null,
-    keywords text,
-    answer text not null,
-    is_active boolean not null default true,
-    sort_order integer not null default 0,
-    created_by uuid references profiles(id) on delete set null,
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now()
 );
 
 -- ข้อมูลร้าน(store_settings) ---------------------------------------------------------------
@@ -374,7 +367,7 @@ insert into store_settings default values;
 
 create table stock_logs (
     id bigint primary key generated always as identity,
-    variant_id uuid not null references product_variants(id) on delete cascade,
+    variant_id uuid not null references product_variants(id) on delete restrict, -- log สต็อก ห้ามหาย (BR-02) เลิกขายใช้ is_active = false
     change_qty integer not null,
     reason text not null check (reason in ('order', 'cancel', 'adjust', 'return')),
     order_id uuid references orders(id) on delete set null,
@@ -505,8 +498,6 @@ create trigger set_updated_at before update on products
   for each row execute function public.set_updated_at();
 create trigger set_updated_at before update on orders
   for each row execute function public.set_updated_at();
-create trigger set_updated_at before update on faq_entries
-  for each row execute function public.set_updated_at();
 create trigger set_updated_at before update on store_settings
   for each row execute function public.set_updated_at();
 
@@ -536,3 +527,7 @@ create index on conversations (status);
 create index on messages (conversation_id, created_at);
 create index on stock_logs (variant_id, created_at);
 create index on audit_logs (created_at);
+
+-- cancel_expired_orders (pg_cron ทุก 5 นาที) หาคำสั่งซื้อที่รอชำระและเลยกำหนดโอน
+-- partial index เก็บเฉพาะแถวที่ยังรอชำระ เล็กและไม่โตตามจำนวนคำสั่งซื้อทั้งหมด
+create index orders_pending_due_idx on orders (payment_due_at) where status = 'pending_payment';

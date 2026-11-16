@@ -476,6 +476,68 @@
   align-items: center;
 }
 
+/* ขอคืนสินค้ารายชิ้น (orders.html) */
+.refund-form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  background: var(--ground);
+}
+
+.refund-form h3 {
+  font-size: 18px;
+}
+
+.rf-items {
+  display: grid;
+}
+
+.rf-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.rf-row input {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+}
+
+.rf-reason {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.rf-reason legend {
+  width: 100%;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rf-reason label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
 @media (max-width: 600px) {
   .pay-box {
     grid-template-columns: 1fr;
