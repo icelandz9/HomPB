@@ -480,6 +480,25 @@
   .pay-box {
     grid-template-columns: 1fr;
   }
+
+  /* cart line: qty + remove move under the name so the name gets the full width */
+  .line-item {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 10px 12px;
+    align-items: start;
+  }
+
+  .line-item .thumb {
+    width: 64px;
+    height: 64px;
+  }
+
+  .line-item .acts {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
 /* ---------- chat ---------- */

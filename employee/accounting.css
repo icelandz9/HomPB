@@ -333,7 +333,10 @@ td.empty {
 
 @media (max-width: 860px) {
   #app {
-    grid-template-columns: 1fr;
+    /* minmax(0,1fr): แถบเมนูที่เลื่อนแนวนอนไม่ดันหน้าให้กว้างเกินจอ
+       align-content:start: แถบเมนูไม่ยืดสูงตอนเนื้อหาสั้น */
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
   }
 
   aside {
@@ -342,7 +345,12 @@ td.empty {
     padding: 16px;
   }
 
+  aside .sub {
+    margin-bottom: 14px;
+  }
+
   nav {
+    flex: none;
     flex-direction: row;
     overflow-x: auto;
   }
@@ -359,5 +367,22 @@ td.empty {
   .top {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+/* มือถือ: การ์ดตัวเลขเรียงแถวละ 2 ใบ ไม่ต้องเลื่อนยาว */
+@media (max-width: 600px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .kpi {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .kpi b {
+    font-size: 30px;
   }
 }
