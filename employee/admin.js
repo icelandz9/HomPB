@@ -1216,7 +1216,7 @@ function chatPill(c) {
 function chatWindow() {
   const c = activeChat();
   if (!c)
-    return `<div class="cw"><div class="msgs"><p class="muted">เลือกแชทจากรายการด้านซ้าย</p></div></div>`;
+    return `<div class="cw"><div class="msgs"><p class="muted">เลือกแชทจากรายการ</p></div></div>`;
   const msgs = c.msgs
     .map((m) => {
       const mine = m.from === "staff";

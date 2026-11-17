@@ -746,9 +746,21 @@
   resize: vertical;
 }
 
+/* minmax(0, 1fr) + min-width: 0: ข้อความล่าสุดยาวๆ (nowrap) ต้องตัดเป็น … ไม่ใช่ดันหน้าให้กว้าง */
+.conv-list,
+.conv,
+.chat-win {
+  min-width: 0;
+}
+
+.chat-win {
+  position: relative; /* label ที่ซ่อน (.sr) ในช่องพิมพ์ ให้อยู่ในกล่องนี้ */
+}
+
 @media (max-width: 760px) {
   .chat-ui {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
   }
 }
 
