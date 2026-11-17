@@ -1630,6 +1630,13 @@ async function saveStore() {
   if (qr && !["image/jpeg", "image/png"].includes(qr.type))
     return toast("QR ต้องเป็น JPG หรือ PNG");
   if (qr && qr.size > 2 * 1024 * 1024) return toast("QR ต้องไม่เกิน 2 MB");
+  // ต้องเป็น QR พร้อมเพย์จริง หน้าคำสั่งซื้อจะอ่าน QR นี้แล้วใส่ยอดให้ลูกค้า (js/promptpay.js)
+  if (qr) {
+    const tmp = URL.createObjectURL(qr);
+    const payload = await ppReadImage(tmp);
+    URL.revokeObjectURL(tmp);
+    if (!payload) return toast("รูปนี้ไม่ใช่ QR พร้อมเพย์ หรืออ่าน QR ไม่ได้ ลองใช้รูปที่ชัดและไม่ถูกตัดขอบ");
+  }
 
   busy = true;
   $("#s_save").disabled = true;

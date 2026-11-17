@@ -469,6 +469,63 @@
   border-radius: 12px;
 }
 
+/* QR พร้อมเพย์ที่ใส่ยอดแล้ว: การ์ดพื้นขาวเหมือนป้าย QR หน้าร้าน (QR ต้องอยู่บนพื้นขาวถึงสแกนง่าย) */
+.pay-qr {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 14px 12px;
+  border-radius: 18px;
+  background: #fff;
+  color: #1d1a17;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
+}
+
+.pay-qr figcaption {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5c544c;
+}
+
+.pay-box .pay-qr img {
+  width: 180px;
+  height: 180px;
+  border-radius: 0;
+  image-rendering: pixelated; /* ขยายแล้วขอบคม ไม่เบลอ */
+}
+
+.pay-qr b {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.pay-qr-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d9d2ca;
+  border-radius: 999px;
+  color: #1d1a17;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pay-qr-save:hover {
+  background: #f3efea;
+}
+
+/* มี QR ใส่ยอด: คอลัมน์ซ้ายกว้างพอสำหรับการ์ด */
+.pay-box:has(.pay-qr) {
+  grid-template-columns: 208px minmax(0, 1fr);
+  align-items: start;
+}
+
 .acts-row {
   display: flex;
   flex-wrap: wrap;
@@ -539,8 +596,19 @@
 }
 
 @media (max-width: 600px) {
-  .pay-box {
+  .pay-box,
+  .pay-box:has(.pay-qr) {
     grid-template-columns: 1fr;
+  }
+
+  .pay-qr {
+    justify-self: center;
+    width: min(100%, 260px);
+  }
+
+  .pay-box .pay-qr img {
+    width: 200px;
+    height: 200px;
   }
 
   /* cart line: qty + remove move under the name so the name gets the full width */

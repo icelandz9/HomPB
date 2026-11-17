@@ -7,6 +7,7 @@ const SHIP = { preparing: "รอจัดส่ง", in_transit: "กำลั�
 const REFUND = { requested: "รอพิจารณา", approved: "อนุมัติแล้ว รอโอนคืน", rejected: "ไม่อนุมัติ", paid: "โอนคืนแล้ว" };
 const REASON = { cancel_before_ship: "ยกเลิกก่อนส่ง", damaged: "สินค้าชำรุด", wrong_item: "ส่งสินค้าผิด" };
 const one = (x) => (Array.isArray(x) ? x[0] : x) || null; // shipment ต่อ 1 คำสั่งซื้อ
+const STORE_QR_FILE = "img/qr_code/K+.jpg"; // QR พร้อมเพย์ของร้าน (สำรอง ถ้ารูปใน ตั้งค่าร้าน ใช้ไม่ได้)
 let refundFor = null; // id คำสั่งซื้อที่เปิดฟอร์มขอคืนสินค้าอยู่
 
 // จำนวนที่ยังขอคืนได้ของแต่ละรายการ = จำนวนที่สั่ง - จำนวนในคำขอคืนที่ยังไม่ถูกปฏิเสธ
@@ -39,6 +40,26 @@ async function load() {
     const { data: u } = await sb.storage.from("store").createSignedUrl(s.promptpay_qr_path, 3600);
     store.qrUrl = u?.signedUrl || "";
   }
+  // อ่านข้อความพร้อมเพย์จากรูป เพื่อสร้าง QR ที่ใส่ยอดของแต่ละคำสั่งซื้อ
+  // ใช้รูปที่ Admin อัปโหลดก่อน ถ้าไม่ใช่ QR พร้อมเพย์ (หรือยังไม่มี) ใช้ QR ของร้านในเว็บ img/qr_code/
+  if (store && orders.some((o) => o.status === "pending_payment")) {
+    store.ppPayload = (store.qrUrl && (await ppReadImage(store.qrUrl))) || (await ppReadImage(site(STORE_QR_FILE)));
+  }
+}
+
+// QR ของคำสั่งซื้อ: ใส่ยอดไว้แล้ว ถ้าอ่านรูป QR ของร้านได้ ไม่อย่างนั้นใช้รูปเดิม (ลูกค้าพิมพ์ยอดเอง)
+function payQr(o) {
+  const payload = store?.ppPayload && ppWithAmount(store.ppPayload, o.total_amount);
+  const src = payload && ppImage(payload);
+  if (src)
+    return `<figure class="pay-qr">
+    <figcaption>สแกนจ่ายด้วยพร้อมเพย์</figcaption>
+    <img src="${src}" alt="QR พร้อมเพย์ ยอด ${baht(o.total_amount)}">
+    <b class="num">${baht(o.total_amount)}</b>
+    <a class="pay-qr-save" href="${src}" download="HomPB-${o.order_no}-QR.gif">${ic("download", 16)}บันทึกรูป QR</a>
+  </figure>`;
+  if (store?.qrUrl) return `<img src="${esc(store.qrUrl)}" alt="QR พร้อมเพย์">`;
+  return `<span class="muted">ยังไม่มี QR</span>`;
 }
 
 function steps(o) {
@@ -53,10 +74,11 @@ function payBox(o) {
   const rejected = last?.status === "rejected";
   if (o.status !== "pending_payment") return "";
   return `<div class="pay-box">
-  ${store?.qrUrl ? `<img src="${esc(store.qrUrl)}" alt="QR พร้อมเพย์">` : `<span class="muted">ยังไม่มี QR</span>`}
+  ${payQr(o)}
   <div style="display:grid;gap:8px">
     ${rejected ? `<p class="pill bad">สลิปครั้งที่ ${last.attempt_no} ไม่ผ่าน: ${esc(last.reject_reason || "-")} · ส่งใหม่ได้อีก ${2 - last.attempt_no} ครั้ง</p>` : ""}
     <b>โอน ${baht(o.total_amount)}</b>
+    ${store?.ppPayload ? `<span class="muted">สแกน QR แล้วแอปธนาคารจะขึ้นยอดนี้ให้เลย ไม่ต้องพิมพ์เอง</span>` : ""}
     ${store?.bank_account_no ? `<span>${esc(store.bank_name || "")} ${esc(store.bank_account_no)}<br><span class="muted">${esc(store.bank_account_name || store.store_name || "")}</span></span>` : ""}
     ${o.payment_due_at ? `<span class="muted">โอนภายใน ${thDate(o.payment_due_at)} ไม่อย่างนั้นคำสั่งซื้อจะถูกยกเลิก</span>` : ""}
     <div class="field"><label for="slip-${o.id}">แนบสลิป (JPG/PNG/PDF ไม่เกิน 5 MB)</label><input id="slip-${o.id}" type="file" accept="image/jpeg,image/png,application/pdf"></div>
