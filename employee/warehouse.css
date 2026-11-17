@@ -417,3 +417,19 @@ td input.num {
         font-size: 30px;
     }
 }
+
+/* มือถือ/แท็บเล็ต: ตารางเลื่อนแนวนอนได้ (.tw) ให้คอลัมน์ไม่ถูกบีบจนตัดบรรทัดกลางคำ
+   (เลขคำสั่งซื้อ เบอร์โทร ชื่อสินค้า) */
+@media (max-width: 860px) {
+  td {
+    min-width: 6.5em;
+  }
+
+  td:first-child {
+    white-space: nowrap;
+  }
+
+  td .pname {
+    min-width: 220px;
+  }
+}
