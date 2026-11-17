@@ -31,6 +31,7 @@ const IC = {
   x: "M6 6l12 12 M18 6L6 18",
   plus: "M12 5v14 M5 12h14",
   box: "M3 7l9-4 9 4v10l-9 4-9-4z M3 7l9 4 9-4 M12 11v10",
+  download: "M12 4v11 M7 10l5 5 5-5 M5 20h14",
 };
 const ic = (name, size = 20) =>
   `<svg class="ic" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="${IC[name]}"/></svg>`;
