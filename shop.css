@@ -170,6 +170,7 @@
 .shop {
   padding-block: 28px 64px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* เนื้อหาข้างในกว้างแค่ไหนก็ไม่ดันหน้าเกินจอ */
   gap: 24px;
 }
 
@@ -606,9 +607,11 @@
     width: min(100%, 260px);
   }
 
+  /* จอเล็ก (320px) ย่อ QR ตามความกว้าง ไม่ดันการ์ดให้ล้นจอ */
   .pay-box .pay-qr img {
-    width: 200px;
-    height: 200px;
+    width: min(200px, 100%);
+    height: auto;
+    aspect-ratio: 1;
   }
 
   /* cart line: qty + remove move under the name so the name gets the full width */
