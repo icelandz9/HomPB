@@ -1496,7 +1496,10 @@ main.store>* {
 }
 
 /* products */
+/* position: relative: radio ที่ซ่อนไว้ (.sr เป็น absolute) ต้องอยู่ในกล่องนี้
+   ไม่อย่างนั้นมันหลุดออกนอกแถบที่เลื่อนได้ แล้วดันหน้าให้กว้างเกินจอบนมือถือ */
 .chips {
+  position: relative;
   display: flex;
   gap: 8px;
   overflow-x: auto;
