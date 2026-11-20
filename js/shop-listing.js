@@ -16,7 +16,7 @@
 <p class="muted">${count}</p>
 ${
   list.length || samples.length
-    ? `<div class="grid">${list.map((p) => productCard(p, favs)).join("")}${samples.map(sampleCard).join("")}</div>`
+    ? `<div class="grid${isZone && z ? " one-zone" : ""}">${list.map((p) => productCard(p, favs)).join("")}${samples.map(sampleCard).join("")}</div>`
     : `<div class="empty-state">${ic("search", 48)}<p>${q ? "ไม่พบสินค้าที่ค้นหา ลองคำอื่น" : "ยังไม่มีสินค้าในหมวดนี้"}</p><a class="btn" href="${site("search.html")}">ดูสินค้าทั้งหมด</a></div>`
 }`;
 })();

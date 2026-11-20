@@ -119,7 +119,7 @@ body {
   color: var(--ink);
   font-family: var(--body);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 a {
@@ -1418,8 +1418,8 @@ main.store>* {
 }
 
 .sec-head h2 {
-  font-size: clamp(24px, 3vw, 34px);
-  font-weight: 700;
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 600;
 }
 
 .crumb {
@@ -1472,8 +1472,8 @@ main.store>* {
 }
 
 .hero-copy h1 {
-  font-size: clamp(34px, 4.6vw, 58px);
-  font-weight: 700;
+  font-size: clamp(30px, 3.8vw, 46px);
+  font-weight: 600;
 }
 
 .hero-copy p {
@@ -1536,61 +1536,6 @@ main.store>* {
     linear-gradient(0deg, rgba(20, 14, 11, .45) 0%, transparent 45%);
 }
 
-/* การ์ดลอยบนรูป (กระจกฝ้า) */
-.hero-chip {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 18px 12px 12px;
-  border-radius: 18px;
-  background: rgba(23, 17, 14, .72);
-  border: 1px solid rgba(255, 245, 225, .14);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #FFF5E1;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
-}
-
-.hero-chip.chip-a {
-  left: 28px;
-  bottom: 28px;
-}
-
-.hero-chip.chip-b {
-  right: 28px;
-  top: 28px;
-}
-
-.hero-chip .hc-ic {
-  width: 44px;
-  height: 44px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: var(--red);
-  color: #FFF5E1;
-}
-
-.hero-chip .hc-ic svg {
-  width: 26px;
-  height: 26px;
-  stroke-width: 1.6;
-}
-
-.hero-chip b {
-  display: block;
-  font-size: 15px;
-  line-height: 1.3;
-}
-
-.hero-chip small {
-  display: block;
-  font-size: 13px;
-  opacity: .75;
-}
-
 @media (max-width:760px) {
   .hero {
     grid-template-columns: minmax(0, 1fr);
@@ -1607,19 +1552,6 @@ main.store>* {
   .hero-photo::after {
     background: linear-gradient(0deg, rgba(20, 14, 11, .5) 0%, transparent 55%);
   }
-
-  .hero-chip {
-    padding: 8px 14px 8px 8px;
-    gap: 10px;
-  }
-
-  .hero-chip .hc-ic {
-    width: 36px;
-    height: 36px;
-  }
-
-  .hero-chip.chip-a { left: 14px; bottom: 14px; }
-  .hero-chip.chip-b { right: 14px; top: 14px; }
 }
 
 /* rooms */
@@ -1799,16 +1731,26 @@ main.store>* {
 
 .card .zone {
   font-size: 13px;
-  font-weight: 600;
   color: var(--muted-2);
 }
 
+/* หน้าห้องเดียว (zone.html?z=…) ทุกการ์ดอยู่ห้องเดียวกัน ไม่ต้องบอกซ้ำ */
+.one-zone .card .zone {
+  display: none;
+}
+
+/* ชื่อสินค้าน้ำหนักปกติ อ่านสบาย ยาวเกิน 2 บรรทัดตัดด้วย … การ์ดในแถวเดียวกันจะสูงเท่ากัน */
 .card .name {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--ink);
   text-decoration: none;
-  line-height: 1.3;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .card .name:hover {
@@ -1827,7 +1769,7 @@ main.store>* {
   display: flex;
   align-items: baseline;
   gap: 2px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .price .cur {
@@ -1835,7 +1777,57 @@ main.store>* {
 }
 
 .price .amt {
-  font-size: 24px;
+  font-size: 20px;
+}
+
+/* ปุ่มใส่ตะกร้าในการ์ด: ปุ่มเส้นเรียบๆ เป็นสีแดงตอนชี้ หน้ารวมสินค้าจะไม่มีปุ่มแดงเต็มหน้า */
+.card .foot .btn {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+  font-weight: 500;
+}
+
+.card .foot .btn:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--cream);
+}
+
+.card .foot .btn[disabled] {
+  background: var(--sand);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+/* รูปสินค้าพื้นขาว มีเส้นบางๆ กันรูปลอยบนพื้นครีม */
+.card .img {
+  border: 1px solid var(--line);
+}
+
+/* ทางลัดไปแต่ละห้อง ใต้หัวเว็บทุกหน้า */
+.shop-zones {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+}
+
+.shop-zones a {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.shop-zones a:hover,
+.shop-zones a[aria-current="page"] {
+  background: var(--sand);
+  color: var(--ink);
 }
 
 .stock {
@@ -1870,7 +1862,7 @@ main.store>* {
   }
 
   .price .amt {
-    font-size: 19px;
+    font-size: 18px;
   }
 
   /* price on top, cart button full width: long prices (฿24,900) no longer push the button out of the card */
@@ -3039,24 +3031,12 @@ tr.me td {
   .hero-copy > :nth-child(3) { animation-delay: .16s; }
   .hero-copy > :nth-child(4) { animation-delay: .24s; }
 
-  /* รูป hero ซูมออกช้าๆ ตอนเปิดหน้า, การ์ดลอยขึ้นมาแล้วลอยขึ้นลงเบาๆ */
+  /* รูป hero ซูมออกช้าๆ ตอนเปิดหน้า */
   .hero-photo img {
     animation: hp-zoom 1.6s cubic-bezier(.2, .7, .2, 1) both;
   }
 
-  .hero-chip {
-    animation: hp-rise .7s cubic-bezier(.2, .7, .2, 1) both, hp-float 6s ease-in-out infinite;
-  }
 
-  .hero-chip.chip-a { animation-delay: .45s, 1.4s; }
-  .hero-chip.chip-b { animation-delay: .65s, 2.6s; }
-
-  /* กาต้มน้ำในการ์ดวาดเส้นตัวเอง */
-  .hero-art svg path[pathLength] {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: hp-draw 1.6s .7s cubic-bezier(.6, 0, .2, 1) forwards;
-  }
 
   /* ----- การ์ด: ยกขึ้นตอนชี้ ----- */
   .card,
@@ -3104,11 +3084,11 @@ tr.me td {
 
   /* ----- ตัวเลขตะกร้า / หัวใจ: เด้งตอนเปลี่ยน ----- */
   .badge {
-    animation: hp-pop .45s cubic-bezier(.3, 1.6, .5, 1);
+    animation: hp-pop .3s cubic-bezier(.25, 1, .5, 1);
   }
 
   [data-fav].on svg {
-    animation: hp-pop .45s cubic-bezier(.3, 1.6, .5, 1);
+    animation: hp-pop .3s cubic-bezier(.25, 1, .5, 1);
   }
 
   /* ----- เลื่อนหน้าลง: ค่อยๆ ปรากฏ (Chrome / Edge; เบราว์เซอร์อื่นแสดงตามปกติ) ----- */
@@ -3146,14 +3126,7 @@ tr.me td {
   to { scale: 1; }
 }
 
-@keyframes hp-draw {
-  to { stroke-dashoffset: 0; }
-}
 
-@keyframes hp-float {
-  0%, 100% { translate: 0 0; rotate: 0deg; }
-  50% { translate: 0 -8px; rotate: -2deg; }
-}
 
 @keyframes hp-pop {
   0% { scale: .6; }

@@ -48,6 +48,7 @@
     "รายการโปรด": "Favorites",
     "รายการโปรดของฉัน": "My favorites",
     "ตะกร้า": "Cart",
+    "ใส่ตะกร้า": "Add to cart",
     "ตะกร้าสินค้า": "Shopping cart",
     "ติดตามพัสดุ": "Track parcel",
     "คำสั่งซื้อ": "Orders",
