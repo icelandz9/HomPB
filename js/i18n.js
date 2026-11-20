@@ -312,6 +312,33 @@
     "ตอนนี้มีคนสมัครเยอะ ระบบส่งอีเมลยืนยันไม่ทัน ลองใหม่อีกครั้งในอีกประมาณ 1 ชั่วโมง": "Too many sign-ups right now. Please try again in about an hour.",
     "สมัครเสร็จแล้ว เปิดลิงก์ยืนยันในอีเมลก่อนเข้าสู่ระบบ": "Signed up! Open the confirmation link in your email before logging in.",
 
+    // ---------- ลืมรหัสผ่าน / ตั้งรหัสผ่านใหม่ ----------
+    "ลืมรหัสผ่าน?": "Forgot password?",
+    "ลืมรหัสผ่าน": "Forgot password",
+    "ไม่เป็นไร ใส่อีเมลที่ใช้สมัคร แล้วเราจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้": "No problem. Enter the email you signed up with and we'll send you a reset link.",
+    "ลิงก์ใช้ได้ครั้งเดียว และหมดอายุใน 1 ชั่วโมง": "The link works once and expires in 1 hour",
+    "ถ้าไม่เห็นอีเมล ลองดูในโฟลเดอร์ Junk / Spam": "Can't find the email? Check your Junk / Spam folder",
+    "← กลับไปหน้าเข้าสู่ระบบ": "← Back to log in",
+    "เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลนี้": "We'll send a password reset link to this email",
+    "ส่งลิงก์ตั้งรหัสผ่านใหม่": "Send reset link",
+    "นึกออกแล้ว?": "Remembered it?",
+    "กำลังส่ง…": "Sending…",
+    "ขอลิงก์ถี่เกินไป รอสักครู่แล้วลองใหม่": "Too many requests. Please wait a moment and try again.",
+    "ถ้าอีเมลนี้มีบัญชีอยู่ เราส่งลิงก์ตั้งรหัสผ่านใหม่ไปแล้ว เปิดอีเมลแล้วกดลิงก์ภายใน 1 ชั่วโมง": "If this email has an account, we've sent a reset link. Open it within 1 hour.",
+    "ตั้งรหัสผ่านใหม่": "Set a new password",
+    "ตั้งรหัสผ่านใหม่แล้วใช้เข้าสู่ระบบได้ทันที": "Set a new password and use it to log in right away",
+    "รหัสผ่านอย่างน้อย 6 ตัว": "At least 6 characters",
+    "อย่าใช้รหัสเดียวกับเว็บอื่น": "Don't reuse a password from another site",
+    "กำลังตรวจลิงก์…": "Checking the link…",
+    "รหัสผ่านใหม่": "New password",
+    "ยืนยันรหัสผ่านใหม่": "Confirm new password",
+    "บันทึกรหัสผ่านใหม่": "Save new password",
+    "กำลังบันทึก…": "Saving…",
+    "ลิงก์ตั้งรหัสผ่านนี้ใช้ไม่ได้แล้ว (หมดอายุหรือถูกใช้ไปแล้ว) ขอลิงก์ใหม่อีกครั้ง": "This reset link no longer works (expired or already used). Please request a new one.",
+    "ขอลิงก์ใหม่": "Request a new link",
+    "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม": "The new password must be different from the old one",
+    "ตั้งรหัสผ่านใหม่แล้ว เข้าสู่ระบบด้วยรหัสใหม่ได้เลย": "Password updated. Log in with your new password.",
+
     // ---------- โปรไฟล์ ----------
     "← กลับไปหน้าร้าน": "← Back to the store",
     "ข้อมูลส่วนตัว": "Personal information",
@@ -378,6 +405,8 @@
     [/^จำนวนที่คืน (.+)$/, (m) => `Quantity to return: ${m[1]}`],
     [/^สินค้า (.+) มีไม่พอ$/, (m) => `Not enough stock for ${m[1]}`],
     [/^สวัสดี,? (.+)$/, (m) => `Hello, ${m[1]}`],
+    [/^ส่งอีกครั้งได้ใน (\d+) วินาที$/, (m) => `Send again in ${m[1]}s`],
+    [/^ตั้งรหัสผ่านใหม่ให้บัญชี (.+)$/, (m) => `Set a new password for ${m[1]}`],
     [/^สมาชิกตั้งแต่ (\S+) (\d{4})$/, (m) => (LONG_MONTHS[m[1]] ? `Member since ${LONG_MONTHS[m[1]]} ${Number(m[2]) - 543}` : null)],    [/^(.+): (.+)$/, (m) => (DICT[m[1]] ? `${DICT[m[1]]}: ${tr(m[2]) ?? m[2]}` : null)],
   ];
 

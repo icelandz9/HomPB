@@ -343,6 +343,41 @@ input:focus {
   font-size: 20px;
 }
 
+/* hidden ต้องชนะ display ของ form (reset.html ซ่อนฟอร์มจนกว่าลิงก์จะผ่าน) */
+[hidden] {
+  display: none !important;
+}
+
+/* ลิงก์ "ลืมรหัสผ่าน?" ชิดขวาใต้ช่องรหัสผ่าน */
+.forgot {
+  margin-top: -6px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.forgot a {
+  color: var(--red-fg);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forgot a:hover {
+  text-decoration: underline;
+}
+
+/* ลิงก์ที่หน้าตาเหมือนปุ่มหลัก (reset.html: ขอลิงก์ใหม่) */
+.btn-submit.as-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
+#invalid .error-message {
+  display: block;
+}
+
 /* ---------- small screens: stack, short brand strip on top ---------- */
 @media (max-width: 760px) {
   .auth {
