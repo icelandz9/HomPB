@@ -570,7 +570,13 @@
           </div>
         </section>
         <!-- Section -->
-        <section class="member" aria-label="สมัครสมาชิก">
+        <!-- แสดงเฉพาะคนที่ยังไม่ล็อกอิน (js/store-nav.js) กดสมัครแล้วการ์ดนี้ขยายกลายเป็นหน้าสมัครสมาชิก -->
+        <section class="member" aria-label="สมัครสมาชิก" data-guest-only>
+          <span class="member-ic" aria-hidden="true">
+            <svg class="ic " viewBox="0 0 24 24" width="30" height="30">
+              <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+            </svg>
+          </span>
           <div>
             <h2>
               บันทึกของที่ชอบไว้ในรายการโปรด
@@ -580,8 +586,11 @@
               ข้อมูลส่วนตัวของคุณถูกเก็บเป็นความลับ
             </p>
           </div>
-          <a href="auth/register.html" class="btn btn-cream lg" data-register>
+          <a href="auth/register.html" class="btn btn-cream lg member-go" data-register>
             สมัครสมาชิก
+            <svg class="ic " viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M5 12h14 M13 6l6 6-6 6" />
+            </svg>
           </a>
         </section>
         <!-- Section -->

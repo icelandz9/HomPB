@@ -1955,6 +1955,104 @@ main.store>* {
   max-width: 640px;
 }
 
+/* ล็อกอินแล้วไม่ต้องชวนสมัคร (store-nav.js ใส่ class signed-in ที่ <html>) */
+html.signed-in [data-guest-only] {
+  display: none;
+}
+
+.member {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* ชื่อนี้ตรงกับการ์ดในหน้าสมัครสมาชิก: กดแล้วการ์ดขยายกลายเป็นหน้านั้น (View Transition) */
+  view-transition-name: join-card;
+}
+
+/* วงกลมแดงจางๆ มุมขวา */
+.member::before {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -120px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--red) 55%, transparent), transparent 70%);
+  z-index: -1;
+}
+
+.member > div {
+  flex: 1 1 320px;
+}
+
+.member-ic {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: var(--red);
+  color: var(--cream);
+}
+
+.member-ic svg {
+  stroke-width: 1.8;
+}
+
+.member-go {
+  gap: 10px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .member-ic svg {
+    animation: hp-beat 2.4s ease-in-out infinite;
+  }
+
+  .member-go svg {
+    transition: translate .25s cubic-bezier(.2, .7, .2, 1);
+  }
+
+  .member-go:hover svg {
+    translate: 5px 0;
+  }
+
+  /* แสงวิ่งผ่านปุ่มสมัครสมาชิกเป็นระยะ */
+  .member-go {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .member-go::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .55) 50%, transparent 70%);
+    translate: -120% 0;
+    animation: hp-shine 4s 1.5s ease-in-out infinite;
+  }
+
+  /* เปลี่ยนหน้าแบบนุ่มนวล (Chrome / Edge): การ์ดนี้ขยายไปเป็นการ์ดหน้าสมัครสมาชิก */
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-group(join-card) {
+    animation-duration: .55s;
+    animation-timing-function: cubic-bezier(.2, .7, .2, 1);
+  }
+}
+
+@keyframes hp-beat {
+  0%, 70%, 100% { scale: 1; }
+  35% { scale: 1.15; }
+}
+
+@keyframes hp-shine {
+  0%, 60% { translate: -120% 0; }
+  100% { translate: 120% 0; }
+}
+
 /* product detail */
 .pd {
   display: grid;

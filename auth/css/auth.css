@@ -467,6 +467,22 @@ input:focus {
   font-size: 20px;
 }
 
+/* มาจากแบนเนอร์ "สมัครสมาชิก" หน้าแรก: การ์ดนั้นขยายกลายเป็นการ์ดนี้ (View Transition ชื่อเดียวกัน) */
+.auth:has(#registerForm) {
+  view-transition-name: join-card;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-group(join-card) {
+    animation-duration: .55s;
+    animation-timing-function: cubic-bezier(.2, .7, .2, 1);
+  }
+}
+
 /* hidden ต้องชนะ display ของ form (reset.html ซ่อนฟอร์มจนกว่าลิงก์จะผ่าน) */
 [hidden] {
   display: none !important;
