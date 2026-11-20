@@ -169,6 +169,19 @@ input {
     border-color: var(--line-2);
 }
 
+.theme-ic {
+    display: inline-flex;
+    color: var(--red-deep);
+}
+
+.theme-ic svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .logout-btn:hover {
     color: var(--bad);
     background: var(--bad-bg);
