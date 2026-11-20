@@ -1,7 +1,7 @@
 # คู่มือเชื่อม Supabase สำหรับทีม HomPB
 
 ไฟล์นี้บอกว่าแต่ละหน้าต้องดึงหรือบันทึกข้อมูลจากตารางและฟังก์ชันอะไร
-ทุกอย่างอ้างอิงจาก `schema.sql`, `security.sql`, `functions.sql` และ `strorage.sql` ใน branch นี้
+ทุกอย่างอ้างอิงจาก `schema.sql`, `security.sql`, `functions.sql` และ `storage.sql` ใน branch นี้
 
 - [ส่วนกลาง (ทุกคนอ่าน)](#ส่วนกลาง-ทุกคนอ่าน)
 - [FE3: Backoffice](#fe3-backoffice)

@@ -110,7 +110,7 @@ async function send(e) {
   }
   await load();
   render();
-  // ข้อความใหม่จากพนักงานเด้งขึ้นเอง (ต้องเปิด realtime ของ conversations, messages ใน strorage.sql)
+  // ข้อความใหม่จากพนักงานเด้งขึ้นเอง (ต้องเปิด realtime ของ conversations, messages ใน storage.sql)
   let t = null;
   const refresh = () => {
     clearTimeout(t);
