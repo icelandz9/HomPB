@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตั้งรหัสผ่านใหม่ | HomPB</title>
+  <link rel="icon" href="../img/Logo/hompb-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Archivo:wdth,wght@62..125,100..900&display=swap">
+  <link rel="stylesheet" href="css/auth.css">
+  <!-- เปลี่ยนภาษา ไทย / English: โหลดก่อน script อื่น -->
+  <script src="../js/i18n.js"></script>
+</head>
+
+<body>
+  <main class="auth">
+    <section class="brand" aria-label="HomPB">
+      <a href="../index.html" class="logo" aria-label="HomPB หน้าแรก"><img class="logo-ic" src="../img/Logo/hompb-icon.svg" alt="" width="36" height="36">HOMPB</a>
+      <div>
+        <h1>ตั้งรหัสผ่านใหม่</h1>
+        <p>ตั้งรหัสผ่านใหม่แล้วใช้เข้าสู่ระบบได้ทันที</p>
+      </div>
+      <ol class="steps-list">
+        <li class="done">ใส่อีเมลที่ใช้สมัคร</li>
+        <li class="done">เปิดลิงก์ในอีเมล (หมดอายุใน 1 ชั่วโมง)</li>
+        <li class="now" aria-current="step">ตั้งรหัสผ่านใหม่</li>
+      </ol>
+    </section>
+
+    <section class="panel">
+      <a href="login.html" class="back">← กลับไปหน้าเข้าสู่ระบบ</a>
+      <span class="panel-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3 M12 15v2"/></svg></span>
+      <h2>ตั้งรหัสผ่านใหม่</h2>
+      <p class="subtitle" id="who">กำลังตรวจลิงก์…</p>
+
+      <form id="resetForm" novalidate hidden>
+        <div class="form-group">
+          <label for="password">รหัสผ่านใหม่ <small class="label-hint">อย่างน้อย 6 ตัว ไม่ซ้ำกับเว็บอื่น</small></label>
+          <div class="pw">
+            <input type="password" id="password" placeholder="อย่างน้อย 6 ตัว" autocomplete="new-password" required>
+            <button type="button" class="eye" aria-label="แสดงรหัสผ่าน" aria-pressed="false" data-eye="password">
+              <svg class="i-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+              <svg class="i-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /><path d="M3 3l18 18" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">ยืนยันรหัสผ่านใหม่</label>
+          <div class="pw">
+            <input type="password" id="confirmPassword" placeholder="พิมพ์รหัสผ่านอีกครั้ง" autocomplete="new-password" required>
+            <button type="button" class="eye" aria-label="แสดงรหัสผ่าน" aria-pressed="false" data-eye="confirmPassword">
+              <svg class="i-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+              <svg class="i-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /><path d="M3 3l18 18" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <p id="error" class="error-message" role="alert"></p>
+        <button type="submit" id="submitBtn" class="btn-submit">บันทึกรหัสผ่านใหม่</button>
+      </form>
+
+      <!-- ลิงก์ใช้ไม่ได้ (หมดอายุ / ใช้ไปแล้ว / เปิดหน้านี้ตรงๆ) -->
+      <div id="invalid" hidden>
+        <p class="error-message">ลิงก์ตั้งรหัสผ่านนี้ใช้ไม่ได้แล้ว (หมดอายุหรือถูกใช้ไปแล้ว) ขอลิงก์ใหม่อีกครั้ง</p>
+        <a class="btn-submit as-link" href="forgot.html">ขอลิงก์ใหม่</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="js/password-reset.js"></script>
+</body>
+
+</html>

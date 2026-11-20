@@ -11,6 +11,8 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Archivo:wdth,wght@62..125,100..900&display=swap">
   <link rel="stylesheet" href="css/auth.css">
+  <!-- เปลี่ยนภาษา ไทย / English: โหลดก่อน script อื่น -->
+  <script src="../js/i18n.js"></script>
 </head> 
 
 <body>
@@ -62,7 +64,10 @@
           </div>
         </div>
 
+        <p class="forgot"><a href="forgot.html">ลืมรหัสผ่าน?</a></p>
+
         <p id="error" class="error-message" role="alert"></p>
+        <p id="success" class="success-message" role="status"></p>
         <button type="submit" id="submitBtn" class="btn-submit">เข้าสู่ระบบ</button>
       </form>
 

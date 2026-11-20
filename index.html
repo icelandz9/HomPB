@@ -13,6 +13,8 @@
     href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Archivo:wdth,wght@62..125,100..900&display=swap">
   <link rel="icon" href="img/Logo/hompb-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="main_page.css">
+  <!-- เปลี่ยนภาษา ไทย / English: โหลดก่อน script อื่น -->
+  <script src="js/i18n.js"></script>
 </head>
 
 <body>
@@ -20,18 +22,15 @@
     <div style="display:flex;flex-direction:column;min-height:100vh">
       <div class="topbar">
         <div class="wrap topbar-in">
-          <span class="tb-l">
+          <!-- เปลี่ยนภาษา ไทย / English (js/i18n.js) -->
+          <button type="button" class="tb-l lang-btn" data-lang-btn onclick="toggleLang()">
             <svg class="ic " viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0 M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18" />
             </svg>
-            <span>
-              TH
-            </span>
+            <span data-lang="th">TH</span>
             <span class="tb-sep" aria-hidden="true"></span>
-            <span>
-              ไทย
-            </span>
-          </span>
+            <span data-lang="en">EN</span>
+          </button>
           <span class="tb-c">
             <svg class="ic " viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5" />
@@ -277,10 +276,7 @@
               <div class="mcards">
                 <a href="index.html#rooms" class="mcard">
                   <span class="art">
-                    <svg class="ic " viewBox="0 0 24 24" width="96" height="96" aria-hidden="true">
-                      <path
-                        d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3 M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M5 17v2 M19 17v2" />
-                    </svg>
+                    <img src="img/rooms/living.jpg" alt="" loading="lazy">
                   </span>
                   <span class="cap">
                     ช้อปตามห้อง ครบทุกโซน
@@ -288,10 +284,7 @@
                 </a>
                 <a href="orders.html" class="mcard">
                   <span class="art">
-                    <svg class="ic " viewBox="0 0 24 24" width="96" height="96" aria-hidden="true">
-                      <path
-                        d="M2 6h12v10H2z M14 9h4l3 3v4h-7 M4 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
-                    </svg>
+                    <img src="img/services/order.jpg" alt="" loading="lazy">
                   </span>
                   <span class="cap dk">
                     ติดตามคำสั่งซื้อ
@@ -306,10 +299,7 @@
             <div class="mrooms">
               <a href="zone.html?z=bed" class="rtile">
                 <span class="rart">
-                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
-                    <path
-                      d="M3 18V7 M3 14h18v4 M21 14v-2a3 3 0 0 0-3-3h-7v5 M6 11a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0" />
-                  </svg>
+                  <img src="img/rooms/bed.jpg" alt="" width="1000" height="558" loading="lazy">
                 </span>
                 <span class="rname">
                   <span>
@@ -322,9 +312,7 @@
               </a>
               <a href="zone.html?z=bath" class="rtile">
                 <span class="rart">
-                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
-                    <path d="M3 12h18v2a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z M6 12V6a2 2 0 0 1 4 0 M7 19l-1 2 M17 19l1 2" />
-                  </svg>
+                  <img src="img/rooms/bath.jpg" alt="" width="1000" height="558" loading="lazy">
                 </span>
                 <span class="rname">
                   <span>
@@ -337,10 +325,7 @@
               </a>
               <a href="zone.html?z=living" class="rtile">
                 <span class="rart">
-                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
-                    <path
-                      d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3 M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z M5 17v2 M19 17v2" />
-                  </svg>
+                  <img src="img/rooms/living.jpg" alt="" width="1000" height="558" loading="lazy">
                 </span>
                 <span class="rname">
                   <span>
@@ -353,10 +338,7 @@
               </a>
               <a href="zone.html?z=kitchen" class="rtile">
                 <span class="rart">
-                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
-                    <path
-                      d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M2 10h2 M20 10h2 M9 6c0-1 1-2 3-2s3 1 3 2 M12 4v2" />
-                  </svg>
+                  <img src="img/rooms/kitchen.jpg" alt="" width="1000" height="558" loading="lazy">
                 </span>
                 <span class="rname">
                   <span>
@@ -369,9 +351,7 @@
               </a>
               <a href="zone.html?z=appliance" class="rtile">
                 <span class="rart">
-                  <svg class="ic " viewBox="0 0 24 24" width="120" height="120" aria-hidden="true">
-                    <path d="M9 3v5 M15 3v5 M6 8h12v3a6 6 0 0 1-12 0z M12 17v4" />
-                  </svg>
+                  <img src="img/rooms/appliance.jpg" alt="" width="1000" height="558" loading="lazy">
                 </span>
                 <span class="rname">
                   <span>
@@ -381,10 +361,6 @@
                     <path d="M5 12h14 M13 6l6 6-6 6" />
                   </svg>
                 </span>
-              </a width="20" height="20" aria-hidden="true">
-              <path d="M5 12h14 M13 6l6 6-6 6" />
-              </svg>
-              </span>
               </a>
             </div>
           </div>
@@ -399,7 +375,7 @@
                 <a href="chat.html">
                   แชทกับฝ่ายบริการลูกค้า
                 </a>
-                <a href="cart.html">
+                <a href="orders.html">
                   ชำระเงิน &amp; แนบสลิป
                 </a>
               </div>
@@ -428,20 +404,15 @@
               <div class="mcards">
                 <a href="chat.html" class="mcard">
                   <span class="art">
-                    <svg class="ic " viewBox="0 0 24 24" width="96" height="96" aria-hidden="true">
-                      <path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5" />
-                    </svg>
+                    <img src="img/services/chat.jpg" alt="" loading="lazy">
                   </span>
                   <span class="cap">
-                    แชท &amp; บอทตอบคำถามที่พบบ่อย
+                    แชทกับฝ่ายบริการลูกค้า
                   </span>
                 </a>
                 <a href="orders.html" class="mcard">
                   <span class="art">
-                    <svg class="ic " viewBox="0 0 24 24" width="96" height="96" aria-hidden="true">
-                      <path
-                        d="M2 6h12v10H2z M14 9h4l3 3v4h-7 M4 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
-                    </svg>
+                    <img src="img/services/delivery.jpg" alt="" loading="lazy" style="object-position: center 80%">
                   </span>
                   <span class="cap dk">
                     ติดตามสถานะการจัดส่ง
@@ -476,13 +447,25 @@
                 class="btn btn-outline-cream lg">ติดตามคำสั่งซื้อ</a>
             </div>
           </div>
-          <div class="hero-art">
-            <span class="bg" aria-hidden="true">
-              HOM
-            </span>
-            <svg class="ic " viewBox="0 0 24 24" width="300" height="300" aria-hidden="true">
-              <path d="M6 9h11l1 11H5z M17 11.5c3 0 3 5.5 0 5.5 M9 9V6h5v3 M4 9h2" />
-            </svg>
+          <!-- รูปห้องครัว + การ์ดลอย 2 ใบ (ข้อมูลจริงของร้าน) -->
+          <div class="hero-art hero-photo">
+            <img src="img/rooms/kitchen.jpg" alt="" width="1000" height="747" fetchpriority="high">
+            <div class="hero-chip chip-a">
+              <span class="hc-ic">
+                <svg class="ic " viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+                  <path pathLength="1" d="M6 9h11l1 11H5z M17 11.5c3 0 3 5.5 0 5.5 M9 9V6h5v3 M4 9h2" />
+                </svg>
+              </span>
+              <span><b>สินค้ากว่า 160 รายการ</b><small>ครบ 5 ห้องในบ้าน</small></span>
+            </div>
+            <div class="hero-chip chip-b">
+              <span class="hc-ic">
+                <svg class="ic " viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+                  <path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h2v2h-2z M18 18h2v2h-2z M18 14h2 M14 18h2v2" />
+                </svg>
+              </span>
+              <span><b>จ่ายผ่านพร้อมเพย์</b><small>สแกนแล้วยอดขึ้นเอง</small></span>
+            </div>
           </div>
         </section>
         <!-- Section -->
@@ -587,7 +570,13 @@
           </div>
         </section>
         <!-- Section -->
-        <section class="member" aria-label="สมัครสมาชิก">
+        <!-- แสดงเฉพาะคนที่ยังไม่ล็อกอิน (js/store-nav.js) กดสมัครแล้วการ์ดนี้ขยายกลายเป็นหน้าสมัครสมาชิก -->
+        <section class="member" aria-label="สมัครสมาชิก" data-guest-only>
+          <span class="member-ic" aria-hidden="true">
+            <svg class="ic " viewBox="0 0 24 24" width="30" height="30">
+              <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+            </svg>
+          </span>
           <div>
             <h2>
               บันทึกของที่ชอบไว้ในรายการโปรด
@@ -597,8 +586,11 @@
               ข้อมูลส่วนตัวของคุณถูกเก็บเป็นความลับ
             </p>
           </div>
-          <a href="auth/register.html" class="btn btn-cream lg" data-register>
+          <a href="auth/register.html" class="btn btn-cream lg member-go" data-register>
             สมัครสมาชิก
+            <svg class="ic " viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M5 12h14 M13 6l6 6-6 6" />
+            </svg>
           </a>
         </section>
         <!-- Section -->
@@ -625,14 +617,13 @@
                 <path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5" />
               </svg>
               <b>
-                แชท &amp; บอทตอบคำถาม
+                แชทกับฝ่ายบริการลูกค้า
               </b>
               <span>
                 คุยกับฝ่ายบริการลูกค้าในเวลาทำการ
-                บอทช่วยตอบคำถามที่พบบ่อยอัตโนมัติ
               </span>
             </a>
-            <a href="cart.html" class="svc">
+            <a href="orders.html" class="svc">
               <svg class="ic " viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
                 <path d="M6 3h9l4 4v14H6z M15 3v4h4 M12 17v-6 M9.5 13.5L12 11l2.5 2.5" />
               </svg>
@@ -701,7 +692,7 @@
               <a href="orders.html">
                 ติดตามสถานะการจัดส่ง
               </a>
-              <a href="cart.html">
+              <a href="orders.html">
                 วิธีชำระเงิน &amp; แนบสลิป
               </a>
             </div>
@@ -868,7 +859,7 @@
             <path d="M5 12h14 M13 6l6 6-6 6" />
           </svg>
         </a>
-        <a href="cart.html" class="drow minor">
+        <a href="orders.html" class="drow minor">
           <span class="dic">
             <svg class="ic " viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <path d="M6 3h9l4 4v14H6z M15 3v4h4 M12 17v-6 M9.5 13.5L12 11l2.5 2.5" />

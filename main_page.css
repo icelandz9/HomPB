@@ -452,6 +452,7 @@ p {
 
 .search {
   flex: 1 1 360px;
+  min-width: 0; /* ปุ่ม "Search" (ภาษาอังกฤษยาวกว่า) ไม่ดันแถบให้ล้นจอ ให้ช่องพิมพ์หดแทน */
   display: flex;
   align-items: center;
   gap: 10px;
@@ -569,6 +570,37 @@ p {
   width: 1px;
   height: 14px;
   background: #8A786C;
+}
+
+/* ปุ่มเปลี่ยนภาษา TH | EN (js/i18n.js ใส่ class on ให้ภาษาที่ใช้อยู่) */
+.lang-btn {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--on-dark);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lang-btn [data-lang] {
+  opacity: .55;
+}
+
+.lang-btn [data-lang].on {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.lang-btn:hover [data-lang] {
+  opacity: 1;
+}
+
+.lang-btn:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .theme-btn {
@@ -822,6 +854,87 @@ textarea::placeholder {
   stroke-width: 1;
 }
 
+/* การ์ดรูปในเมนูใหญ่: รูปเต็มกรอบ ซูมนิดตอนชี้ */
+.mcard .art {
+  position: relative;
+  overflow: hidden;
+}
+
+.mcard .art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: scale .5s cubic-bezier(.2, .7, .2, 1);
+}
+
+.mcard:hover .art img {
+  scale: 1.05;
+}
+
+/* การ์ดแบบรูปเต็มใบ: ข้อความทับรูปด้านล่าง ไล่เงาให้อ่านง่าย มีลูกศรบอกว่ากดได้ */
+.mcard:has(.art img) {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.mcard:has(.art img) .art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.mcard:has(.art img) .cap,
+.mcard:has(.art img) .cap.dk {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 56px 20px 18px;
+  background: linear-gradient(180deg, transparent 0%, rgba(20, 14, 11, .88) 70%);
+  color: #FFF5E1;
+}
+
+.mcard:has(.art img) .cap::after {
+  content: "→";
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--red);
+  color: #FFF5E1;
+  font-size: 16px;
+  transition: translate .25s cubic-bezier(.2, .7, .2, 1);
+}
+
+.mcard:has(.art img):hover .cap,
+.mcard:has(.art img):hover .cap.dk {
+  background: linear-gradient(180deg, transparent 0%, rgba(20, 14, 11, .92) 65%);
+}
+
+.mcard:has(.art img):hover .cap::after {
+  translate: 4px 0;
+}
+
+/* รูปห้องในเมนู: เงาไล่ด้านล่างเล็กน้อย ให้ดูมีมิติ */
+.rtile .rart {
+  position: relative;
+}
+
+.rtile .rart::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(20, 14, 11, .35));
+  pointer-events: none;
+}
+
 .mcard .cap {
   padding: 20px 22px;
   background: var(--red);
@@ -872,6 +985,22 @@ textarea::placeholder {
   width: 42%;
   height: auto;
   stroke-width: 1;
+}
+
+/* รูปห้องในกรอบโค้ง */
+.rtile .rart {
+  overflow: hidden;
+}
+
+.rtile .rart img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: scale .5s cubic-bezier(.2, .7, .2, 1);
+}
+
+.rtile:hover .rart img {
+  scale: 1.05;
 }
 
 .rtile:hover {
@@ -954,14 +1083,15 @@ textarea::placeholder {
     display: none !important;
   }
 
+  /* ปุ่มภาษา | ข้อความแชท | ปุ่มธีม */
   .topbar-in {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     min-height: 44px;
     gap: 8px;
     padding-block: 4px;
   }
 
-  .tb-l {
+  .tb-l .ic {
     display: none;
   }
 
@@ -1381,6 +1511,86 @@ main.store>* {
   stroke-width: .9;
 }
 
+/* hero แบบรูปจริง: รูปเต็มกรอบ ไล่สีแดงจากฝั่งข้อความให้กลืนกัน */
+.hero-photo {
+  padding: 0;
+  isolation: isolate;
+}
+
+.hero-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.hero-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--red) 55%, transparent) 0%, transparent 35%),
+    linear-gradient(0deg, rgba(20, 14, 11, .45) 0%, transparent 45%);
+}
+
+/* การ์ดลอยบนรูป (กระจกฝ้า) */
+.hero-chip {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px 12px 12px;
+  border-radius: 18px;
+  background: rgba(23, 17, 14, .72);
+  border: 1px solid rgba(255, 245, 225, .14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #FFF5E1;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
+}
+
+.hero-chip.chip-a {
+  left: 28px;
+  bottom: 28px;
+}
+
+.hero-chip.chip-b {
+  right: 28px;
+  top: 28px;
+}
+
+.hero-chip .hc-ic {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--red);
+  color: #FFF5E1;
+}
+
+.hero-chip .hc-ic svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.6;
+}
+
+.hero-chip b {
+  display: block;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.hero-chip small {
+  display: block;
+  font-size: 13px;
+  opacity: .75;
+}
+
 @media (max-width:760px) {
   .hero {
     grid-template-columns: minmax(0, 1fr);
@@ -1389,6 +1599,27 @@ main.store>* {
   .hero-art {
     min-height: 220px;
   }
+
+  .hero-photo {
+    min-height: 260px;
+  }
+
+  .hero-photo::after {
+    background: linear-gradient(0deg, rgba(20, 14, 11, .5) 0%, transparent 55%);
+  }
+
+  .hero-chip {
+    padding: 8px 14px 8px 8px;
+    gap: 10px;
+  }
+
+  .hero-chip .hc-ic {
+    width: 36px;
+    height: 36px;
+  }
+
+  .hero-chip.chip-a { left: 14px; bottom: 14px; }
+  .hero-chip.chip-b { right: 14px; top: 14px; }
 }
 
 /* rooms */
@@ -1535,6 +1766,7 @@ main.store>* {
 
 .card .img {
   position: relative;
+  overflow: hidden; /* รูปที่ขยายตอน hover ไม่ล้นมุมโค้ง */
   aspect-ratio: 1/1;
   max-width: 100%;
   border-radius: 16px;
@@ -1721,6 +1953,104 @@ main.store>* {
 .member p {
   color: #E9DCCB;
   max-width: 640px;
+}
+
+/* ล็อกอินแล้วไม่ต้องชวนสมัคร (store-nav.js ใส่ class signed-in ที่ <html>) */
+html.signed-in [data-guest-only] {
+  display: none;
+}
+
+.member {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* ชื่อนี้ตรงกับการ์ดในหน้าสมัครสมาชิก: กดแล้วการ์ดขยายกลายเป็นหน้านั้น (View Transition) */
+  view-transition-name: join-card;
+}
+
+/* วงกลมแดงจางๆ มุมขวา */
+.member::before {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -120px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--red) 55%, transparent), transparent 70%);
+  z-index: -1;
+}
+
+.member > div {
+  flex: 1 1 320px;
+}
+
+.member-ic {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: var(--red);
+  color: var(--cream);
+}
+
+.member-ic svg {
+  stroke-width: 1.8;
+}
+
+.member-go {
+  gap: 10px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .member-ic svg {
+    animation: hp-beat 2.4s ease-in-out infinite;
+  }
+
+  .member-go svg {
+    transition: translate .25s cubic-bezier(.2, .7, .2, 1);
+  }
+
+  .member-go:hover svg {
+    translate: 5px 0;
+  }
+
+  /* แสงวิ่งผ่านปุ่มสมัครสมาชิกเป็นระยะ */
+  .member-go {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .member-go::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .55) 50%, transparent 70%);
+    translate: -120% 0;
+    animation: hp-shine 4s 1.5s ease-in-out infinite;
+  }
+
+  /* เปลี่ยนหน้าแบบนุ่มนวล (Chrome / Edge): การ์ดนี้ขยายไปเป็นการ์ดหน้าสมัครสมาชิก */
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-group(join-card) {
+    animation-duration: .55s;
+    animation-timing-function: cubic-bezier(.2, .7, .2, 1);
+  }
+}
+
+@keyframes hp-beat {
+  0%, 70%, 100% { scale: 1; }
+  35% { scale: 1.15; }
+}
+
+@keyframes hp-shine {
+  0%, 60% { translate: -120% 0; }
+  100% { translate: 120% 0; }
 }
 
 /* product detail */
@@ -2688,6 +3018,146 @@ tr.me td {
   .chip {
     transition: background-color .15s, border-color .15s, color .15s;
   }
+}
+
+/* =====================================================================
+   Motion: เคลื่อนไหวเบาๆ ให้เว็บดูมีชีวิต (ปิดเองถ้าผู้ใช้ตั้ง "ลดการเคลื่อนไหว" ในเครื่อง)
+   - หน้าแรก: ข้อความ hero ค่อยๆ ขึ้นมา, กาต้มน้ำวาดเส้นเอง แล้วลอยขึ้นลงช้าๆ
+   - การ์ดสินค้า/ห้อง/บริการ: ยกขึ้นเล็กน้อยตอนชี้ รูปขยายนิดหน่อย
+   - เลื่อนหน้าลง: การ์ดและหัวข้อค่อยๆ ปรากฏ (เบราว์เซอร์ที่รองรับ animation-timeline)
+   - ตะกร้า/หัวใจ: ตัวเลขและหัวใจเด้งตอนเปลี่ยน, ปุ่มยุบลงนิดตอนกด
+   hover ใช้ translate / scale ส่วนการปรากฏตอนเลื่อนใช้ transform จึงทำงานพร้อมกันได้ไม่ทับกัน
+   ===================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* ----- หน้าแรก: hero ----- */
+  .hero-copy > * {
+    animation: hp-rise .7s cubic-bezier(.2, .7, .2, 1) both;
+  }
+
+  .hero-copy > :nth-child(2) { animation-delay: .08s; }
+  .hero-copy > :nth-child(3) { animation-delay: .16s; }
+  .hero-copy > :nth-child(4) { animation-delay: .24s; }
+
+  /* รูป hero ซูมออกช้าๆ ตอนเปิดหน้า, การ์ดลอยขึ้นมาแล้วลอยขึ้นลงเบาๆ */
+  .hero-photo img {
+    animation: hp-zoom 1.6s cubic-bezier(.2, .7, .2, 1) both;
+  }
+
+  .hero-chip {
+    animation: hp-rise .7s cubic-bezier(.2, .7, .2, 1) both, hp-float 6s ease-in-out infinite;
+  }
+
+  .hero-chip.chip-a { animation-delay: .45s, 1.4s; }
+  .hero-chip.chip-b { animation-delay: .65s, 2.6s; }
+
+  /* กาต้มน้ำในการ์ดวาดเส้นตัวเอง */
+  .hero-art svg path[pathLength] {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: hp-draw 1.6s .7s cubic-bezier(.6, 0, .2, 1) forwards;
+  }
+
+  /* ----- การ์ด: ยกขึ้นตอนชี้ ----- */
+  .card,
+  .room,
+  .svc,
+  .mcard {
+    transition: translate .25s cubic-bezier(.2, .7, .2, 1), background-color .15s, border-color .15s, color .15s;
+  }
+
+  .card:hover,
+  .room:hover,
+  .svc:hover {
+    translate: 0 -4px;
+  }
+
+  .card .img img,
+  .room .ph {
+    transition: scale .5s cubic-bezier(.2, .7, .2, 1);
+  }
+
+  .card:hover .img img {
+    scale: 1.05;
+  }
+
+  .room {
+    overflow: hidden;
+  }
+
+  .room:hover .ph {
+    scale: 1.04;
+  }
+
+  /* ----- ปุ่ม: ยุบลงนิดตอนกด ----- */
+  .btn,
+  .icon-btn,
+  .sh-ic {
+    transition: scale .12s, background-color .15s, border-color .15s, color .15s;
+  }
+
+  .btn:active:not(:disabled),
+  .icon-btn:active,
+  .sh-ic:active {
+    scale: .96;
+  }
+
+  /* ----- ตัวเลขตะกร้า / หัวใจ: เด้งตอนเปลี่ยน ----- */
+  .badge {
+    animation: hp-pop .45s cubic-bezier(.3, 1.6, .5, 1);
+  }
+
+  [data-fav].on svg {
+    animation: hp-pop .45s cubic-bezier(.3, 1.6, .5, 1);
+  }
+
+  /* ----- เลื่อนหน้าลง: ค่อยๆ ปรากฏ (Chrome / Edge; เบราว์เซอร์อื่นแสดงตามปกติ) ----- */
+  @supports (animation-timeline: view()) {
+    .sec-head,
+    .card,
+    .room,
+    .svc,
+    .shop .panel {
+      animation: hp-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@keyframes hp-rise {
+  from { opacity: 0; translate: 0 18px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+/* ใช้ transform (ไม่ใช่ translate) เพราะ animation แบบ fill both จะทับ translate ตอน hover ตลอด */
+@keyframes hp-reveal {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes hp-ghost {
+  from { opacity: 0; translate: -40px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@keyframes hp-zoom {
+  from { scale: 1.08; }
+  to { scale: 1; }
+}
+
+@keyframes hp-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes hp-float {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  50% { translate: 0 -8px; rotate: -2deg; }
+}
+
+@keyframes hp-pop {
+  0% { scale: .6; }
+  100% { scale: 1; }
 }
 
 

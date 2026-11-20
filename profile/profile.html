@@ -11,6 +11,8 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Archivo:wdth,wght@62..125,100..900&display=swap">
     <link rel="stylesheet" href="profile.css">
+  <!-- เปลี่ยนภาษา ไทย / English: โหลดก่อน script อื่น -->
+  <script src="../js/i18n.js"></script>
 </head>
 
 <body>
@@ -21,9 +23,13 @@
             <a href="../index.html" class="logo" aria-label="HomPB หน้าแรก"><img class="logo-ic" src="../img/Logo/hompb-icon.svg" alt="" width="36" height="36">HOMPB</a>
             <div class="header-actions">
                 <a href="../index.html" class="back-link">&#8592; กลับไปหน้าร้าน</a>
+                <!-- เปลี่ยนภาษา (js/i18n.js) -->
+                <button type="button" class="theme-toggle-btn lang-toggle" data-lang-btn onclick="toggleLang()">
+                    <span data-lang="th">TH</span><span class="sep" aria-hidden="true">|</span><span data-lang="en">EN</span>
+                </button>
                 <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()"
                     aria-label="เปลี่ยนธีม">
-                    <span id="themeIcon">☀️</span> <span id="themeText">โหมดสว่าง</span>
+                    <span id="themeIcon" class="theme-ic" aria-hidden="true"></span><span id="themeText">โหมดสว่าง</span>
                 </button>
                 <!-- signOut() อยู่ใน js/supabase.js: ออกจากระบบแล้วไปหน้า login -->
                 <button type="button" class="theme-toggle-btn logout-btn" onclick="signOut()">ออกจากระบบ</button>
@@ -66,6 +72,7 @@
                 <div class="name-block">
                     <h2 id="displayFullName">&nbsp;</h2>
                     <p class="username" id="displayUsername">&nbsp;</p>
+                    <p class="member-since" id="memberSince" hidden></p>
                 </div>
 
                 <!-- Edit Profile Button -->
@@ -75,19 +82,20 @@
                 <nav class="quick-links" aria-label="ทางลัด">
                     <a href="../orders.html">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>
-                        <span>คำสั่งซื้อของฉัน</span><i>&#8250;</i>
+                        <span>คำสั่งซื้อของฉัน</span><b class="count" id="countOrders"></b><i>&#8250;</i>
                     </a>
                     <a href="../favorites.html">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
-                        <span>รายการโปรด</span><i>&#8250;</i>
+                        <span>รายการโปรด</span><b class="count" id="countFavs"></b><i>&#8250;</i>
                     </a>
                     <a href="../cart.html">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>
-                        <span>ตะกร้าสินค้า</span><i>&#8250;</i>
+                        <span>ตะกร้าสินค้า</span><b class="count" id="countCart"></b><i>&#8250;</i>
                     </a>
                 </nav>
             </aside>
 
+            <div class="main-col">
             <!-- ===== ขวา: ข้อมูลส่วนตัว (ดู / แก้ไข) ===== -->
             <section class="profile-card main-card">
 
@@ -164,6 +172,16 @@
                 </div>
 
             </section>
+
+            <!-- ===== คำสั่งซื้อล่าสุด 3 รายการ ===== -->
+            <section class="profile-card main-card recent-card" id="recentCard" hidden>
+                <div class="card-head">
+                    <h3 class="card-title">คำสั่งซื้อล่าสุด</h3>
+                    <a href="../orders.html" class="see-all">ดูทั้งหมด &#8250;</a>
+                </div>
+                <div id="recentOrders"></div>
+            </section>
+            </div>
         </div>
     </main>
 
@@ -203,7 +221,55 @@
             me = await requireLogin(); // ยังไม่ล็อกอิน → ไปหน้า login แล้วกลับมาหน้านี้
             await loadProfileData();
             renderView();
+            loadActivity(); // ตัวเลขข้างทางลัด + คำสั่งซื้อล่าสุด (โหลดทีหลัง ไม่ให้หน้าค้าง)
         };
+
+        // ===================== ACTIVITY =====================
+        const ORDER_STATUS = {
+            pending_payment: ['รอชำระเงิน', 'warn'], awaiting_approval: ['รอตรวจสลิป', 'warn'],
+            approved: ['ชำระแล้ว · รอจัดส่ง', 'ok'], shipping: ['กำลังจัดส่ง', 'ok'], delivered: ['ส่งถึงแล้ว', 'ok'],
+            cancelled: ['ยกเลิก', 'bad'], refunded: ['คืนเงินแล้ว', 'neutral'],
+        };
+        const baht = (n) => '฿' + Number(n).toLocaleString('th-TH');
+        const shortDate = (d) => new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+
+        async function loadActivity() {
+            const [o, f, c, p] = await Promise.all([
+                sb.from('orders').select('id, order_no, status, total_amount, created_at, order_items (product_name, quantity)', { count: 'exact' })
+                    .eq('user_id', me.id).order('created_at', { ascending: false }).limit(3),
+                sb.from('favorites').select('product_id', { count: 'exact', head: true }).eq('user_id', me.id),
+                sb.from('cart_items').select('quantity').eq('user_id', me.id),
+                sb.from('profiles').select('created_at').eq('id', me.id).single(),
+            ]);
+            const setCount = (id, n) => {
+                const el = document.getElementById(id);
+                if (el && n > 0) el.textContent = n;
+            };
+            setCount('countOrders', o.count || 0);
+            setCount('countFavs', f.count || 0);
+            setCount('countCart', (c.data || []).reduce((s, x) => s + x.quantity, 0));
+
+            if (p.data?.created_at) {
+                const el = document.getElementById('memberSince');
+                el.textContent = 'สมาชิกตั้งแต่ ' + new Date(p.data.created_at).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+                el.hidden = false;
+            }
+
+            if (o.error || me.role !== 'customer') return; // บัญชีพนักงานไม่มีคำสั่งซื้อ
+            const box = document.getElementById('recentOrders');
+            box.innerHTML = (o.data || []).length
+                ? o.data.map((x) => {
+                    const [label, tone] = ORDER_STATUS[x.status] || [x.status, 'neutral'];
+                    const items = (x.order_items || []).map((i) => `${i.product_name} × ${i.quantity}`).join(', ');
+                    return `<a class="recent-order" href="../orders.html?id=${x.id}">
+                        <div class="ro-main"><b>HPB${x.order_no}</b><span class="pill ${tone}">${label}</span></div>
+                        <p class="ro-items">${escapeHtml(items)}</p>
+                        <div class="ro-foot"><span>${shortDate(x.created_at)}</span><b>${baht(x.total_amount)}</b></div>
+                    </a>`;
+                }).join('')
+                : `<div class="empty-addr">ยังไม่มีคำสั่งซื้อ <a href="../index.html">เลือกซื้อสินค้า</a></div>`;
+            document.getElementById('recentCard').hidden = false;
+        }
 
         // ข้อมูลจริงจากตาราง profiles + addresses (รูปโปรไฟล์ยังเก็บในเบราว์เซอร์ เพราะฐานข้อมูลไม่มีช่องรูป)
         async function loadProfileData() {
@@ -256,13 +322,12 @@
             document.documentElement.setAttribute('data-theme', theme);
             const icon = document.getElementById('themeIcon');
             const text = document.getElementById('themeText');
-            if (theme === 'dark') {
-                if (icon) icon.textContent = '☀️';
-                if (text) text.textContent = 'โหมดสว่าง';
-            } else {
-                if (icon) icon.textContent = '🌙';
-                if (text) text.textContent = 'โหมดมืด';
-            }
+            // ไอคอนเส้นแบบเดียวกับหน้าร้าน (เดิมเป็นอีโมจิ ☀️ ซึ่งแต่ละเครื่องวาดไม่เหมือนกัน)
+            const svg = (d) => `<svg viewBox="0 0 24 24" width="18" height="18"><path d="${d}"/></svg>`;
+            const SUN = 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8 M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4';
+            const MOON = 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z';
+            if (icon) icon.innerHTML = svg(theme === 'dark' ? SUN : MOON);
+            if (text) text.textContent = theme === 'dark' ? 'โหมดสว่าง' : 'โหมดมืด';
         }
         // If you change the CSS theme, the colors will be adjusted to suit the theme you have selected.
 

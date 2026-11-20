@@ -116,6 +116,10 @@ $("form").addEventListener("submit", async (e) => {
   busy(false);
 });
 
+// มาจากหน้าตั้งรหัสผ่านใหม่ (reset.html)
+if (!isRegister && new URLSearchParams(location.search).get("reset") === "1")
+  $("#success").textContent = "ตั้งรหัสผ่านใหม่แล้ว เข้าสู่ระบบด้วยรหัสใหม่ได้เลย";
+
 // ล็อกอินค้างไว้อยู่แล้ว ไม่ต้องกรอกใหม่
 currentProfile().then((p) => {
   if (p && p.is_active) goHome(p);

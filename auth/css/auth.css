@@ -158,6 +158,130 @@ body {
   font-weight: 700;
 }
 
+/* ขั้นตอนลืมรหัสผ่าน 1-2-3 (forgot.html / reset.html) */
+.steps-list {
+  list-style: none;
+  counter-reset: step;
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+}
+
+.steps-list li {
+  counter-increment: step;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  opacity: .7;
+}
+
+/* เส้นเชื่อมระหว่างวงกลม */
+.steps-list li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 38px;
+  width: 2px;
+  height: calc(100% - 30px);
+  background: rgba(255, 245, 225, .25);
+}
+
+.steps-list li::before {
+  content: counter(step);
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 245, 225, .45);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.steps-list li.done {
+  opacity: .85;
+}
+
+.steps-list li.done::before {
+  content: "✓";
+  background: rgba(255, 245, 225, .2);
+  border-color: transparent;
+}
+
+.steps-list li.now {
+  opacity: 1;
+  font-weight: 700;
+}
+
+.steps-list li.now::before {
+  background: var(--cream);
+  border-color: var(--cream);
+  color: var(--red);
+  box-shadow: 0 0 0 5px rgba(255, 245, 225, .18);
+}
+
+/* ไอคอนเหนือหัวข้อฝั่งฟอร์ม */
+.panel-ic {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--red-tint, rgba(169, 27, 13, .15));
+  color: var(--red-fg);
+}
+
+.panel-ic svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.label-hint {
+  margin-left: 6px;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 13px;
+}
+
+/* "ไม่เห็นอีเมล?" แสดงหลังส่งลิงก์สำเร็จเท่านั้น */
+.hint-spam {
+  margin-top: -8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.success-message:empty + .hint-spam {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .steps-list li.now::before {
+    animation: step-pulse 2.4s ease-in-out infinite;
+  }
+
+  .success-message:not(:empty) {
+    animation: msg-in .35s cubic-bezier(.2, .7, .2, 1);
+  }
+}
+
+@keyframes step-pulse {
+  50% { box-shadow: 0 0 0 9px rgba(255, 245, 225, .08); }
+}
+
+@keyframes msg-in {
+  from { opacity: 0; translate: 0 -6px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
 /* ---------- form side ---------- */
 .panel {
   padding: 44px 40px;
@@ -341,6 +465,57 @@ input:focus {
   display: inline-block;
   margin-bottom: 24px;
   font-size: 20px;
+}
+
+/* มาจากแบนเนอร์ "สมัครสมาชิก" หน้าแรก: การ์ดนั้นขยายกลายเป็นการ์ดนี้ (View Transition ชื่อเดียวกัน) */
+.auth:has(#registerForm) {
+  view-transition-name: join-card;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-group(join-card) {
+    animation-duration: .55s;
+    animation-timing-function: cubic-bezier(.2, .7, .2, 1);
+  }
+}
+
+/* hidden ต้องชนะ display ของ form (reset.html ซ่อนฟอร์มจนกว่าลิงก์จะผ่าน) */
+[hidden] {
+  display: none !important;
+}
+
+/* ลิงก์ "ลืมรหัสผ่าน?" ชิดขวาใต้ช่องรหัสผ่าน */
+.forgot {
+  margin-top: -6px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.forgot a {
+  color: var(--red-fg);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.forgot a:hover {
+  text-decoration: underline;
+}
+
+/* ลิงก์ที่หน้าตาเหมือนปุ่มหลัก (reset.html: ขอลิงก์ใหม่) */
+.btn-submit.as-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
+#invalid .error-message {
+  display: block;
 }
 
 /* ---------- small screens: stack, short brand strip on top ---------- */
