@@ -74,6 +74,7 @@ async function renderHeader() {
   ${link("chat.html", "chat", "แชท")}
   ${link("cart.html", "cart", "ตะกร้า")}
   <a href="${account.href}" class="sh-ic" aria-label="${esc(account.text)}">${ic("user", 22)}<span class="lbl">${esc(account.text)}</span></a>
+  ${window.toggleLang ? `<button type="button" class="sh-ic lang-btn" onclick="toggleLang()" aria-label="${window.HOMPB_LANG === "en" ? "เปลี่ยนเป็นภาษาไทย" : "Switch to English"}">${window.HOMPB_LANG === "en" ? "TH" : "EN"}</button>` : ""}
 </nav>
 </div>
 <nav class="wrap shop-zones" aria-label="ห้องต่างๆ">${ZONES.map(([s, n]) => `<a href="${site("zone.html?z=" + s)}"${param("z") === s ? ' aria-current="page"' : ""}>${n}</a>`).join("")}</nav>`;

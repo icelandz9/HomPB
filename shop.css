@@ -75,6 +75,22 @@
   background: var(--sand);
 }
 
+/* ปุ่มเปลี่ยนภาษา: แสดงภาษาที่จะเปลี่ยนไป (EN / TH) */
+.shop-icons .lang-btn {
+  min-width: 44px;
+  justify-content: center;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-icons .lang-btn:hover {
+  background: var(--sand);
+}
+
 .sh-ic .badge {
   position: absolute;
   top: 2px;

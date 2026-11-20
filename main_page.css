@@ -452,6 +452,7 @@ p {
 
 .search {
   flex: 1 1 360px;
+  min-width: 0; /* ปุ่ม "Search" (ภาษาอังกฤษยาวกว่า) ไม่ดันแถบให้ล้นจอ ให้ช่องพิมพ์หดแทน */
   display: flex;
   align-items: center;
   gap: 10px;
@@ -569,6 +570,37 @@ p {
   width: 1px;
   height: 14px;
   background: #8A786C;
+}
+
+/* ปุ่มเปลี่ยนภาษา TH | EN (js/i18n.js ใส่ class on ให้ภาษาที่ใช้อยู่) */
+.lang-btn {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--on-dark);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lang-btn [data-lang] {
+  opacity: .55;
+}
+
+.lang-btn [data-lang].on {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.lang-btn:hover [data-lang] {
+  opacity: 1;
+}
+
+.lang-btn:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .theme-btn {
@@ -954,14 +986,15 @@ textarea::placeholder {
     display: none !important;
   }
 
+  /* ปุ่มภาษา | ข้อความแชท | ปุ่มธีม */
   .topbar-in {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     min-height: 44px;
     gap: 8px;
     padding-block: 4px;
   }
 
-  .tb-l {
+  .tb-l .ic {
     display: none;
   }
 
