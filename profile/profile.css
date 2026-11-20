@@ -865,6 +865,98 @@ input {
     }
 }
 
+/* ===================== POLISH ===================== */
+/* รูปโปรไฟล์มีวงแหวนสีแบรนด์ */
+#profileImageWrapper img {
+    box-shadow: 0 0 0 3px var(--red), 0 8px 22px rgba(0, 0, 0, .3);
+}
+
+/* แถบบนการ์ดซ้าย: ลายจุดบางๆ ทับสีแดง */
+.cover {
+    height: 110px;
+    background:
+        radial-gradient(rgba(255, 245, 225, .14) 1.2px, transparent 1.3px) 0 0 / 14px 14px,
+        radial-gradient(circle at 85% 20%, rgba(255, 245, 225, .18) 0 40px, transparent 41px),
+        radial-gradient(circle at 10% 110%, rgba(255, 245, 225, .12) 0 60px, transparent 61px),
+        linear-gradient(135deg, var(--red) 0%, var(--red-dk) 100%);
+}
+
+#profileImageWrapper {
+    margin-top: -60px;
+}
+
+/* หัวข้อการ์ดมีขีดสีแดงนำหน้า */
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-title::before {
+    content: "";
+    width: 4px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--red);
+}
+
+.info-group,
+.address-view-item {
+    transition: border-color .2s, background .2s;
+}
+
+.info-group:hover,
+.address-view-item:hover {
+    border-color: var(--line-2);
+}
+
+/* คำสั่งซื้อล่าสุด: แถบสีด้านซ้ายตามสถานะ */
+.recent-order {
+    position: relative;
+    padding-left: 20px;
+    overflow: hidden;
+}
+
+.recent-order::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--line-2);
+}
+
+.recent-order:has(.pill.ok)::before { background: var(--ok); }
+.recent-order:has(.pill.warn)::before { background: var(--warn); }
+.recent-order:has(.pill.bad)::before { background: var(--bad); }
+
+/* เปิดหน้า: การ์ดค่อยๆ ขึ้นมาทีละใบ */
+@media (prefers-reduced-motion: no-preference) {
+    .page-head,
+    .side-card,
+    .main-col > .profile-card {
+        animation: pf-rise .6s cubic-bezier(.2, .7, .2, 1) both;
+    }
+
+    .side-card { animation-delay: .06s; }
+    .main-col > .profile-card:nth-child(1) { animation-delay: .12s; }
+    .main-col > .profile-card:nth-child(2) { animation-delay: .2s; }
+
+    .quick-links a i {
+        transition: translate .2s;
+    }
+
+    .quick-links a:hover i {
+        translate: 3px 0;
+    }
+}
+
+@keyframes pf-rise {
+    from { opacity: 0; translate: 0 14px; }
+    to { opacity: 1; translate: 0 0; }
+}
+
 /* ===================== RESPONSIVE ===================== */
 @media (max-width: 820px) {
     .profile-layout {

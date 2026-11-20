@@ -151,6 +151,10 @@
     "เว็บเดโม: ราคาและข้อมูลเป็นตัวอย่าง เก็บในเบราว์เซอร์นี้เท่านั้น": "Demo site: prices and data are examples only",
     "เร็วๆ นี้": "Coming soon",
     "สินค้าเครื่องใช้ไฟฟ้าอื่นๆ": "More appliances",
+    "สินค้ากว่า 160 รายการ": "160+ products",
+    "ครบ 5 ห้องในบ้าน": "For all 5 rooms",
+    "จ่ายผ่านพร้อมเพย์": "Pay with PromptPay",
+    "สแกนแล้วยอดขึ้นเอง": "Scan and the amount fills in",
 
     // ---------- การ์ดสินค้า / หน้าสินค้า ----------
     "เพิ่มลงตะกร้า": "Add to cart",
@@ -338,6 +342,10 @@
     "ขอลิงก์ใหม่": "Request a new link",
     "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม": "The new password must be different from the old one",
     "ตั้งรหัสผ่านใหม่แล้ว เข้าสู่ระบบด้วยรหัสใหม่ได้เลย": "Password updated. Log in with your new password.",
+    "ใส่อีเมลที่ใช้สมัคร": "Enter your sign-up email",
+    "เปิดลิงก์ในอีเมล (หมดอายุใน 1 ชั่วโมง)": "Open the link in the email (expires in 1 hour)",
+    "ไม่เห็นอีเมล? ลองดูในโฟลเดอร์ Junk / Spam": "No email? Check your Junk / Spam folder",
+    "อย่างน้อย 6 ตัว ไม่ซ้ำกับเว็บอื่น": "6+ characters, not used on other sites",
 
     // ---------- โปรไฟล์ ----------
     "← กลับไปหน้าร้าน": "← Back to the store",
