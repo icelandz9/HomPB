@@ -1568,6 +1568,7 @@ main.store>* {
 
 .card .img {
   position: relative;
+  overflow: hidden; /* รูปที่ขยายตอน hover ไม่ล้นมุมโค้ง */
   aspect-ratio: 1/1;
   max-width: 100%;
   border-radius: 16px;
@@ -2721,6 +2722,136 @@ tr.me td {
   .chip {
     transition: background-color .15s, border-color .15s, color .15s;
   }
+}
+
+/* =====================================================================
+   Motion: เคลื่อนไหวเบาๆ ให้เว็บดูมีชีวิต (ปิดเองถ้าผู้ใช้ตั้ง "ลดการเคลื่อนไหว" ในเครื่อง)
+   - หน้าแรก: ข้อความ hero ค่อยๆ ขึ้นมา, กาต้มน้ำวาดเส้นเอง แล้วลอยขึ้นลงช้าๆ
+   - การ์ดสินค้า/ห้อง/บริการ: ยกขึ้นเล็กน้อยตอนชี้ รูปขยายนิดหน่อย
+   - เลื่อนหน้าลง: การ์ดและหัวข้อค่อยๆ ปรากฏ (เบราว์เซอร์ที่รองรับ animation-timeline)
+   - ตะกร้า/หัวใจ: ตัวเลขและหัวใจเด้งตอนเปลี่ยน, ปุ่มยุบลงนิดตอนกด
+   hover ใช้ translate / scale ส่วนการปรากฏตอนเลื่อนใช้ transform จึงทำงานพร้อมกันได้ไม่ทับกัน
+   ===================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* ----- หน้าแรก: hero ----- */
+  .hero-copy > * {
+    animation: hp-rise .7s cubic-bezier(.2, .7, .2, 1) both;
+  }
+
+  .hero-copy > :nth-child(2) { animation-delay: .08s; }
+  .hero-copy > :nth-child(3) { animation-delay: .16s; }
+  .hero-copy > :nth-child(4) { animation-delay: .24s; }
+
+  .hero-art .bg {
+    animation: hp-ghost 1.1s .15s cubic-bezier(.2, .7, .2, 1) both;
+  }
+
+  .hero-art svg {
+    animation: hp-float 6s 2.2s ease-in-out infinite;
+  }
+
+  .hero-art svg path[pathLength] {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: hp-draw 1.8s .3s cubic-bezier(.6, 0, .2, 1) forwards;
+  }
+
+  /* ----- การ์ด: ยกขึ้นตอนชี้ ----- */
+  .card,
+  .room,
+  .svc,
+  .mcard {
+    transition: translate .25s cubic-bezier(.2, .7, .2, 1), background-color .15s, border-color .15s, color .15s;
+  }
+
+  .card:hover,
+  .room:hover,
+  .svc:hover {
+    translate: 0 -4px;
+  }
+
+  .card .img img,
+  .room .ph {
+    transition: scale .5s cubic-bezier(.2, .7, .2, 1);
+  }
+
+  .card:hover .img img {
+    scale: 1.05;
+  }
+
+  .room {
+    overflow: hidden;
+  }
+
+  .room:hover .ph {
+    scale: 1.04;
+  }
+
+  /* ----- ปุ่ม: ยุบลงนิดตอนกด ----- */
+  .btn,
+  .icon-btn,
+  .sh-ic {
+    transition: scale .12s, background-color .15s, border-color .15s, color .15s;
+  }
+
+  .btn:active:not(:disabled),
+  .icon-btn:active,
+  .sh-ic:active {
+    scale: .96;
+  }
+
+  /* ----- ตัวเลขตะกร้า / หัวใจ: เด้งตอนเปลี่ยน ----- */
+  .badge {
+    animation: hp-pop .45s cubic-bezier(.3, 1.6, .5, 1);
+  }
+
+  [data-fav].on svg {
+    animation: hp-pop .45s cubic-bezier(.3, 1.6, .5, 1);
+  }
+
+  /* ----- เลื่อนหน้าลง: ค่อยๆ ปรากฏ (Chrome / Edge; เบราว์เซอร์อื่นแสดงตามปกติ) ----- */
+  @supports (animation-timeline: view()) {
+    .sec-head,
+    .card,
+    .room,
+    .svc,
+    .shop .panel {
+      animation: hp-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@keyframes hp-rise {
+  from { opacity: 0; translate: 0 18px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+/* ใช้ transform (ไม่ใช่ translate) เพราะ animation แบบ fill both จะทับ translate ตอน hover ตลอด */
+@keyframes hp-reveal {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes hp-ghost {
+  from { opacity: 0; translate: -40px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@keyframes hp-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes hp-float {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  50% { translate: 0 -8px; rotate: -2deg; }
+}
+
+@keyframes hp-pop {
+  0% { scale: .6; }
+  100% { scale: 1; }
 }
 
 
