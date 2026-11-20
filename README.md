@@ -62,7 +62,7 @@
 ```
 HomPB/
 ├── index.html, zone.html, ...   หน้าร้าน (ชั้นบนสุด)
-├── main_page.css, shop.css      สไตล์หน้าร้าน (ธีมมืด/สว่าง)
+├── css/                         main_page.css, shop.css สไตล์หน้าร้าน (ธีมมืด/สว่าง)
 ├── js/
 │   ├── supabase.js              ตัวเชื่อม Supabase และตัวช่วยที่ใช้ทุกหน้า
 │   ├── shop.js                  หัวเว็บ การ์ดสินค้า ตะกร้า รายการโปรด
@@ -73,6 +73,8 @@ HomPB/
 ├── employee/                    หน้าพนักงานแต่ละฝ่าย
 ├── img/                         รูปทั้งหมด (ดู img/README.md)
 ├── backend/                     SQL ของฐานข้อมูลและคู่มือ API
+├── tests/                       SQL ทดสอบฐานข้อมูล (รันใน SQL Editor)
+├── docs/                        เอกสารประกอบ (ตัวอย่าง query ข้อมูล)
 └── supabase/functions/          Edge Function (create-staff)
 ```
 
@@ -85,7 +87,7 @@ HomPB/
 | 1 | `schema.sql` | ตาราง enum และ index |
 | 2 | `security.sql` | ฟังก์ชันเช็กสิทธิ์และ RLS policy |
 | 3 | `functions.sql` | ฟังก์ชันธุรกิจที่หน้าเว็บเรียกด้วย `sb.rpc(...)` เช่น `place_order` |
-| 4 | `strorage.sql` | bucket รูปและสลิป pg_cron และ Realtime (เปิด extension `pg_cron` ก่อน) |
+| 4 | `storage.sql` | bucket รูปและสลิป pg_cron และ Realtime (เปิด extension `pg_cron` ก่อน) |
 | 5 | `seed_products.sql` | หมวดสินค้า 5 ห้อง และสินค้าเริ่มต้น 164 รายการ พร้อมราคา สต็อก และรูป (รันซ้ำได้ ไม่สร้างซ้ำ) |
 
 ฐานข้อมูลที่ตั้งไว้ก่อนมี `fix_on_delete.sql` ให้รัน `backend/fix_on_delete.sql` ครั้งเดียว (ประวัติคำสั่งซื้อ การคืนเงิน การจัดส่ง log สต็อก และแชท ลบตามแถวหลักไม่ได้แล้ว, ลบตาราง `faq_entries`, เพิ่ม index ให้การยกเลิกคำสั่งซื้อที่เลยกำหนดโอน) ผลท้ายไฟล์ต้องเป็น `RESTRICT` ครบ 7 แถว
