@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HomPB Database Design</title>
+<!-- favicon: Tabler Icons "home" (filled), MIT License, tabler.io/icons -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23D7261F'/%3E%3Cg transform='translate(4 3.5)' fill='%23fff'%3E%3Cpath d='M12.707 2.293l9 9c.63 .63 .184 1.707 -.707 1.707h-1v6a3 3 0 0 1 -3 3h-1v-7a3 3 0 0 0 -2.824 -2.995l-.176 -.005h-2a3 3 0 0 0 -3 3v7h-1a3 3 0 0 1 -3 -3v-6h-1c-.89 0 -1.337 -1.077 -.707 -1.707l9 -9a1 1 0 0 1 1.414 0m.293 11.707a1 1 0 0 1 1 1v7h-4v-7a1 1 0 0 1 .883 -.993l.117 -.007z'/%3E%3C/g%3E%3C/svg%3E">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("hompb-slides-theme")||"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
+<link rel="stylesheet" href="css/slides.css">
+</head>
+<body>
+
+<div id="progress" aria-hidden="true"></div>
+
+<!-- SVG icons -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-browser" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.4 0 4 1.5 4.6 4"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12a7 7 0 0 1-10.4 6.1L4 20l1.9-5.4A7 7 0 1 1 20 12z"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M14.8 9.2c-.5-.8-1.6-1.3-2.8-1.3-1.7 0-2.8.9-2.8 2.1 0 2.9 5.8 1.4 5.8 4.2 0 1.2-1.2 2.1-3 2.1-1.3 0-2.5-.5-3-1.4M12 6.5v11"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.2-6.5 8-6.5s7 2.5 8 6.5"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2M14 9l2 2"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 13h6l-1 8 8-10h-6z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-8 6 6 0 0 0-11.4 1.6A3.3 3.3 0 0 0 7 18z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</svg>
+
+<main id="deck">
+
+<!-- 1 COVER -->
+<section class="slide theme-dark" id="slide-1" data-title="HomPB: ภาพรวมฐานข้อมูล">
+  <div class="inner">
+    <div class="cover-grid">
+      <div class="stack">
+        <p class="kicker">Supabase · PostgreSQL · RLS</p>
+        <h1>Hom<span class="hl">PB</span></h1>
+        <p class="lead" style="font-size:20px">E-Commerce เครื่องใช้ไฟฟ้าและของใช้ในบ้าน หมวดสินค้าแบ่งตามห้อง (ครัว ห้องนอน ห้องน้ำ)</p>
+        <p class="lead" style="margin-top:0">Web App แบบ Responsive ที่บังคับสิทธิ์และความถูกต้องของข้อมูลที่ฐานข้อมูล</p>
+        <div class="row" style="margin-top:24px">
+          <a class="btn btn-brass" href="https://hompb.netlify.app" target="_blank" rel="noopener"><svg class="i"><use href="#i-browser"/></svg>เปิดเว็บ hompb.netlify.app</a>
+          <a class="btn" href="#slide-5" data-go="5"><svg class="i"><use href="#i-search"/></svg>Traceability</a>
+          <a class="btn" href="#slide-6" data-go="6"><svg class="i"><use href="#i-db"/></svg>ER Diagram</a>
+        </div>
+      </div>
+      <div class="panel-dark">
+        <h3 style="margin-bottom:4px">สารบัญ</h3>
+        <ul class="toc">
+          <li><span class="n">01–04</span><a href="#slide-2" data-go="2"><b>ปัญหาและกฎธุรกิจ</b><br><span class="muted small">6 role · สถาปัตยกรรม · flow คำสั่งซื้อ · BR1–BR8</span></a></li>
+          <li><span class="n">05–07</span><a href="#slide-5" data-go="5"><b>ออกแบบและตรวจสอบย้อนกลับ</b><br><span class="muted small">Traceability · ER 21 ตาราง · Impact Analysis</span></a></li>
+          <li><span class="n">08–10</span><a href="#slide-8" data-go="8"><b>คุณภาพและความถูกต้องของข้อมูล</b><br><span class="muted small">Index · ON DELETE & Trigger · ACID & Concurrency</span></a></li>
+          <li><span class="n">11–12</span><a href="#slide-11" data-go="11"><b>ความปลอดภัยและคลัง SQL</b><br><span class="muted small">Privacy Matrix & RLS · คลัง SQL ทุกบล็อก</span></a></li>
+          <li><span class="n">13–16</span><a href="#slide-13" data-go="13"><b>เดโมสด ทดสอบ และสรุป</b><br><span class="muted small">พาใช้เว็บ · Test Plan · JOIN · สรุป</span></a></li>
+          <li><span class="n">17</span><a href="#slide-17" data-go="17"><b>ภาคผนวก: Data Dictionary</b><br><span class="muted small">21 ตาราง ทำอะไร เก็บอะไร ใครเข้าถึง</span></a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="fact-strip" style="margin-top:36px">
+      <div><b>21 / 10</b><span>Tables / Enums</span></div>
+      <div><b>34 / 19</b><span>FK / CHECK</span></div>
+      <div><b>16 / 10</b><span>Triggers / RPC</span></div>
+      <div><b>21 / 33</b><span>RLS / Policies</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 ROLES & ARCHITECTURE -->
+<section class="slide theme-dark" id="slide-2" data-title="ปัญหาธุรกิจ 6 role & สถาปัตยกรรม">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">02 · Problem & Architecture</p><h2>ร้านเดียว 6 role แต่ละฝ่ายเห็นข้อมูลไม่เท่ากัน</h2><p class="lead">1 คน 1 role · ผู้เยี่ยมชม (anon) ดูสินค้าได้โดยไม่ล็อกอิน</p></div>
+      <span class="meta-tag">app_role enum</span>
+    </div>
+    <div class="grid g3">
+      <div class="card role"><div class="top"><svg class="i"><use href="#i-key"/></svg><code>admin</code><span class="pill p-brass">3 คน</span></div><b>Admin</b><span class="small muted">ทำได้ทุกอย่าง ยกเว้นแก้/ลบ log · จัดการบัญชีพนักงาน · ดู log · ตั้งค่าร้าน</span></div>
+      <div class="card role"><div class="top"><svg class="i"><use href="#i-box"/></svg><code>warehouse</code><span class="pill p-brass">24-31 คน</span></div><b>คลังสินค้า</b><span class="small muted">จัดการสินค้า ตัวเลือก ราคา รูป หมวด · ปรับสต็อก · ตรวจของคืน</span></div>
+      <div class="card role"><div class="top"><svg class="i"><use href="#i-truck"/></svg><code>shipping</code><span class="pill p-brass">20-24 คน</span></div><b>จัดส่ง</b><span class="small muted">รับงานที่อนุมัติแล้ว · เห็นชื่อ เบอร์ ที่อยู่ผู้รับ · อัปเดตสถานะส่ง</span></div>
+      <div class="card role"><div class="top"><svg class="i"><use href="#i-chat"/></svg><code>sales</code><span class="pill p-brass">12-24 คน</span></div><b>ขาย / บริการลูกค้า</b><span class="small muted">ทีมเดียว · ตอบแชท · แนะนำสินค้า</span></div>
+      <div class="card role"><div class="top"><svg class="i"><use href="#i-coin"/></svg><code>accounting</code><span class="pill p-brass">4-6 คน</span></div><b>บัญชี / การเงิน</b><span class="small muted">ตรวจสลิป · อนุมัติยอด · อนุมัติคืนเงิน</span></div>
+      <div class="card role"><div class="top"><svg class="i"><use href="#i-user"/></svg><code>customer</code><span class="pill p-blue">ลูกค้า</span></div><b>ลูกค้า</b><span class="small muted">สมัครด้วยอีเมลใดก็ได้ · ซื้อ · แชท · ขอคืนเงิน</span></div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <h3>สถาปัตยกรรม</h3>
+      <div class="arch">
+        <div class="box"><svg class="i"><use href="#i-browser"/></svg><b style="display:block;margin-top:6px">Browser</b><span class="small muted">ลูกค้า · พนักงาน · ผู้เยี่ยมชม<br>มือถือ / คอม</span></div>
+        <div class="arrow"><svg class="i"><use href="#i-right"/></svg></div>
+        <div class="box"><svg class="i"><use href="#i-code"/></svg><b style="display:block;margin-top:6px">Web App</b><span class="small muted">HTML + CSS + JavaScript<br>ไม่ใช้ framework · มีแค่ anon key</span><a class="small" href="https://hompb.netlify.app" target="_blank" rel="noopener" style="display:block;margin-top:6px">hompb.netlify.app ↗</a></div>
+        <div class="arrow"><svg class="i"><use href="#i-right"/></svg></div>
+        <div class="box"><svg class="i"><use href="#i-cloud"/></svg><b style="display:block;margin-top:6px">Supabase</b>
+          <div class="sb">
+            <div><b>Auth</b>bcrypt · JWT · rate limit</div>
+            <div><b>PostgreSQL + RLS</b>21 ตาราง · 33 policy</div>
+            <div><b>Storage (private)</b>รูปสินค้า · สลิป</div>
+            <div><b>Realtime</b>แชทลูกค้า ↔ ฝ่ายขาย</div>
+            <div><b>Edge Function</b>create-staff (service_role)</div>
+            <div><b>pg_cron</b>cancel_expired_orders()</div>
+          </div>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:12px">เครื่องมือออกแบบ: Figma (หน้าจอ) · dbdiagram.io (ER) · ไม่มีแชทบอท (ตัดออก 15 ต.ค.) แชทคือลูกค้าคุยกับฝ่ายขาย/บริการโดยตรง</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 FLOW & VALIDATION -->
+<section class="slide theme-light" id="slide-3" data-title="End-to-End Flow & Input Validation">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">03 · Order lifecycle</p><h2>สถานะคำสั่งซื้อ และด่านกันข้อมูลผิดตอนรับเข้า</h2></div>
+      <span class="meta-tag">order_status · 7 ค่า</span>
+    </div>
+    <div class="card">
+      <div class="flow">
+        <div class="st">pending_payment<small>กดสั่ง ตัดสต็อก</small></div><span class="ar">→</span>
+        <div class="st">awaiting_approval<small>อัปสลิป</small></div><span class="ar">→</span>
+        <div class="st ok">approved<small>บัญชีอนุมัติ</small></div><span class="ar">→</span>
+        <div class="st">shipping<small>ฝ่ายจัดส่งส่งออก</small></div><span class="ar">→</span>
+        <div class="st ok">delivered<small>ส่งถึง</small></div><span class="ar">→</span>
+        <div class="st">refunded<small>คืนครบทุกชิ้น</small></div>
+      </div>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="note">สลิปไม่ผ่านครั้งที่ 1 → กลับ <code class="code-inline">pending_payment</code> (payments.status = rejected) อัปโหลดใหม่ได้ภายใน reupload_window_hours</div>
+        <div class="note bad">ไม่ผ่านครั้งที่ 2 / เกินเวลาโอน / ยกเลิกก่อนส่ง → <code class="code-inline">cancelled</code> พร้อมคืนสต็อก + stock_logs</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h3>Input Validation ที่ฐานข้อมูล (หน้าเว็บส่งอะไรมาก็ผ่านด่านนี้ก่อน)</h3>
+      <div class="tbl-wrap"><table class="clean stack-sm">
+        <thead><tr><th>ตาราง.คอลัมน์</th><th>กฎ</th><th>กันอะไร</th><th>error</th><th>เดโม</th></tr></thead>
+        <tbody>
+          <tr><td><code>product_variants.price</code></td><td>CHECK price ≥ 0</td><td>ราคาติดลบ</td><td><span class="pill p-crimson">23514</span></td><td class="mono">C2</td></tr>
+          <tr><td><code>product_variants.stock_qty</code></td><td>CHECK stock_qty ≥ 0</td><td>ขายเกินสต็อก (ด่านสุดท้าย)</td><td><span class="pill p-crimson">23514</span></td><td class="mono">C3</td></tr>
+          <tr><td><code>cart_items.quantity</code></td><td>CHECK quantity &gt; 0</td><td>จำนวน 0 หรือติดลบ</td><td><span class="pill p-crimson">23514</span></td><td class="mono">-</td></tr>
+          <tr><td><code>payments.attempt_no</code></td><td>CHECK attempt_no IN (1,2)</td><td>อัปสลิปครั้งที่ 3</td><td><span class="pill p-crimson">23514</span></td><td class="mono">C4</td></tr>
+          <tr><td><code>shipments</code></td><td>update_shipment() บังคับ carrier + tracking_no (เช็กใน RPC ไม่ใช่ CHECK)</td><td>ส่งของโดยไม่มีเลขพัสดุ</td><td><span class="pill p-brass">P0001</span></td><td class="mono">-</td></tr>
+          <tr><td><code>messages</code></td><td>CHECK body หรือ image_path อย่างน้อย 1</td><td>ข้อความแชทว่าง</td><td><span class="pill p-crimson">23514</span></td><td class="mono">C6</td></tr>
+          <tr><td><code>product_variants.sku</code> · <code>categories.name</code></td><td>UNIQUE</td><td>sku / ชื่อหมวดซ้ำ</td><td><span class="pill p-blue">23505</span></td><td class="mono">C7 C8</td></tr>
+          <tr><td><code>addresses (user_id) WHERE is_default</code></td><td>Partial UNIQUE</td><td>ที่อยู่หลักเกิน 1 ที่ต่อคน</td><td><span class="pill p-blue">23505</span></td><td class="mono">C9</td></tr>
+          <tr><td><code>payments (order_id, attempt_no)</code></td><td>UNIQUE</td><td>สลิปครั้งเดียวกันซ้ำ</td><td><span class="pill p-blue">23505</span></td><td class="mono">-</td></tr>
+          <tr><td><code>addresses.user_id</code></td><td>FK → profiles</td><td>ที่อยู่ของผู้ใช้ที่ไม่มีอยู่จริง</td><td><span class="pill p-brass">23503</span></td><td class="mono">C1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 BUSINESS RULES -->
+<section class="slide theme-light" id="slide-4" data-title="Business Rules BR1-BR8">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">04 · Business Rules</p><h2>กฎธุรกิจ 8 ข้อ และสิ่งที่บังคับใช้ในฐานข้อมูล</h2></div>
+      <span class="meta-tag">BR1–BR8</span>
+    </div>
+    <div class="grid g4">
+      <div class="card br"><span class="code">BR1</span><p>แต่ละตำแหน่งมีสิทธิ์เข้าถึงข้อมูลต่างกัน (RBAC)</p><div class="enf">current_user_role() · has_role()<br>RLS 21 ตาราง · 33 policy</div></div>
+      <div class="card br"><span class="code">BR2</span><p>Admin ทำได้ทุกอย่าง รวมงานคลังและบัญชี ยกเว้นแก้/ลบ log (append-only)</p><div class="enf">stock_logs · audit_logs ·<br>order_status_history มีแค่ policy SELECT</div></div>
+      <div class="card br"><span class="code">BR3</span><p>ดูสินค้าได้โดยไม่ล็อกอิน แต่สั่งซื้อ แชท และส่วนอื่นต้องล็อกอิน</p><div class="enf">policy SELECT ของสินค้าให้ anon<br>view variants_public · RPC เช็ก auth.uid()</div></div>
+      <div class="card br"><span class="code">BR4</span><p>พนักงานล็อกอินได้เฉพาะอีเมลที่ Admin กำหนด ลูกค้าสมัครด้วยอีเมลใดก็ได้</p><div class="enf">Edge Function create-staff<br>trigger handle_new_user → role customer</div></div>
+      <div class="card br"><span class="code">BR5</span><p>1 คำสั่งซื้อ 1 ที่อยู่ จัดส่งได้เฉพาะพนักงานที่มีสิทธิ์</p><div class="enf">orders.shipping_address jsonb (snapshot)<br>is_my_shipping_job() · shipments UNIQUE(order_id)</div></div>
+      <div class="card br"><span class="code">BR6</span><p>เริ่มจัดส่งได้เมื่อฝ่ายบัญชีตรวจสลิปและอนุมัติแล้ว</p><div class="enf">review_payment() → approved<br>claim_shipment() · payments attempt_no IN (1,2)</div></div>
+      <div class="card br"><span class="code">BR7</span><p>ตัดสต็อกตอนสั่งซื้อ คืนสต็อกเมื่อยกเลิก แก้สต็อกได้เฉพาะคลังและ Admin</p><div class="enf">UPDATE … WHERE stock_qty &gt;= n<br>CHECK stock_qty &gt;= 0 · stock_logs</div></div>
+      <div class="card br"><span class="code">BR8</span><p>อนุมัติคืนเงินได้เฉพาะบัญชีหรือ Admin คืนบางชิ้นได้ ของคืนต้องให้คลังตรวจก่อนเข้าสต็อก</p><div class="enf">review_refund() · refund_items<br>return_status · check_return()</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 TRACEABILITY -->
+<section class="slide theme-light" id="slide-5" data-title="Traceability Workbench FR-01–FR-20">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">05 · Traceability</p><h2>FR → BR → Entity → Table → UI → Impact</h2></div>
+      <span class="meta-tag">20 FR · เลือกจากรายการซ้าย</span>
+    </div>
+    <div class="wb">
+      <aside class="wb-side">
+        <label class="wb-search"><svg class="i"><use href="#i-search"/></svg><input id="frSearch" type="search" placeholder="ค้น FR, ตาราง, RPC…" aria-label="ค้นหา FR"></label>
+        <div class="wb-list" id="frList"></div>
+      </aside>
+      <div>
+        <div class="card" style="margin-bottom:10px"><p class="mono" id="frId" style="color:var(--brass)"></p><h3 id="frTitle" style="margin:2px 0 0"></h3><p class="small muted" id="frWho"></p></div>
+        <div class="steps" id="frSteps"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ER -->
+<section class="slide theme-light" id="slide-6" data-title="ER Diagram 21 ตาราง">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">06 · Entity Relationship</p><h2>21 ตาราง 5 กลุ่ม</h2></div>
+      <span class="meta-tag">PK · FK · UQ หลัก</span>
+    </div>
+    <div class="er" id="er"></div>
+    <div class="pills" style="margin-top:14px">
+      <span class="pill p-brass">auth.users 1:1 profiles</span>
+      <span class="pill p-brass">profiles 1:N addresses, orders</span>
+      <span class="pill p-blue">products 1:N product_variants, product_images</span>
+      <span class="pill p-blue">products M:N categories (product_categories)</span>
+      <span class="pill p-emerald">orders 1:N order_items</span>
+      <span class="pill p-emerald">orders 1:N payments (สูงสุด 2)</span>
+      <span class="pill p-crimson">orders 1:0..1 shipments</span>
+      <span class="pill p-emerald">refunds 1:N refund_items</span>
+      <span class="pill p-emerald">order_items 1:N refund_items</span>
+      <span class="pill p-crimson">conversations 1:N messages</span>
+    </div>
+    <a class="btn" href="#slide-17" data-go="17" style="margin-top:14px"><svg class="i"><use href="#i-db"/></svg>อ่านรายละเอียดทุกตาราง (Data Dictionary)</a>
+  </div>
+</section>
+
+<!-- 7 IMPACT -->
+<section class="slide theme-light" id="slide-7" data-title="Impact Analysis 3 กรณี">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">07 · Impact Analysis</p><h2>ถ้ากฎธุรกิจเปลี่ยน ต้องแก้อะไรบ้าง</h2><p class="lead">กรณีสมมติ 3 แบบ · ระบุสิ่งที่ migration ต้องทำ (ไม่ได้รันจริง)</p></div>
+      <span class="meta-tag">what-if</span>
+    </div>
+    <div class="grid g3">
+      <div class="card">
+        <span class="pill p-crimson">ก</span>
+        <h3 style="margin-top:8px">แบ่งส่งหลายรอบ</h3>
+        <div class="cmp"><div><h4>ก่อน</h4>orders 1:0..1 shipments<br><code class="code-inline">order_id UNIQUE</code></div><div><h4>หลัง</h4>orders 1:N shipments<br>+ shipment_items</div></div>
+        <ul class="mig">
+          <li>ลบ UNIQUE (order_id) ของ shipments</li>
+          <li>เพิ่มตาราง shipment_items (shipment_id, order_item_id, quantity)</li>
+          <li>claim_shipment / update_shipment รับรายการชิ้น</li>
+          <li>orders เป็น delivered เมื่อทุก shipment ส่งถึง</li>
+        </ul>
+        <div class="pills" style="margin-top:10px"><span class="pill p-blue">FR-06</span><span class="pill p-blue">FR-16</span><span class="pill p-brass">BR5</span><span class="pill p-brass">BR6</span></div>
+        <p class="tiny muted" style="margin-top:8px">หน้าจอ: employee/delivery.html · orders.html</p>
+      </div>
+      <div class="card">
+        <span class="pill p-crimson">ข</span>
+        <h3 style="margin-top:8px">สินค้าอยู่ได้หมวดเดียว</h3>
+        <div class="cmp"><div><h4>ก่อน</h4>products M:N categories<br>ผ่าน product_categories</div><div><h4>หลัง</h4>categories 1:N products<br><code class="code-inline">products.category_id</code></div></div>
+        <ul class="mig">
+          <li>เพิ่ม products.category_id (FK → categories)</li>
+          <li>ย้ายข้อมูลจาก product_categories แล้วลบตาราง</li>
+          <li>policy 2 ตัวของ product_categories หายไป</li>
+          <li>query หน้าห้อง (B2, B4) เปลี่ยน JOIN</li>
+        </ul>
+        <div class="pills" style="margin-top:10px"><span class="pill p-blue">FR-02</span><span class="pill p-blue">FR-13</span><span class="pill p-brass">BR3</span></div>
+        <p class="tiny muted" style="margin-top:8px">หน้าจอ: index.html · zone.html · employee/warehouse.html</p>
+      </div>
+      <div class="card">
+        <span class="pill p-crimson">ค</span>
+        <h3 style="margin-top:8px">อัปสลิปได้ 3 ครั้ง</h3>
+        <div class="cmp"><div><h4>ก่อน</h4><code class="code-inline">attempt_no IN (1,2)</code><br>ครั้งที่ 2 ไม่ผ่าน = ยกเลิก</div><div><h4>หลัง</h4><code class="code-inline">attempt_no IN (1,2,3)</code><br>ครั้งที่ 3 ไม่ผ่าน = ยกเลิก</div></div>
+        <ul class="mig">
+          <li>แก้ CHECK attempt_no ของ payments</li>
+          <li>submit_payment / review_payment เปลี่ยนเลขครั้งสุดท้าย</li>
+          <li>cancel_expired_orders ใช้เงื่อนไขใหม่</li>
+          <li>เคสทดสอบ C4 ต้องเปลี่ยนเป็นครั้งที่ 4</li>
+        </ul>
+        <div class="pills" style="margin-top:10px"><span class="pill p-blue">FR-05</span><span class="pill p-blue">FR-09</span><span class="pill p-blue">FR-10</span><span class="pill p-brass">BR6</span></div>
+        <p class="tiny muted" style="margin-top:8px">หน้าจอ: orders.html · employee/accounting.html</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 INDEX -->
+<section class="slide theme-light" id="slide-8" data-title="คุณภาพ SQL & Index">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">08 · Query quality</p><h2>Index 20 ตัว จับคู่กับ query ที่ใช้จริง</h2><p class="lead">ไม่นับ PK และ UNIQUE constraint ที่มี index ให้อัตโนมัติ · PostgreSQL ไม่สร้าง index ให้ FK เอง</p></div>
+      <span class="meta-tag">pg_indexes</span>
+    </div>
+    <div class="grid g2">
+      <div class="card tbl-wrap" style="padding:8px 12px"><table class="clean idx-table"><thead><tr><th>Index</th><th>ใช้กับ</th><th>บล็อก</th></tr></thead><tbody></tbody></table></div>
+      <div class="card tbl-wrap" style="padding:8px 12px"><table class="clean idx-table"><thead><tr><th>Index</th><th>ใช้กับ</th><th>บล็อก</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="split split-wide" style="margin-top:20px">
+      <div class="sql-tabs" data-blocks="X1,X2,X3,R1,R2,R3,R4,R5"></div>
+      <div class="note">ผล EXPLAIN และเวลา: <b>รันสดตอนนำเสนอ</b> · ข้อมูลน้อย Postgres อาจเลือก Seq Scan เป็นเรื่องปกติ บล็อก X จึงตั้ง enable_seqscan = off</div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 INTEGRITY -->
+<section class="slide theme-dark" id="slide-9" data-title="Data Integrity, ON DELETE & Triggers">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">09 · Integrity</p><h2>ON DELETE 34 FK และ Trigger 16 ตัว</h2></div>
+      <span class="meta-tag">pg_constraint.confdeltype</span>
+    </div>
+    <div class="split">
+      <div class="stack">
+        <div class="card tbl-wrap"><table class="clean">
+          <thead><tr><th>แบบ</th><th>จำนวน</th><th>ตัวอย่าง</th><th>เหตุผล</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill p-emerald">CASCADE</span></td><td class="mono">11</td><td class="tiny">variants, images, product_categories, cart_items, favorites, addresses, messages</td><td class="tiny">ลูกไม่มีความหมายถ้าไม่มีแม่</td></tr>
+            <tr><td><span class="pill p-crimson">RESTRICT</span></td><td class="mono">7</td><td class="tiny">order_items, order_status_history, refund_items ×2, shipments, conversations.customer_id, stock_logs.variant_id</td><td class="tiny">ประวัติการขาย การส่ง แชท และ log ห้ามหาย</td></tr>
+            <tr><td><span class="pill p-blue">SET NULL</span></td><td class="mono">12</td><td class="tiny">order_items.variant_id, reviewed_by, approved_by, checked_by, handled_by, staff_id, actor_id</td><td class="tiny">เก็บแถวไว้ แค่ตัดลิงก์ไปคน/ตัวเลือกที่ถูกลบ</td></tr>
+            <tr><td><span class="pill p-brass">NO ACTION</span></td><td class="mono">4</td><td class="tiny">orders.user_id, payments.order_id, refunds.order_id, messages.sender_id</td><td class="tiny">ห้ามลบลูกค้าที่มีคำสั่งซื้อ ข้อมูลการเงินต้องอยู่</td></tr>
+          </tbody>
+        </table></div>
+        <div class="card tbl-wrap"><table class="clean">
+          <thead><tr><th>SQLSTATE</th><th>ชื่อ</th><th>เกิดเมื่อ</th><th>บล็อก</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">23503</td><td>foreign_key_violation</td><td class="tiny">FK ไม่มีจริง / ลบแม่ที่ RESTRICT, NO ACTION</td><td class="mono">C1 D3</td></tr>
+            <tr><td class="mono">23514</td><td>check_violation</td><td class="tiny">ราคา/สต็อกติดลบ สลิปครั้งที่ 3 แชทว่าง</td><td class="mono">C2–C4 C6</td></tr>
+            <tr><td class="mono">23505</td><td>unique_violation</td><td class="tiny">sku ซ้ำ หมวดซ้ำ ที่อยู่หลัก 2 ที่</td><td class="mono">C7–C9</td></tr>
+            <tr><td class="mono">23502</td><td>not_null_violation</td><td class="tiny">ไม่ใส่ชื่อสินค้า</td><td class="mono">C11</td></tr>
+            <tr><td class="mono">22P02</td><td>invalid_text_representation</td><td class="tiny">ค่า enum ที่ไม่มี</td><td class="mono">C10</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="stack">
+        <div class="sql-tabs" data-blocks="C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,D1,D2,D3,B11,B12"></div>
+        <div class="note">D1 และ D2 บน schema ปัจจุบัน: variant ทุกตัวมีแถวใน stock_logs (after_stock_change บันทึกตอนสร้าง) และ stock_logs.variant_id เป็น RESTRICT จึงได้ <b>ERROR 23503</b> แทน = ลบตัวเลือกที่มีประวัติสต็อกไม่ได้</div>
+        <div class="card">
+          <h3>Trigger 16 ตัว</h3>
+          <p class="small"><b>ธุรกิจ 5:</b> <span class="mono">handle_new_user · sync_user_email · log_order_status · set_no_return · set_order_refunded</span></p>
+          <p class="small" style="margin-top:6px"><b>กันสิทธิ์ 1:</b> <span class="mono">on_profile_update</span> (ลูกค้าแก้ role / is_active / email ตัวเองไม่ได้)</p>
+          <p class="small" style="margin-top:6px"><b>Audit 6:</b> <span class="mono">after_profile_access_change · after_refund_status_change · after_return_check · after_stock_change · after_price_change · after_store_settings_update</span></p>
+          <p class="small" style="margin-top:6px"><b>เวลา/ผู้แก้ 4:</b> <span class="mono">set_updated_at ×3 · set_updated_by</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 ACID -->
+<section class="slide theme-dark" id="slide-10" data-title="ACID & Concurrency">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">10 · ACID</p><h2>place_order() ทำทั้งหมดใน transaction เดียว</h2></div>
+      <span class="meta-tag">READ COMMITTED</span>
+    </div>
+    <div class="split">
+      <div class="stack">
+        <div class="card">
+          <h3>ตัดสต็อกแบบมีเงื่อนไข</h3>
+          <pre class="sql solo" id="condUpdate"></pre>
+          <ul class="small" style="margin:10px 0 0 18px">
+            <li>ได้ 0 แถว = สต็อกไม่พอ → raise exception → <b>rollback ทั้งชุด</b> (คำสั่งซื้อ รายการ สต็อกรายการก่อนหน้า)</li>
+            <li>CHECK stock_qty ≥ 0 เป็นด่านสุดท้ายถ้ามีโค้ดอื่นลืมเงื่อนไข</li>
+            <li>ราคามาจาก product_variants ใน DB ไม่รับจากหน้าเว็บ</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>2 session สั่งพร้อมกันตอนเหลือ 1 ชิ้น</h3>
+          <div class="tl">
+            <div class="h">เวลา</div><div class="h">Session A</div><div class="h">Session B</div>
+            <div class="t">t1</div><div><code>UPDATE … stock_qty &gt;= 1</code><br>ได้ 1 แถว stock 0 · ถือ row lock</div><div></div>
+            <div class="t">t2</div><div class="muted">pg_sleep(10)</div><div><code>UPDATE … stock_qty &gt;= 1</code><br><span class="wait">รอ row lock</span></div>
+            <div class="t">t3</div><div>COMMIT</div><div class="wait">ยังรอ</div>
+            <div class="t">t4</div><div></div><div>อ่านแถวใหม่ เช็กเงื่อนไขซ้ำ stock 0<br><b>UPDATE 0 แถว</b> ไม่ติดลบ</div>
+          </div>
+          <p class="tiny muted" style="margin-top:8px">ทดสอบจริง 2 session: แท็บ B รอ lock ประมาณ 4 วินาที แล้วได้ 0 แถว</p>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="sql-tabs" data-blocks="E1,E2,E4"></div>
+        <div class="grid g2" id="e3pair"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 PRIVACY -->
+<section class="slide theme-dark" id="slide-11" data-title="Privacy Matrix, RLS & Anti-SQL Injection">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">11 · Privacy & Security</p><h2>ใครเห็นอะไร: RLS คุมแถว view คุมคอลัมน์</h2></div>
+      <span class="meta-tag">7 กลุ่มผู้ใช้</span>
+    </div>
+    <div class="split split-wide">
+      <div class="stack">
+        <div class="card tbl-wrap" style="padding:8px 10px"><table class="clean matrix" id="matrix"></table></div>
+        <p class="tiny muted">C สร้าง · R อ่าน · U แก้ · D ลบ · การเขียนข้อมูลเงิน การส่ง และคำสั่งซื้อทำผ่าน RPC · ข้อมูลเงิน การส่ง แชท ไม่มี policy ลบ · สินค้าเลิกขายใช้ is_active</p>
+        <div class="grid g2">
+          <div class="card"><h3>Privacy level</h3>
+            <p class="small"><span class="pill p-emerald">Public</span> สินค้า ราคา รูป หมวด เวลาทำการ</p>
+            <p class="small" style="margin-top:6px"><span class="pill p-blue">Internal</span> stock_qty, sku, stock_logs, ข้อมูลจัดส่ง</p>
+            <p class="small" style="margin-top:6px"><span class="pill p-brass">Personal/PDPA</span> ชื่อ เบอร์ ที่อยู่ ประวัติซื้อ แชท ชื่อพนักงาน</p>
+            <p class="small" style="margin-top:6px"><span class="pill p-crimson">Confidential</span> สลิป, password hash, audit_logs, สิทธิ์</p>
+          </div>
+          <div class="card"><h3>Security</h3>
+            <ul class="small" style="margin-left:18px">
+              <li>Supabase Auth: bcrypt + JWT + rate limit</li>
+              <li>RLS ทุกตาราง default deny</li>
+              <li>หน้าเว็บไม่ส่งราคา place_order() อ่านจาก DB</li>
+              <li>Storage private + signed URL อายุสั้น jpg/png/pdf</li>
+              <li>Frontend มีแค่ anon key · service_role อยู่ใน Edge Function</li>
+              <li>supabase-js (parameterized) + RPC ไม่ต่อ string SQL</li>
+              <li>ข้อความแชทแสดงเป็น text กัน XSS</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="sql-tabs" data-blocks="G1,G2,G3,G4,G5,S1,S2"></div>
+        <div class="note">G1–G5 ต้องรันบน Supabase จริงที่เปิด RLS แล้ว (ทดสอบในเครื่องได้แค่ว่า syntax รันได้) · S1 หลุด 3 แถว / S2 ได้ 0</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 SQL LIBRARY -->
+<section class="slide theme-dark" id="slide-12" data-title="คลัง SQL Demo">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">12 · Live Q&amp;A</p><h2>คลัง SQL สำหรับการใช้งาน</h2><p class="lead">ทุกบล็อกที่แก้ข้อมูลครอบด้วย begin; … rollback; · SQL Editor รันด้วย role postgres ซึ่งข้าม RLS ได้ ถ้าจะโชว์ RLS ใช้หมวด G</p></div>
+      <span class="meta-tag" id="libCount"></span>
+    </div>
+    <div class="wb">
+      <aside class="wb-side">
+        <label class="wb-search"><svg class="i"><use href="#i-search"/></svg><input id="libSearch" type="search" placeholder="ค้นรหัสหรือชื่อบล็อก…" aria-label="ค้นหาบล็อก SQL"></label>
+        <div class="wb-list" id="libList"></div>
+      </aside>
+      <div class="stack">
+        <div id="libBox"></div>
+        <div class="expect"><h4>ผลที่ต้องเห็น</h4><div id="libExpect"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 WEB WALKTHROUGH -->
+<section class="slide theme-dark" id="slide-13" data-title="พาใช้เว็บ: กดอะไร ตารางไหนเปลี่ยน">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">13 · Live Demo</p><h2>พาใช้เว็บ: กดอะไร แล้วตารางไหนเปลี่ยน</h2><p class="lead">ทำบนเว็บทีละขั้น แล้วเปิดบล็อก SQL คอลัมน์ขวาสุดใน Supabase เพื่อดูแถวที่เพิ่งเขียนลงไป</p></div>
+      <a class="btn btn-brass" href="https://hompb.netlify.app" target="_blank" rel="noopener"><svg class="i"><use href="#i-browser"/></svg>เปิดเว็บ hompb.netlify.app</a>
+    </div>
+    <div class="card tbl-wrap" style="padding:8px 10px">
+      <table class="clean walk stack-sm">
+        <thead><tr><th>#</th><th>ทำบนเว็บ</th><th>หน้า</th><th>ตารางที่อ่าน / เขียน</th><th>ผ่าน</th><th>SQL</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td>ผู้เยี่ยมชมเลือกห้อง ดูสินค้า</td><td><code>index.html</code> → <code>zone.html</code></td><td>อ่าน categories, product_categories, products, <code>variants_public</code> (view ซ่อน stock_qty)</td><td>SELECT แบบ anon</td><td class="mono">B2 J1</td></tr>
+          <tr><td class="n">2</td><td>สมัครสมาชิก</td><td><code>auth/register.html</code></td><td>เขียน auth.users → trigger <code>handle_new_user</code> สร้าง profiles (role = customer)</td><td>Supabase Auth</td><td class="mono">B1 J3</td></tr>
+          <tr><td class="n">3</td><td>ใส่ตะกร้า (กดซ้ำ = เพิ่มจำนวน)</td><td><code>product.html</code></td><td>เขียน cart_items (PK user_id + variant_id)</td><td>upsert + RLS</td><td class="mono">B5</td></tr>
+          <tr><td class="n">4</td><td>กดสั่งซื้อ</td><td><code>cart.html</code></td><td>เขียน orders, order_items · ลด product_variants.stock_qty · เขียน stock_logs, order_status_history</td><td>RPC <code>place_order()</code></td><td class="mono">B6 J4</td></tr>
+          <tr><td class="n">5</td><td>แนบสลิป</td><td><code>orders.html</code></td><td>ไฟล์ลง Storage bucket slips · เขียน payments (attempt_no 1) · orders → awaiting_approval</td><td>RPC <code>submit_payment()</code></td><td class="mono">B7</td></tr>
+          <tr><td class="n">6</td><td>บัญชีตรวจสลิป อนุมัติ / ไม่ผ่าน</td><td><code>employee/accounting.html</code></td><td>แก้ payments.status, reviewed_by · orders → approved หรือกลับ pending_payment</td><td>RPC <code>review_payment()</code></td><td class="mono">B7 B8</td></tr>
+          <tr><td class="n">7</td><td>ฝ่ายจัดส่งรับงาน ใส่เลขพัสดุ</td><td><code>employee/delivery.html</code></td><td>เขียน shipments (handled_by, carrier, tracking_no) · orders → shipping → delivered</td><td>RPC <code>claim_shipment()</code> <code>update_shipment()</code></td><td class="mono">B10</td></tr>
+          <tr><td class="n">8</td><td>ลูกค้าขอคืน → คลังตรวจของ → บัญชีคืนเงิน</td><td><code>orders.html</code> → <code>employee/warehouse.html</code></td><td>เขียน refunds, refund_items (return_status) · คืนสต็อก + stock_logs · audit_logs</td><td>RPC <code>request_refund()</code> <code>check_return()</code> <code>review_refund()</code></td><td class="mono">B11 B12</td></tr>
+          <tr><td class="n">9</td><td>แชทลูกค้า ↔ ฝ่ายขาย</td><td><code>chat.html</code> ↔ <code>employee/service.html</code></td><td>เขียน conversations, messages</td><td>Realtime</td><td class="mono">B13</td></tr>
+          <tr><td class="n">10</td><td>Admin ดูประวัติย้อนหลัง</td><td><code>employee/admin.html</code></td><td>อ่าน order_status_history, stock_logs, audit_logs (trigger เป็นคนเขียน แก้ไม่ได้)</td><td>SELECT + RLS</td><td class="mono">B14</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card"><h3>ทุก role อยู่ตารางเดียวกัน</h3><p class="small muted" style="margin-top:6px">ลูกค้า แอดมิน และพนักงาน 4 ฝ่ายเป็นแถวในตาราง <code>profiles</code> ตารางเดียว เชื่อมกับ <code>auth.users</code> แบบ 1:1 (ใช้ id เดียวกันเป็น PK) แยกกันด้วยคอลัมน์ <code>role</code> (enum app_role 6 ค่า) RLS อ่านค่านี้ผ่าน <code>current_user_role()</code> · ดูได้จากบล็อก J3</p></div>
+      <div class="card"><h3>หน้าเว็บต่อฐานข้อมูลยังไง</h3><p class="small muted" style="margin-top:6px">ใช้ library ตัวเดียวคือ <code>supabase-js 2.45.4</code> (โหลดจาก CDN) ซึ่งมี 4 ส่วน: <b>Auth</b> (สมัคร / ล็อกอิน) · <b>Database</b> (select / upsert / rpc) · <b>Storage</b> (รูปสินค้า สลิป) · <b>Realtime</b> (แชท) ส่วนที่เหลือเป็น HTML + CSS + JavaScript ล้วน</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 TEST PLAN -->
+<section class="slide theme-dark" id="slide-14" data-title="Test Plan 19 เคส">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">14 · Test Plan</p><h2>แผนทดสอบ: ทำอะไร คาดว่าได้อะไร ผลเป็นยังไง</h2><p class="lead">ทุกเคสมีบล็อก SQL ในคลัง (สไลด์ 12) · บล็อกที่แก้ข้อมูลจบด้วย rollback</p></div>
+      <span class="meta-tag">19 เคส</span>
+    </div>
+    <div class="split">
+      <div class="stack">
+        <div class="card tbl-wrap" style="padding:8px 10px">
+          <h3 style="padding:8px 4px 4px">ฟังก์ชันหลัก (ทำบนเว็บ แล้วตรวจด้วย SQL)</h3>
+          <table class="clean tp stack-sm">
+            <thead><tr><th>TC</th><th>ทดสอบ</th><th>ผลที่คาด</th><th>SQL</th><th>ผล</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">TC-01</td><td>สมัครสมาชิก</td><td>profiles เพิ่ม 1 แถว role = customer</td><td class="mono">B1 J3</td><td><span class="pill p-blue">เดโมสด</span></td></tr>
+              <tr><td class="mono">TC-02</td><td>ใส่ตะกร้าสินค้าเดิมซ้ำ</td><td>quantity เพิ่ม ไม่เกิดแถวซ้ำ</td><td class="mono">B5</td><td><span class="pill p-blue">เดโมสด</span></td></tr>
+              <tr><td class="mono">TC-03</td><td>สั่งซื้อ</td><td>orders = pending_payment · stock ลด · stock_logs reason order</td><td class="mono">B6 J4</td><td><span class="pill p-blue">เดโมสด</span></td></tr>
+              <tr><td class="mono">TC-04</td><td>สลิปไม่ผ่านครั้งที่ 1</td><td>กลับ pending_payment · อัปใหม่ได้ attempt_no 2</td><td class="mono">B8</td><td><span class="pill p-blue">เดโมสด</span></td></tr>
+              <tr><td class="mono">TC-05</td><td>เกินเวลาโอน</td><td>cancelled + คืนสต็อก + stock_logs reason cancel</td><td class="mono">B9</td><td><span class="pill p-blue">เดโมสด</span></td></tr>
+              <tr><td class="mono">TC-06</td><td>คืน 1 ใน 2 ชิ้น</td><td>refund_items = pending_check → คลังตรวจ restocked · สถานะยัง delivered</td><td class="mono">B11</td><td><span class="pill p-blue">เดโมสด</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>วิธีอ่านผล</h3>
+          <p class="small" style="margin-top:8px"><span class="pill p-ok">ผ่าน</span> รันบล็อกบน schema เดียวกับที่ deploy (PostgreSQL ในเครื่องด้วย PGlite) แล้วได้ error code / ผลตรงตามคาด · TC-16 ทดสอบด้วย 2 session จริง</p>
+          <p class="small" style="margin-top:6px"><span class="pill p-blue">เดโมสด</span> ทำบนเว็บจริงตอนนำเสนอ แล้วรันบล็อกตรวจผลต่อ</p>
+          <p class="small" style="margin-top:6px"><span class="pill p-brass">Supabase</span> ต้องมีข้อมูลจริงหรือ RLS จริง ทดสอบในเครื่องไม่ได้</p>
+        </div>
+      </div>
+      <div class="card tbl-wrap" style="padding:8px 10px">
+        <h3 style="padding:8px 4px 4px">ข้อมูลผิด / ไม่ครบ · ACID · ความปลอดภัย</h3>
+        <table class="clean tp stack-sm">
+          <thead><tr><th>TC</th><th>ใส่ข้อมูลแบบนี้</th><th>ผลที่คาด</th><th>SQL</th><th>ผล</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">TC-07</td><td>ที่อยู่ของผู้ใช้ที่ไม่มีอยู่จริง</td><td>ERROR 23503 (FK)</td><td class="mono">C1</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-08</td><td>ราคาติดลบ</td><td>ERROR 23514 (CHECK)</td><td class="mono">C2</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-09</td><td>สต็อกติดลบ</td><td>ERROR 23514 (CHECK)</td><td class="mono">C3</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-10</td><td>อัปสลิปครั้งที่ 3</td><td>ERROR 23514 (attempt_no)</td><td class="mono">C4</td><td><span class="pill p-brass">Supabase</span></td></tr>
+            <tr><td class="mono">TC-11</td><td>sku ซ้ำ / ชื่อหมวดซ้ำ</td><td>ERROR 23505 (UNIQUE)</td><td class="mono">C7 C8</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-12</td><td>สถานะที่ไม่มีใน enum</td><td>ERROR 22P02</td><td class="mono">C10</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-13</td><td>ไม่ใส่ชื่อสินค้า</td><td>ERROR 23502 (NOT NULL)</td><td class="mono">C11</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-14</td><td>ลบตัวเลือกที่มีประวัติสต็อก</td><td>ERROR 23503 (RESTRICT) ไม่ลบอะไร</td><td class="mono">D1</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-15</td><td>สั่งหลายชิ้น ตัวที่ 2 สต็อกไม่พอ</td><td>rollback ทั้งชุด สต็อกเท่าเดิม</td><td class="mono">E1</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-16</td><td>2 คนซื้อชิ้นสุดท้ายพร้อมกัน</td><td>คนที่ 2 รอ lock แล้วได้ 0 แถว</td><td class="mono">E3</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-17</td><td>ลูกค้าแก้ role ตัวเอง</td><td>ERROR 42501</td><td class="mono">G3</td><td><span class="pill p-brass">Supabase</span></td></tr>
+            <tr><td class="mono">TC-18</td><td>ลูกค้าลบข้อมูลการเงิน</td><td>ERROR 42501 permission denied</td><td class="mono">G5</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-19</td><td>คำค้น <code>x' or '1'='1</code></td><td>แบบ parameterized ได้ 0 แถว</td><td class="mono">S1 S2</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 JOIN DEMO -->
+<section class="slide theme-dark" id="slide-15" data-title="JOIN Demo พร้อม Output">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">15 · JOIN</p><h2>Query แบบ JOIN และ output ที่ได้</h2><p class="lead">เลือกแท็บ J1–J4 · ซ้ายคือโค้ด ขวาคือผลที่รันได้จริง</p></div>
+      <span class="meta-tag">INNER · LEFT · GROUP BY</span>
+    </div>
+    <div class="split">
+      <div class="stack">
+        <div id="joinBox"></div>
+        <div class="grid g2">
+          <div class="card"><h3>INNER JOIN</h3><p class="small muted" style="margin-top:6px">เอาเฉพาะแถวที่จับคู่ได้ทั้งสองฝั่ง เช่นสินค้าที่มีหมวดและมีตัวเลือก</p></div>
+          <div class="card"><h3>LEFT JOIN</h3><p class="small muted" style="margin-top:6px">เก็บทุกแถวฝั่งซ้าย ฝั่งขวาที่ไม่มีคู่ได้ค่า null เช่นคำสั่งซื้อที่ยังไม่มีการจัดส่ง</p></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card tbl-wrap" style="padding:8px 10px">
+          <h3 style="padding:8px 4px 4px">Output <span class="muted small" id="joinCount"></span></h3>
+          <table class="clean out" id="joinOut"></table>
+        </div>
+        <div class="expect"><h4>อ่าน output ยังไง</h4><div id="joinNote"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 SUMMARY -->
+<section class="slide theme-dark" id="slide-16" data-title="สรุป & เอกสารอ้างอิง">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">16 · Summary</p><h2>สรุปการตัดสินใจออกแบบ</h2></div>
+      <a class="btn btn-brass" href="https://hompb.netlify.app" target="_blank" rel="noopener"><svg class="i"><use href="#i-browser"/></svg>เปิดเว็บ hompb.netlify.app</a>
+    </div>
+    <div class="fact-strip">
+      <div><b>21 / 10</b><span>Tables / Enums</span></div>
+      <div><b>34 / 19</b><span>FK / CHECK</span></div>
+      <div><b>16 / 10</b><span>Triggers / RPC</span></div>
+      <div><b>21 / 33</b><span>RLS / Policies</span></div>
+    </div>
+    <div class="grid g3" style="margin-top:20px">
+      <div class="card"><span class="pill p-brass">1</span><h3 style="margin-top:8px">Snapshot ราคาใน order_items</h3><p class="small muted">เก็บ product_name, variant_name, unit_price ณ ตอนสั่ง แก้ราคาหรือลบตัวเลือกภายหลังประวัติการขายไม่เปลี่ยน (variant_id เป็น SET NULL)</p></div>
+      <div class="card"><span class="pill p-blue">2</span><h3 style="margin-top:8px">Partial UNIQUE ที่อยู่หลัก</h3><p class="small muted">UNIQUE (user_id) WHERE is_default ให้มีที่อยู่ได้หลายที่ แต่ที่อยู่หลักได้ 1 ที่ต่อคน ฐานข้อมูลบังคับเอง ไม่ต้องพึ่งโค้ดหน้าเว็บ</p></div>
+      <div class="card"><span class="pill p-emerald">3</span><h3 style="margin-top:8px">RPC แทน INSERT ตรง</h3><p class="small muted">place_order, submit_payment, review_payment ฯลฯ ทำหลายตารางใน transaction เดียว เช็กสิทธิ์และสถานะในฟังก์ชัน ลูกค้า INSERT orders / payments เองไม่ได้</p></div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <div class="ref-head"><h3>เอกสารอ้างอิง</h3><button class="btn btn-sm" type="button" data-copy="refList"><svg class="i"><use href="#i-copy"/></svg>คัดลอกทั้งหมด</button></div>
+      <ul id="refList" class="small ref-list">
+        <li>PostgreSQL Global Development Group. (2023). <i>PostgreSQL 16 documentation</i>. <a href="https://www.postgresql.org/docs/16/" target="_blank" rel="noopener">https://www.postgresql.org/docs/16/</a></li>
+        <li>Supabase. (n.d.). <i>Supabase documentation: Auth, Row Level Security, Storage, Realtime</i>. <a href="https://supabase.com/docs" target="_blank" rel="noopener">https://supabase.com/docs</a></li>
+        <li>OWASP Foundation. (n.d.). <i>SQL injection prevention cheat sheet</i>. OWASP Cheat Sheet Series. <a href="https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html" target="_blank" rel="noopener">https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 17 DATA DICTIONARY -->
+<section class="slide theme-light" id="slide-17" data-title="ภาคผนวก: Data Dictionary 21 ตาราง">
+  <div class="inner">
+    <div class="head">
+      <div><p class="kicker">17 · Appendix</p><h2>Data Dictionary: แต่ละตารางทำอะไร เก็บอะไร</h2><p class="lead">ข้อมูลจาก backend/schema.sql และ security.sql · เลือกตารางจากรายการซ้าย</p></div>
+      <span class="meta-tag">21 ตาราง</span>
+    </div>
+    <div class="wb">
+      <aside class="wb-side">
+        <label class="wb-search"><svg class="i"><use href="#i-search"/></svg><input id="ddSearch" type="search" placeholder="ค้นชื่อตารางหรือคอลัมน์…" aria-label="ค้นหาตาราง"></label>
+        <div class="wb-list" id="ddList"></div>
+      </aside>
+      <div class="stack">
+        <div class="card">
+          <p class="mono" id="ddGroup" style="color:var(--brass)"></p>
+          <h3 id="ddName" style="font-family:var(--mono);font-size:22px;margin:2px 0 6px"></h3>
+          <p id="ddPurpose"></p>
+          <p class="small muted" id="ddExample" style="margin-top:6px"></p>
+        </div>
+        <div class="card tbl-wrap" style="padding:8px 12px"><table class="clean" id="ddCols"><thead><tr><th>คอลัมน์</th><th>ชนิด</th><th>เก็บอะไร</th></tr></thead><tbody></tbody></table></div>
+        <div class="grid g2">
+          <div class="card"><h3>กฎ / ความสัมพันธ์</h3><ul class="small" id="ddRules" style="margin-left:18px"></ul></div>
+          <div class="card"><h3>ใครเข้าถึง (RLS)</h3><p class="small" id="ddAccess"></p><p class="tiny muted" id="ddUsed" style="margin-top:8px"></p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav id="dock" aria-label="ควบคุมสไลด์">
+  <button id="prev" aria-label="สไลด์ก่อนหน้า"><svg class="i"><use href="#i-left"/></svg></button>
+  <span id="counter" aria-live="polite">1 / 14</span>
+  <button id="next" aria-label="สไลด์ถัดไป"><svg class="i"><use href="#i-right"/></svg></button>
+  <span class="dock-sep"></span>
+  <button id="ovBtn" aria-label="ภาพรวม (G)" title="ภาพรวม (G)"><svg class="i"><use href="#i-grid"/></svg></button>
+  <button id="themeBtn" aria-label="สลับธีมสว่าง/มืด (T)" title="สลับธีม (T)"><svg class="i i-sun"><use href="#i-sun"/></svg><svg class="i i-moon"><use href="#i-moon"/></svg></button>
+  <button id="fsBtn" aria-label="เต็มจอ (F)" title="เต็มจอ (F)"><svg class="i"><use href="#i-full"/></svg></button>
+</nav>
+
+<div id="overview" role="dialog" aria-modal="true" aria-label="ภาพรวมสไลด์">
+  <div class="ov-head"><h2 style="font-size:22px;margin:0">ภาพรวมสไลด์</h2><button class="close" id="ovClose">ปิด (Esc)</button></div>
+  <div class="ov-grid" id="ovGrid"></div>
+</div>
+
+<div id="toast" role="status"><svg class="i"><use href="#i-check"/></svg><span>คัดลอกคำสั่ง SQL แล้ว</span></div>
+
+<script src="js/sql-data.js"></script>
+<script src="js/slides.js"></script>
+</body>
+</html>
