@@ -170,9 +170,9 @@ function productCard(p, favs = new Set()) {
 <button type="button" class="icon-btn fav${favs.has(p.id) ? " on" : ""}" data-fav="${p.id}" aria-pressed="${favs.has(p.id)}" aria-label="บันทึก ${esc(p.name)} ในรายการโปรด">${ic("heart", 22)}</button></div>
 <span class="zone">${esc(p.zone || "-")}</span>
 <a href="${url}" class="name">${esc(p.name)}</a>
-<span class="stock${p.inStock ? "" : " out"}">${ic(p.inStock ? "check" : "x", 14)}${p.inStock ? "มีสินค้า" : "สินค้าหมด"}</span>
+${p.inStock ? "" : `<span class="stock out">${ic("x", 14)}สินค้าหมด</span>`}
 <div class="foot"><span class="price num"><span class="cur">฿</span><span class="amt">${Number(v.price).toLocaleString("th-TH")}</span></span>
-<button type="button" class="btn sm" data-add="${v.id}"${p.inStock ? "" : " disabled"} aria-label="เพิ่ม ${esc(p.name)} ลงตะกร้า">${ic("plus", 16)}<span>ตะกร้า</span></button></div>
+<button type="button" class="btn sm" data-add="${v.id}"${p.inStock ? "" : " disabled"} aria-label="เพิ่ม ${esc(p.name)} ลงตะกร้า">${ic("cart", 16)}<span>ใส่ตะกร้า</span></button></div>
 </article>`;
 }
 
