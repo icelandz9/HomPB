@@ -336,6 +336,8 @@
     "กรุณากรอกเบอร์โทรศัพท์": "Please enter your phone number",
     "กรุณากรอกที่อยู่ให้ครบทุกช่อง": "Please fill in every address field",
     "ลูกค้า": "Customer",
+    "คำสั่งซื้อล่าสุด": "Recent orders",
+    "ดูทั้งหมด ›": "View all ›",
 
     // ---------- ชื่อแท็บ ----------
     "HomPB": "HomPB",
@@ -345,6 +347,9 @@
   const MONTHS = { "ม.ค.": "Jan", "ก.พ.": "Feb", "มี.ค.": "Mar", "เม.ย.": "Apr", "พ.ค.": "May", "มิ.ย.": "Jun",
     "ก.ค.": "Jul", "ส.ค.": "Aug", "ก.ย.": "Sep", "ต.ค.": "Oct", "พ.ย.": "Nov", "ธ.ค.": "Dec" };
   const MON_RE = new RegExp("(\\d{1,2}) (" + Object.keys(MONTHS).map((m) => m.replace(/\./g, "\\.")).join("|") + ")(?: (\\d{4}))?", "g");
+  const LONG_MONTHS = { "มกราคม": "January", "กุมภาพันธ์": "February", "มีนาคม": "March", "เมษายน": "April", "พฤษภาคม": "May",
+    "มิถุนายน": "June", "กรกฎาคม": "July", "สิงหาคม": "August", "กันยายน": "September", "ตุลาคม": "October",
+    "พฤศจิกายน": "November", "ธันวาคม": "December" };
   const date = (s) => s.replace(MON_RE, (_, d, m, y) => `${d} ${MONTHS[m]}${y ? " " + (Number(y) - 543) : ""}`);
 
   // ข้อความที่มีตัวเลข / ชื่อ ปนอยู่ (ลองทีละแบบ ตัวแรกที่ตรงชนะ)
@@ -373,7 +378,7 @@
     [/^จำนวนที่คืน (.+)$/, (m) => `Quantity to return: ${m[1]}`],
     [/^สินค้า (.+) มีไม่พอ$/, (m) => `Not enough stock for ${m[1]}`],
     [/^สวัสดี,? (.+)$/, (m) => `Hello, ${m[1]}`],
-    [/^(.+): (.+)$/, (m) => (DICT[m[1]] ? `${DICT[m[1]]}: ${tr(m[2]) ?? m[2]}` : null)],
+    [/^สมาชิกตั้งแต่ (\S+) (\d{4})$/, (m) => (LONG_MONTHS[m[1]] ? `Member since ${LONG_MONTHS[m[1]]} ${Number(m[2]) - 543}` : null)],    [/^(.+): (.+)$/, (m) => (DICT[m[1]] ? `${DICT[m[1]]}: ${tr(m[2]) ?? m[2]}` : null)],
   ];
 
   // คำเดียวกันแต่ความหมายต่างตามที่อยู่: ป้ายสถานะ (.pill) "ยกเลิก" = ถูกยกเลิกแล้ว ไม่ใช่ปุ่มยกเลิก
