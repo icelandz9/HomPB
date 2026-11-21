@@ -677,19 +677,24 @@ rollback;
 -- =====================================================================
 
 -- @@ E1 Atomicity: สั่ง 2 รายการ รายการที่ 2 สต็อกไม่พอ -> ทั้งชุดยกเลิก สต็อกรายการแรกกลับคืน
---      (ใน place_order() จริงใช้ raise exception ให้ rollback ทั้งฟังก์ชัน)
-drop table if exists stock_before;
-create temp table stock_before as select id, stock_qty from product_variants;
-begin;
-update product_variants set stock_qty = stock_qty - 1
-where id = (select id from product_variants where stock_qty >= 1 order by sku limit 1);
-update product_variants set stock_qty = stock_qty - 999999   -- error 23514 ตรงนี้
-where id = (select id from product_variants order by sku desc limit 1);
-rollback;
--- ตรวจว่าสต็อกเท่าเดิมทุกตัว (ต้องได้ 0 แถว)
-select v.sku, b.stock_qty as before, v.stock_qty as now
-from product_variants v join stock_before b on b.id = v.id
-where v.stock_qty <> b.stock_qty;
+--      กด Run ได้เลยทั้งบล็อก: block begin ... exception คือ transaction ย่อย
+--      error ตรงไหนก็ยกเลิกทุกคำสั่งในบล็อก (เหมือน raise exception ใน place_order())
+--      ผลที่ต้องเห็น: result = ERROR 23514 ... และ rows_changed = 0 (สต็อกเท่าเดิมทุกตัว)
+drop table if exists e1_before, e1_log;
+create temp table e1_before as select id, stock_qty from product_variants;
+create temp table e1_log (result text);
+do $$
+begin
+  update product_variants set stock_qty = stock_qty - 1          -- รายการที่ 1 ตัดสต็อกสำเร็จ
+  where id = (select id from product_variants where stock_qty >= 1 order by sku limit 1);
+  update product_variants set stock_qty = stock_qty - 999999     -- รายการที่ 2 error 23514 ตรงนี้
+  where id = (select id from product_variants order by sku desc limit 1);
+exception when check_violation then
+  insert into e1_log values ('ERROR ' || sqlstate || ': ' || sqlerrm || ' -> rollback ทั้งชุด');
+end $$;
+select (select result from e1_log) as result,
+       count(*) filter (where v.stock_qty <> b.stock_qty) as rows_changed   -- ต้องได้ 0
+from product_variants v join e1_before b on b.id = v.id;
 
 -- @@ E2 ตัดสต็อกแบบมีเงื่อนไข: สต็อกไม่พอ = UPDATE 0 แถว (ไม่ error ไม่ติดลบ)
 begin;
@@ -698,27 +703,37 @@ where id = (select id from product_variants limit 1) and stock_qty >= 999999
 returning sku, stock_qty;
 rollback;
 
--- @@ E3 Concurrency: ของเหลือ 1 ชิ้น 2 คนกดพร้อมกัน
+-- @@ E3 Concurrency: ของเหลือ 1 ชิ้น 2 คนกดพร้อมกัน (กด Run ได้เลย ไม่ต้องแก้ sku)
 --      เปิด SQL Editor 2 แท็บ วาง SQL แท็บ A และแท็บ B ไว้ก่อน
---      กด Run แท็บ A แล้วภายใน 10 วินาทีกด Run แท็บ B
---      ผลที่ต้องเห็น: แท็บ A ได้ 1 แถว (stock 0), แท็บ B ค้างรอจน A เสร็จ แล้วได้ 0 แถว
---      เปลี่ยน 'RC-2L' เป็น sku จริงที่ตั้ง stock_qty = 1 ไว้ก่อนโชว์
+--      กด Run แท็บ A แล้วภายใน 15 วินาทีกด Run แท็บ B (ถ้ามีหน้าต่างเตือน drop ให้กด Run ต่อ)
+--      ผลที่ต้องเห็น: แท็บ A ได้ stock_qty = 0
+--                    แท็บ B หมุนรอจน A เสร็จ แล้วได้ tab_b_bought = 0 (ไม่ติดลบ)
+--      ใช้สินค้า sku แรกเรียงตามตัวอักษร แท็บ A จำสต็อกเดิมไว้ แท็บ B คืนให้เองตอนจบ
 --
 -- ---- แท็บ A ----
 begin;
+create schema if not exists demo;
+create table if not exists demo.e3_backup as                       -- จำสต็อกเดิมไว้คืนทีหลัง
+  select id, stock_qty from product_variants order by sku limit 1;
+update product_variants set stock_qty = 1
+where id = (select id from demo.e3_backup);                        -- ให้เหลือ 1 ชิ้น
 update product_variants set stock_qty = stock_qty - 1
-where sku = 'RC-2L' and stock_qty >= 1
-returning sku, stock_qty;
-select pg_sleep(10);           -- ถือ row lock ไว้ 10 วินาที
+where id = (select id from demo.e3_backup) and stock_qty >= 1;     -- A ซื้อชิ้นสุดท้าย + ถือ row lock
+select pg_sleep(15);                                               -- ถือ lock ไว้ 15 วินาที
+select sku, stock_qty from product_variants
+where id = (select id from demo.e3_backup);                        -- ต้องได้ 0
 commit;
 --
--- ---- แท็บ B ---- (คัดลอกไปวางอีกแท็บ)
--- update product_variants set stock_qty = stock_qty - 1
--- where sku = 'RC-2L' and stock_qty >= 1
--- returning sku, stock_qty;
---
--- ---- คืนสต็อกหลังโชว์เสร็จ ----
--- update product_variants set stock_qty = stock_qty + 1 where sku = 'RC-2L';
+-- ---- แท็บ B ----
+with b as (
+  update product_variants set stock_qty = stock_qty - 1
+  where id = (select id from product_variants order by sku limit 1) and stock_qty >= 1
+  returning id
+)
+select count(*) as tab_b_bought from b;                            -- รอ A เสร็จ แล้วต้องได้ 0
+update product_variants v set stock_qty = k.stock_qty              -- คืนสต็อกเดิม
+from demo.e3_backup k where v.id = k.id;
+drop schema demo cascade;
 
 -- @@ E4 Isolation level ปัจจุบัน
 show transaction_isolation;

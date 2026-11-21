@@ -1,6 +1,23 @@
 /* HomPB slides: สร้างกล่อง SQL, Traceability, ER, Data Dictionary และการเลื่อนสไลด์ (ต้องโหลด sql-data.js ก่อน) */
 /* ---------- แยกบล็อกตามบรรทัด -- @@ ---------- */
 const GROUPS = {A:"A โครงสร้าง",B:"B ฟีเจอร์",R:"R รายงาน",J:"J JOIN",C:"C constraint",D:"D ON DELETE",E:"E ACID",G:"G RLS",S:"S SQL Injection",X:"X EXPLAIN"};
+/* ชื่อสั้นในรายการคลัง SQL (ชื่อเต็ม + คำอธิบายอยู่ในกล่องโค้ดตอนกดเข้าไป) */
+const SHORT = {
+  A1:"ตารางทั้งหมด", A2:"นับ constraint", A3:"กฎ ON DELETE", A4:"CHECK ทั้งหมด", A5:"enum ทั้งหมด", A6:"trigger ทั้งหมด",
+  A7:"index ทั้งหมด", A8:"ฟังก์ชันทั้งหมด", A9:"ดูโค้ดฟังก์ชัน", A10:"RLS เปิดครบไหม", A11:"policy ทั้งหมด",
+  B1:"สมัครสมาชิก", B2:"ดูสินค้าตามห้อง", B3:"ค้นหาสินค้า", B4:"หน้ารายละเอียดสินค้า", B5:"ใส่ตะกร้า / กดหัวใจ", B6:"สั่งซื้อ",
+  B7:"อัปโหลดสลิป → อนุมัติ", B8:"สลิปไม่ผ่าน → อัปใหม่", B9:"ยกเลิกอัตโนมัติ (หมดเวลา)", B10:"จัดส่ง", B11:"คืนเงิน",
+  B12:"ยกเลิกก่อนส่ง", B13:"แชท", B14:"ดู log ย้อนหลัง",
+  R1:"ยอดขายรายวัน", R2:"สินค้าขายดี", R3:"สินค้าใกล้หมด", R4:"คำสั่งซื้อตามสถานะ", R5:"คิวงานแต่ละฝ่าย",
+  J1:"สินค้าในแต่ละห้อง", J2:"นับสินค้าต่อห้อง", J3:"ผู้ใช้แยกตาม role", J4:"รายละเอียดคำสั่งซื้อล่าสุด",
+  C1:"FK ผิด", C2:"ราคาติดลบ", C3:"สต็อกติดลบ", C4:"อัปโหลดสลิปครั้งที่ 3", C5:"ขนส่งไม่มีเลขพัสดุ", C6:"ข้อความแชทว่าง",
+  C7:"SKU ซ้ำ", C8:"ชื่อหมวดซ้ำ", C9:"ที่อยู่หลัก 2 ที่", C10:"ค่า enum ผิด", C11:"ช่องบังคับว่าง",
+  D1:"ลบสินค้า (CASCADE)", D2:"ลบตัวเลือกที่เคยขาย (SET NULL)", D3:"ลบลูกค้าที่มีคำสั่งซื้อ (NO ACTION)",
+  E1:"สั่งไม่ครบ = ยกเลิกทั้งชุด", E2:"สต็อกไม่พอ = ไม่ตัด", E3:"2 คนแย่งชิ้นสุดท้าย", E4:"ระดับ isolation",
+  G1:"ผู้เยี่ยมชมเห็นอะไร", G2:"ลูกค้าเห็นแค่ของตัวเอง", G3:"ลูกค้าแอบเปลี่ยน role", G4:"คลังดูสลิปไม่ได้", G5:"ลบข้อมูลการเงินไม่ได้",
+  S1:"ต่อ string เอง (โดนเจาะ)", S2:"parameterized (ปลอดภัย)",
+  X1:"คิวสลิป", X2:"คำสั่งซื้อของลูกค้า", X3:"ข้อความแชท",
+};
 const BLOCKS = {}; const ORDER = [];
 (function parse(){
   const lines = SQL_TEXT.split("\n"); let cur = null;
@@ -27,9 +44,9 @@ const RESULT = {
   C5:"บน schema ปัจจุบัน: ไม่ error เพราะตาราง shipments ไม่มี CHECK นี้ (บล็อกจบด้วย rollback ข้อมูลไม่เปลี่ยน) กฎ carrier + tracking_no บังคับอยู่ในฟังก์ชัน update_shipment() แทน",
   B11:"คืน 1 ใน 2 ชิ้น สถานะยัง delivered · คืนครบเป็น refunded",
   B12:"return_status = no_return",
-  E1:"ERROR 23514 ที่ update ตัวที่ 2 แล้ว select ตรวจได้ 0 แถว (สต็อกเท่าเดิมทุกตัว)",
+  E1:"result = ERROR 23514 … rollback ทั้งชุด · rows_changed = 0 (สต็อกเท่าเดิมทุกตัว)",
   E2:"UPDATE 0 แถว ไม่ error ไม่ติดลบ",
-  E3:"แท็บ B รอ lock ประมาณ 4 วินาที แล้วได้ 0 แถว",
+  E3:"แท็บ A ได้ stock_qty = 0 · แท็บ B รอ lock จน A commit แล้วได้ tab_b_bought = 0 · สต็อกคืนค่าเดิมเอง",
   E4:"read committed",
   S1:"leaked_rows = 3 (ตามข้อมูลตัวอย่างที่ทดสอบ)",
   S2:"rows = 0",
@@ -120,13 +137,12 @@ document.querySelectorAll(".sql-tabs").forEach((el) => el.appendChild(sqlBox(el.
   const lines = BLOCKS.E3.sql.split("\n");
   const ia = lines.findIndex((l) => l.startsWith("-- ---- แท็บ A"));
   const ib = lines.findIndex((l) => l.startsWith("-- ---- แท็บ B"));
-  const ic = lines.findIndex((l) => l.startsWith("-- ---- คืนสต็อก"));
   const a = lines.slice(ia + 1, ib).filter((l) => l !== "--").join("\n");
-  const b = lines.slice(ib + 1, ic).filter((l) => l !== "--").map((l) => l.replace(/^-- /, "")).join("\n");
+  const b = lines.slice(ib + 1).filter((l) => l.trim() !== "").join("\n");
   const wrap = document.getElementById("e3pair");
-  wrap.append(sqlBox(["E3"], {text:a, label:"E3 · A", titleText:"แท็บ A รันก่อน"}), sqlBox(["E3"], {text:b, label:"E3 · B", titleText:"แท็บ B ภายใน 10 วิ"}));
+  wrap.append(sqlBox(["E3"], {text:a, label:"E3 · A", titleText:"แท็บ A รันก่อน"}), sqlBox(["E3"], {text:b, label:"E3 · B", titleText:"แท็บ B ภายใน 15 วิ"}));
   const n = document.createElement("p"); n.className = "tiny muted"; n.style.gridColumn = "1 / -1";
-  n.textContent = "แท็บ B ตัด -- หน้าบรรทัดจากบล็อก E3 ต้นฉบับ คำสั่งไม่เปลี่ยน · เปลี่ยน 'RC-2L' เป็น sku จริงที่ตั้ง stock_qty = 1 ไว้ · คืนสต็อกหลังโชว์ด้วยบรรทัดท้ายบล็อก E3 ในคลัง SQL";
+  n.textContent = "กด Run ได้เลย ไม่ต้องแก้ sku: แท็บ A ตั้งสต็อกเหลือ 1 แล้วซื้อชิ้นสุดท้าย · แท็บ B คืนสต็อกเดิมให้เองตอนจบ";
   wrap.appendChild(n);
   /* บรรทัดตัดสต็อกจาก B6 ขั้นที่ 3 */
   const b6 = BLOCKS.B6.sql.split("\n"); const s = b6.findIndex((l) => l.startsWith("update product_variants v"));
@@ -283,9 +299,9 @@ const FR = [
   let cur = ORDER[0];
   const pick = (c) => { cur = c; box.show(c); list.querySelectorAll("button").forEach((b) => b.setAttribute("aria-current", b.dataset.code === c)); };
   const render = () => { const s = q.value.trim().toLowerCase(); list.textContent = ""; let last = "";
-    ORDER.filter((c) => !s || (c + " " + BLOCKS[c].title + " " + BLOCKS[c].desc.join(" ")).toLowerCase().includes(s)).forEach((c) => {
+    ORDER.filter((c) => !s || (c + " " + (SHORT[c] || "") + " " + BLOCKS[c].title + " " + BLOCKS[c].desc.join(" ")).toLowerCase().includes(s)).forEach((c) => {
       const g = c[0]; if (g !== last) { last = g; const h = document.createElement("div"); h.className = "wb-group"; h.textContent = GROUPS[g] || g; list.appendChild(h); }
-      const b = document.createElement("button"); b.type = "button"; b.dataset.code = c; const bb = document.createElement("b"); bb.textContent = c; b.append(bb, document.createTextNode(BLOCKS[c].title)); b.onclick = () => pick(c); b.setAttribute("aria-current", c === cur); list.appendChild(b); }); };
+      const b = document.createElement("button"); b.type = "button"; b.dataset.code = c; const bb = document.createElement("b"); bb.textContent = c; b.append(bb, document.createTextNode(SHORT[c] || BLOCKS[c].title)); b.title = BLOCKS[c].title; b.onclick = () => pick(c); b.setAttribute("aria-current", c === cur); list.appendChild(b); }); };
   q.addEventListener("input", render); render(); pick(cur);
 })();
 
