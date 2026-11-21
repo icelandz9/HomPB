@@ -1,10 +1,13 @@
 /* HomPB slides: สร้างกล่อง SQL, Traceability, ER, Data Dictionary และการเลื่อนสไลด์ (ต้องโหลด sql-data.js ก่อน) */
 /* ---------- แยกบล็อกตามบรรทัด -- @@ ---------- */
-const GROUPS = {A:"A โครงสร้าง",B:"B ฟีเจอร์",R:"R รายงาน",J:"J JOIN",C:"C constraint",D:"D ON DELETE",E:"E ACID",G:"G RLS",S:"S SQL Injection",X:"X EXPLAIN",Q:"Q คำถามที่มักโดนถาม",Z:"Z ล้างของค้าง"};
+const GROUPS = {A:"A โครงสร้าง",M:"M คำสั่งพื้นฐาน",B:"B ฟีเจอร์",R:"R รายงาน",J:"J JOIN",C:"C constraint",D:"D ON DELETE",E:"E ACID",G:"G RLS",S:"S SQL Injection",X:"X EXPLAIN",Q:"Q คำถามที่มักโดนถาม",Z:"Z ล้างของค้าง"};
 /* ชื่อสั้นในรายการคลัง SQL (ชื่อเต็ม + คำอธิบายอยู่ในกล่องโค้ดตอนกดเข้าไป) */
 const SHORT = {
   A1:"ตารางทั้งหมด", A2:"นับ constraint", A3:"กฎ ON DELETE", A4:"CHECK ทั้งหมด", A5:"enum ทั้งหมด", A6:"trigger ทั้งหมด",
   A7:"index ทั้งหมด", A8:"ฟังก์ชันทั้งหมด", A9:"ดูโค้ดฟังก์ชัน", A10:"RLS เปิดครบไหม", A11:"policy ทั้งหมด",
+  M1:"SELECT กรองช่วงราคา", M2:"ILIKE + DISTINCT", M3:"GROUP BY + HAVING", M4:"CASE + COALESCE", M5:"Subquery",
+  M6:"วันที่ 7 วันล่าสุด", M7:"INSERT เพิ่มสินค้า", M8:"UPDATE ราคา + audit", M9:"UPDATE เติมสต็อก", M10:"ปิดการขาย (soft delete)",
+  M11:"DELETE จากตะกร้า", M12:"ตั้งค่าร้าน", M13:"VIEW หน้าร้าน", M14:"ดูผู้ใช้ทุก role", M15:"Admin เปลี่ยน role", M16:"ปิดบัญชีพนักงาน",
   B1:"สมัครสมาชิก", B2:"ดูสินค้าตามห้อง", B3:"ค้นหาสินค้า", B4:"หน้ารายละเอียดสินค้า", B5:"ใส่ตะกร้า / กดหัวใจ", B6:"สั่งซื้อ",
   B7:"อัปโหลดสลิป → อนุมัติ", B8:"สลิปไม่ผ่าน → อัปใหม่", B9:"ยกเลิกอัตโนมัติ (หมดเวลา)", B10:"จัดส่ง", B11:"คืนเงิน",
   B12:"ยกเลิกก่อนส่ง", B13:"แชท", B14:"ดู log ย้อนหลัง",
@@ -52,6 +55,22 @@ const HOW = {
   A9:"1 แถว = โค้ดเต็มของ place_order() ของจริง ใช้คู่กับ B6 เพื่อยืนยันว่าเดโมทำแบบเดียวกัน (เปลี่ยนชื่อในบรรทัดล่างได้)",
   A10:"21 แถว rls_enabled = true ทุกตาราง และทุกตารางมี policy อย่างน้อย 1 ตัว",
   A11:"33 แถว = policy ทุกตัว: using_expr คือเงื่อนไขว่าเห็นแถวไหน with_check คือเงื่อนไขตอนเขียน",
+  M1:"10 แถว: สินค้าที่เปิดขาย ราคา 500-2,000 บาท เรียงจากถูก · WHERE กรองแถว · BETWEEN รวมค่าขอบ · LIMIT ตัดจำนวน",
+  M2:"1 แถวต่อห้องไม่ซ้ำ · ILIKE ค้นแบบไม่สนตัวพิมพ์ 'ชุด%' = ขึ้นต้นด้วย ชุด · DISTINCT ตัดห้องซ้ำ",
+  M3:"1 แถวต่อห้องที่มีเกิน 30 ตัวเลือก: จำนวน สต็อกรวม ราคาเฉลี่ย ต่ำสุด สูงสุด · WHERE กรองก่อนรวม HAVING กรองหลังรวม",
+  M4:"10 แถว: price_level และ stock_status คำนวณด้วย CASE · คำอธิบายว่าง COALESCE เติมข้อความแทน",
+  M5:"สินค้าที่แพงกว่าค่าเฉลี่ยของห้องตัวเอง พร้อม room_avg · subquery ในเงื่อนไขอ้างถึงห้องของแถวนั้น (correlated subquery)",
+  M6:"1 แถวต่อวันที่มีคำสั่งซื้อใน 7 วันล่าสุด · date_trunc ตัดเวลาเหลือวัน · now() - interval = ย้อนหลัง 7 วัน",
+  M7:"1 แถว: ตัวเลือก DEMO-M7 ที่เพิ่ง insert (RETURNING คืนแถวที่สร้างทันที ไม่ต้อง select ซ้ำ) · rollback หมวดและสินค้าทดสอบหายหมด",
+  M8:"1 แถว: action = variant.price · changed_by = อีเมลแอดมิน · detail.price = [ราคาเก่า, ราคาใหม่] = trigger บันทึกเอง",
+  M9:"1 แถว: stock_now เพิ่ม 10 · change_qty = 10 reason = adjust · by_user = แอดมิน = trigger after_stock_change เขียน stock_logs ให้เอง",
+  M10:"1 แถว: shop_after น้อยกว่า shop_before (หายจากหน้าร้าน) แต่ table_after = table_before (ข้อมูลยังอยู่ครบ) = ปิดขายแทนการลบ",
+  M11:"1 แถว = แถวที่ถูกลบ (DELETE ... RETURNING) · ตะกร้าลบได้เพราะไม่ใช่ประวัติ ต่างจากคำสั่งซื้อและสลิปที่ลบไม่ได้",
+  M12:"1 แถว: shipping_fee = 50 · payment_window_hours = 12 · trigger บันทึก store.update ลง audit_logs · rollback ค่าเดิมกลับ",
+  M13:"5 แถว: ชื่อร้าน ค่าส่ง ตัวเลือก ราคา in_stock (true/false) = สิ่งที่หน้าร้านอ่านได้ ไม่มี stock_qty จริง",
+  M14:"1 แถวต่อ role: จำนวนผู้ใช้ จำนวนที่เปิดใช้งาน และอีเมลพนักงาน (ลูกค้าไม่แสดงอีเมล)",
+  M15:"1 แถว: changed_by = อีเมลแอดมิน · role_old_new = [\"customer\",\"warehouse\"] · ทำในนามแอดมินผ่าน RLS จริง",
+  M16:"1 แถว: staff = อีเมลพนักงานคลัง · role_now = null = ปิดบัญชีแล้ว ฟังก์ชันเช็กสิทธิ์ไม่คืน role ทุก policy จึงไม่ให้ผ่าน",
   B1:"1 แถว: profiles ถูกสร้างอัตโนมัติจาก trigger handle_new_user role = customer · ใน Supabase จริงถ้า insert auth.users ไม่ได้ ให้สมัครผ่านหน้าเว็บ",
   B2:"1 แถวต่อ 1 ตัวเลือกในแต่ละห้อง (164 แถวในข้อมูลตัวอย่าง) ช่อง stock บอกแค่ มีสินค้า/หมด",
   B3:"สินค้าที่ชื่อหรือคำอธิบายมีคำว่า \"หม้อ\" พร้อมราคาเริ่มต้น (6 รายการในข้อมูลตัวอย่าง)",
@@ -111,22 +130,24 @@ const HOW = {
   Q6:"1 แถวต่ออันดับในแต่ละห้อง (rank 1-3) · ยอดขายเท่ากันได้อันดับเดียวกัน · ยังไม่มีคำสั่งซื้อที่อนุมัติ = 0 แถว",
   Q7:"20 แถวล่าสุด: เวลา · ใครทำ (ว่าง = ระบบ/trigger) · ทำอะไร · ตารางไหน · รายละเอียด [ค่าเก่า, ค่าใหม่]",
   Q8:"1 แถว: hompb-cancel-expired-orders schedule */5 * * * * = ทุก 5 นาที · active = true · รันได้เฉพาะบน Supabase",
-  Z1:"1 แถว: test_orders, test_variants, test_products, test_users, demo_schema = 0 ทุกช่อง = ไม่มีของทดสอบค้าง · ลบเฉพาะของที่บล็อกสาธิตสร้าง (คำสั่งซื้อที่ไม่มีชื่อผู้รับ, SKU DEMO-, สินค้าทดสอบ, demo.signup@mail.com) และคืนสต็อก E3 ถ้าค้าง · รันซ้ำกี่ครั้งก็ได้",
+  Z1:"1 แถว: test_orders, test_variants, test_products, test_categories, test_users, demo_schema = 0 ทุกช่อง = ไม่มีของทดสอบค้าง · ลบเฉพาะของที่บล็อกสาธิตสร้าง (คำสั่งซื้อที่ไม่มีชื่อผู้รับ, SKU DEMO-, สินค้าทดสอบ, demo.signup@mail.com) และคืนสต็อก E3 ถ้าค้าง · รันซ้ำกี่ครั้งก็ได้",
   Z2:"1 แถว: next_order_no = เลขที่คำสั่งซื้อจริงใบถัดไปจะได้ (เลขสูงสุดตอนนี้ + 1) · ใช้หลังสาธิตเสร็จ ให้เลขต่อเนื่อง",
   Q9:"5 แถว: slips, refund-slips, chat-images, store เป็น public = false (เปิดผ่าน signed URL อายุสั้น) · product-images = true เพราะรูปสินค้าให้ทุกคนดู · มีจำกัดขนาดและชนิดไฟล์ · รันได้เฉพาะบน Supabase",
 };
 function expectText(b){
   const parts = [];
   parts.push(HOW[b.code] || b.title);
-  if (b.desc.length) parts.push("หมายเหตุ: " + b.desc.join(" "));
+  const notes = b.desc.filter((d) => !d.startsWith("ผลที่ต้องเห็น:") && !d.startsWith("· "));
+  if (notes.length) parts.push("หมายเหตุ: " + notes.join(" "));
   if (b.code[0] === "G") parts.push("รันบน Supabase จริงที่เปิด RLS แล้ว");
+  if (b.code[0] === "M" && /rollback/.test(b.sql)) parts.push("บล็อกนี้แก้ข้อมูลแล้ว rollback ข้อมูลจริงไม่เปลี่ยน");
   if (b.code[0] === "Z") parts.push("บล็อกนี้บันทึกจริง (commit) แต่แตะเฉพาะข้อมูลทดสอบ");
   if (b.code[0] === "C") parts.push("ตั้งใจให้ error ทุกบล็อกครอบ begin … rollback ข้อมูลไม่เปลี่ยน");
   return parts;
 }
 
 /* ---------- syntax highlight (สร้าง DOM ด้วย textContent) ---------- */
-const KW = new Set(("select from where and or not in is null insert into values update set delete returning begin commit rollback create table temp as with case when then else end group by order limit union all exists distinct over partition left join on conflict do nothing filter show prepare execute deallocate explain analyze local role drop if interval true false like ilike desc asc count sum min max rank grant setval json_agg json_build_object string_agg coalesce now date_trunc make_interval gen_random_uuid to_jsonb set_config pg_sleep text drop").split(" "));
+const KW = new Set(("select from where and or not in is null insert into values update set delete returning begin commit rollback create table temp as with case when then else end group by order limit union all exists distinct over partition left join on conflict do nothing filter show prepare execute deallocate explain analyze local role drop if interval true false like ilike desc asc count sum min max avg round rank grant setval between distinct having json_agg json_build_object string_agg coalesce now date_trunc make_interval gen_random_uuid to_jsonb set_config pg_sleep text drop").split(" "));
 function highlight(pre, text){
   pre.textContent = "";
   const re = /(--[^\n]*)|('(?:[^']|'')*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][A-Za-z_0-9]*)|([\s\S])/g;
