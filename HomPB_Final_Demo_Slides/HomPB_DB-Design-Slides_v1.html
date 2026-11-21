@@ -148,7 +148,7 @@
           <tr><td><code>product_variants.stock_qty</code></td><td>CHECK stock_qty ≥ 0</td><td>ขายเกินสต็อก (ด่านสุดท้าย)</td><td><span class="pill p-crimson">23514</span></td><td class="mono">C3</td></tr>
           <tr><td><code>cart_items.quantity</code></td><td>CHECK quantity &gt; 0</td><td>จำนวน 0 หรือติดลบ</td><td><span class="pill p-crimson">23514</span></td><td class="mono">-</td></tr>
           <tr><td><code>payments.attempt_no</code></td><td>CHECK attempt_no IN (1,2)</td><td>อัปสลิปครั้งที่ 3</td><td><span class="pill p-crimson">23514</span></td><td class="mono">C4</td></tr>
-          <tr><td><code>shipments</code></td><td>update_shipment() บังคับ carrier + tracking_no (เช็กใน RPC ไม่ใช่ CHECK)</td><td>ส่งของโดยไม่มีเลขพัสดุ</td><td><span class="pill p-brass">P0001</span></td><td class="mono">-</td></tr>
+          <tr><td><code>shipments</code></td><td>update_shipment() บังคับ carrier + tracking_no (เช็กใน RPC ไม่ใช่ CHECK)</td><td>ส่งของโดยไม่มีเลขพัสดุ</td><td><span class="pill p-brass">P0001</span></td><td class="mono">C5</td></tr>
           <tr><td><code>messages</code></td><td>CHECK body หรือ image_path อย่างน้อย 1</td><td>ข้อความแชทว่าง</td><td><span class="pill p-crimson">23514</span></td><td class="mono">C6</td></tr>
           <tr><td><code>product_variants.sku</code> · <code>categories.name</code></td><td>UNIQUE</td><td>sku / ชื่อหมวดซ้ำ</td><td><span class="pill p-blue">23505</span></td><td class="mono">C7 C8</td></tr>
           <tr><td><code>addresses (user_id) WHERE is_default</code></td><td>Partial UNIQUE</td><td>ที่อยู่หลักเกิน 1 ที่ต่อคน</td><td><span class="pill p-blue">23505</span></td><td class="mono">C9</td></tr>
@@ -324,7 +324,7 @@
       </div>
       <div class="stack">
         <div class="sql-tabs" data-blocks="C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,D1,D2,D3,B11,B12"></div>
-        <div class="note">D1 และ D2 บน schema ปัจจุบัน: variant ทุกตัวมีแถวใน stock_logs (after_stock_change บันทึกตอนสร้าง) และ stock_logs.variant_id เป็น RESTRICT จึงได้ <b>ERROR 23503</b> แทน = ลบตัวเลือกที่มีประวัติสต็อกไม่ได้</div>
+        <div class="note">ของจริงทุกตัวเลือกมีแถวใน stock_logs และ stock_logs.variant_id เป็น <b>RESTRICT</b> จึงลบไม่ได้ (ร้านใช้ is_active = false แทน) · D1 D2 เลยสร้างสินค้าทดสอบที่ยังไม่มีประวัติขึ้นมาลบใน transaction แล้ว rollback</div>
         <div class="card">
           <h3>Trigger 16 ตัว</h3>
           <p class="small"><b>ธุรกิจ 5:</b> <span class="mono">handle_new_user · sync_user_email · log_order_status · set_no_return · set_order_refunded</span></p>
@@ -386,7 +386,10 @@
       <div class="stack">
         <div class="card tbl-wrap" style="padding:8px 10px"><table class="clean matrix" id="matrix"></table></div>
         <p class="tiny muted">C สร้าง · R อ่าน · U แก้ · D ลบ · การเขียนข้อมูลเงิน การส่ง และคำสั่งซื้อทำผ่าน RPC · ข้อมูลเงิน การส่ง แชท ไม่มี policy ลบ · สินค้าเลิกขายใช้ is_active</p>
-        <div class="grid g2">
+      </div>
+      <div class="stack">
+        <div class="sql-tabs" data-blocks="G1,G2,G3,G4,G5,S1,S2"></div>
+        <div class="note">G1–G5 รันบน Supabase ที่เปิด RLS แล้ว เลือกผู้ใช้ตาม role ให้เอง · ช่อง <b>me</b> ต้องไม่ว่าง ผลถึงจะใช้ได้ · S1 หลุด 3 แถว / S2 ได้ 0</div>
           <div class="card"><h3>Privacy level</h3>
             <p class="small"><span class="pill p-emerald">Public</span> สินค้า ราคา รูป หมวด เวลาทำการ</p>
             <p class="small" style="margin-top:6px"><span class="pill p-blue">Internal</span> stock_qty, sku, stock_logs, ข้อมูลจัดส่ง</p>
@@ -404,11 +407,6 @@
               <li>ข้อความแชทแสดงเป็น text กัน XSS</li>
             </ul>
           </div>
-        </div>
-      </div>
-      <div class="stack">
-        <div class="sql-tabs" data-blocks="G1,G2,G3,G4,G5,S1,S2"></div>
-        <div class="note">G1–G5 ต้องรันบน Supabase จริงที่เปิด RLS แล้ว (ทดสอบในเครื่องได้แค่ว่า syntax รันได้) · S1 หลุด 3 แถว / S2 ได้ 0</div>
       </div>
     </div>
   </div>
@@ -418,7 +416,7 @@
 <section class="slide theme-dark" id="slide-12" data-title="คลัง SQL Demo">
   <div class="inner">
     <div class="head">
-      <div><p class="kicker">12 · Live Q&amp;A</p><h2>คลัง SQL สำหรับการใช้งาน</h2><p class="lead">ทุกบล็อกที่แก้ข้อมูลครอบด้วย begin; … rollback; · SQL Editor รันด้วย role postgres ซึ่งข้าม RLS ได้ ถ้าจะโชว์ RLS ใช้หมวด G</p></div>
+      <div><p class="kicker">12 · Live Q&amp;A</p><h2>คลัง SQL สำหรับการใช้งาน</h2><p class="lead">บล็อกที่แก้ข้อมูลครอบด้วย begin; … rollback; (ยกเว้น E3 และหมวด Z ที่ล้างของค้าง) · SQL Editor รันด้วย role postgres ซึ่งข้าม RLS ได้ ถ้าจะโชว์ RLS ใช้หมวด G</p></div>
       <span class="meta-tag" id="libCount"></span>
     </div>
     <div class="wb">
@@ -507,11 +505,11 @@
             <tr><td class="mono">TC-11</td><td>sku ซ้ำ / ชื่อหมวดซ้ำ</td><td>ERROR 23505 (UNIQUE)</td><td class="mono">C7 C8</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
             <tr><td class="mono">TC-12</td><td>สถานะที่ไม่มีใน enum</td><td>ERROR 22P02</td><td class="mono">C10</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
             <tr><td class="mono">TC-13</td><td>ไม่ใส่ชื่อสินค้า</td><td>ERROR 23502 (NOT NULL)</td><td class="mono">C11</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
-            <tr><td class="mono">TC-14</td><td>ลบตัวเลือกที่มีประวัติสต็อก</td><td>ERROR 23503 (RESTRICT) ไม่ลบอะไร</td><td class="mono">D1</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-14</td><td>ลบสินค้า (CASCADE) / ลบตัวเลือกที่เคยขาย (SET NULL)</td><td>ตัวเลือก รูป หมวดหายตาม · order_items ยังอยู่ variant_id เป็น null</td><td class="mono">D1 D2</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
             <tr><td class="mono">TC-15</td><td>สั่งหลายชิ้น ตัวที่ 2 สต็อกไม่พอ</td><td>rollback ทั้งชุด สต็อกเท่าเดิม</td><td class="mono">E1</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
             <tr><td class="mono">TC-16</td><td>2 คนซื้อชิ้นสุดท้ายพร้อมกัน</td><td>คนที่ 2 รอ lock แล้วได้ 0 แถว</td><td class="mono">E3</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
             <tr><td class="mono">TC-17</td><td>ลูกค้าแก้ role ตัวเอง</td><td>ERROR 42501</td><td class="mono">G3</td><td><span class="pill p-brass">Supabase</span></td></tr>
-            <tr><td class="mono">TC-18</td><td>ลูกค้าลบข้อมูลการเงิน</td><td>ERROR 42501 permission denied</td><td class="mono">G5</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
+            <tr><td class="mono">TC-18</td><td>Admin ลบข้อมูลการเงิน</td><td>ERROR 42501 permission denied</td><td class="mono">G5</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
             <tr><td class="mono">TC-19</td><td>คำค้น <code>x' or '1'='1</code></td><td>แบบ parameterized ได้ 0 แถว</td><td class="mono">S1 S2</td><td><span class="pill p-ok">ผ่าน</span></td></tr>
           </tbody>
         </table>
