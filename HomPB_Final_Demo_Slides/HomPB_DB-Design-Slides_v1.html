@@ -360,11 +360,11 @@
           <div class="tl">
             <div class="h">เวลา</div><div class="h">Session A</div><div class="h">Session B</div>
             <div class="t">t1</div><div><code>UPDATE … stock_qty &gt;= 1</code><br>ได้ 1 แถว stock 0 · ถือ row lock</div><div></div>
-            <div class="t">t2</div><div class="muted">pg_sleep(10)</div><div><code>UPDATE … stock_qty &gt;= 1</code><br><span class="wait">รอ row lock</span></div>
+            <div class="t">t2</div><div class="muted">pg_sleep(15)</div><div><code>UPDATE … stock_qty &gt;= 1</code><br><span class="wait">รอ row lock</span></div>
             <div class="t">t3</div><div>COMMIT</div><div class="wait">ยังรอ</div>
             <div class="t">t4</div><div></div><div>อ่านแถวใหม่ เช็กเงื่อนไขซ้ำ stock 0<br><b>UPDATE 0 แถว</b> ไม่ติดลบ</div>
           </div>
-          <p class="tiny muted" style="margin-top:8px">ทดสอบจริง 2 session: แท็บ B รอ lock ประมาณ 4 วินาที แล้วได้ 0 แถว</p>
+          <p class="tiny muted" style="margin-top:8px">ทดสอบ 2 session: แท็บ B รอ lock จนแท็บ A commit แล้วได้ tab_b_bought = 0</p>
         </div>
       </div>
       <div class="stack">
