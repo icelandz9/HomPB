@@ -13,6 +13,7 @@
 -- =====================================================================
 
 -- @@ A1 รายชื่อตารางทั้งหมดและจำนวนคอลัมน์
+-- ผลที่ต้องเห็น: 21 แถว = 21 ตาราง แต่ละแถวบอกจำนวนคอลัมน์ ใช้ตอบ "มีกี่ตาราง"
 select table_name, count(*) as columns
 from information_schema.columns
 where table_schema = 'public'
@@ -22,6 +23,10 @@ group by table_name
 order by table_name;
 
 -- @@ A2 นับ constraint แยกประเภท (p=PK, f=FK, u=UNIQUE, c=CHECK)
+-- ผลที่ต้องเห็น: 4 แถว: PRIMARY KEY 21
+--   · FOREIGN KEY 34
+--   · UNIQUE 6
+--   · CHECK 19 ตรงกับตัวเลขในสไลด์ 1
 select case contype when 'p' then 'PRIMARY KEY' when 'f' then 'FOREIGN KEY'
                     when 'u' then 'UNIQUE' when 'c' then 'CHECK' end as type,
        count(*)
@@ -31,6 +36,10 @@ group by contype
 order by 1;
 
 -- @@ A3 นโยบาย ON DELETE ของ FK ทุกตัว (a=NO ACTION, c=CASCADE, n=SET NULL)
+-- ผลที่ต้องเห็น: 34 แถว = FK ทุกตัว พร้อมนโยบาย ON DELETE: CASCADE 11
+--   · SET NULL 12
+--   · RESTRICT 7
+--   · NO ACTION 4
 select conrelid::regclass as table_name,
        conname,
        confrelid::regclass as references_table,
@@ -41,12 +50,14 @@ where contype = 'f' and connamespace = 'public'::regnamespace
 order by on_delete, table_name;
 
 -- @@ A4 CHECK constraint ทั้งหมดพร้อมเงื่อนไข
+-- ผลที่ต้องเห็น: 19 แถว = กฎ CHECK ทุกข้อ เช่น price >= 0, stock_qty >= 0, attempt_no IN (1,2)
 select conrelid::regclass as table_name, pg_get_constraintdef(oid) as rule
 from pg_constraint
 where contype = 'c' and connamespace = 'public'::regnamespace
 order by 1;
 
 -- @@ A5 enum ทั้ง 10 ตัวและค่าที่อนุญาต
+-- ผลที่ต้องเห็น: 10 แถว = enum 10 ตัว พร้อมค่าที่อนุญาต เช่น order_status มี 7 สถานะ
 select t.typname as enum_name, string_agg(e.enumlabel, ', ' order by e.enumsortorder) as values
 from pg_type t join pg_enum e on e.enumtypid = t.oid
 where t.typnamespace = 'public'::regnamespace
@@ -54,6 +65,8 @@ group by t.typname
 order by 1;
 
 -- @@ A6 trigger ทั้งหมด (รวม trigger บน auth.users)
+-- ผลที่ต้องเห็น: 16 แถว = trigger ทุกตัว (รวม 2 ตัวบน auth.users)
+--   · set_updated_at ใช้ชื่อเดียวกันบน 3 ตาราง ชื่อไม่ซ้ำจึงมี 14
 select event_object_schema || '.' || event_object_table as table_name,
        trigger_name, action_timing, string_agg(event_manipulation, ' / ') as events
 from information_schema.triggers
@@ -62,12 +75,15 @@ group by 1, 2, 3
 order by 1;
 
 -- @@ A7 index ทั้งหมด
+-- ผลที่ต้องเห็น: 47 แถว = index ทั้งหมด: PK 21 + UNIQUE 6 + index ที่สร้างเอง 20 (สไลด์ 8)
 select tablename, indexname, indexdef
 from pg_indexes
 where schemaname = 'public'
 order by tablename, indexname;
 
 -- @@ A8 ฟังก์ชัน / RPC ทั้งหมด พร้อม parameter
+-- ผลที่ต้องเห็น: 33 แถว = ฟังก์ชันทั้งหมด: RPC ที่หน้าเว็บเรียก 10 ตัว ที่เหลือเป็นฟังก์ชันของ trigger และตัวช่วยเช็กสิทธิ์
+--   · security definer 30 ตัว
 select p.proname as function_name,
        pg_get_function_identity_arguments(p.oid) as arguments,
        case when p.prosecdef then 'security definer' else 'security invoker' end as security
@@ -76,11 +92,13 @@ where p.pronamespace = 'public'::regnamespace
 order by 1;
 
 -- @@ A9 ดูโค้ดเต็มของฟังก์ชัน (เปลี่ยนชื่อได้ เช่น place_order, review_payment)
+-- ผลที่ต้องเห็น: 1 แถว = โค้ดเต็มของ place_order() ของจริง ใช้คู่กับ B6 เพื่อยืนยันว่าเดโมทำแบบเดียวกัน (เปลี่ยนชื่อในบรรทัดล่างได้)
 select pg_get_functiondef(p.oid)
 from pg_proc p
 where p.pronamespace = 'public'::regnamespace and p.proname = 'place_order';
 
 -- @@ A10 RLS เปิดครบทุกตารางไหม + จำนวน policy ต่อตาราง
+-- ผลที่ต้องเห็น: 21 แถว rls_enabled = true ทุกตาราง และทุกตารางมี policy อย่างน้อย 1 ตัว
 select c.relname as table_name,
        c.relrowsecurity as rls_enabled,
        (select count(*) from pg_policies p
@@ -90,10 +108,237 @@ where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
 order by 1;
 
 -- @@ A11 policy ทั้งหมด (ใคร ทำอะไร เงื่อนไขอะไร)
+-- ผลที่ต้องเห็น: 33 แถว = policy ทุกตัว: using_expr คือเงื่อนไขว่าเห็นแถวไหน with_check คือเงื่อนไขตอนเขียน
 select tablename, policyname, cmd, roles, qual as using_expr, with_check
 from pg_policies
 where schemaname = 'public'
 order by tablename, cmd;
+
+
+-- =====================================================================
+-- หมวด M: คำสั่งพื้นฐาน (SELECT / INSERT / UPDATE / DELETE) กับงานประจำของร้าน
+-- บล็อกที่แก้ข้อมูลทำในนามแอดมิน 1 คน (ให้ audit_logs บันทึกว่าใครทำ) แล้ว rollback ไม่บันทึกจริง
+-- =====================================================================
+
+-- @@ M1 SELECT + WHERE + BETWEEN + ORDER BY + LIMIT: สินค้าราคา 500-2,000 บาท ถูกสุด 10 ตัว
+-- ผลที่ต้องเห็น: 10 แถว: สินค้าที่เปิดขาย ราคา 500-2,000 บาท เรียงจากถูก
+--   · WHERE กรองแถว
+--   · BETWEEN รวมค่าขอบ
+--   · LIMIT ตัดจำนวน
+select p.name as product, v.name as option, v.sku, v.price, v.stock_qty
+from product_variants v
+join products p on p.id = v.product_id
+where v.is_active and p.is_active
+  and v.price between 500 and 2000
+order by v.price, p.name
+limit 10;
+
+-- @@ M2 ILIKE + IN + DISTINCT: ห้องที่มีสินค้าชื่อขึ้นต้นด้วย "ชุด" หรือ "ตู้"
+-- ผลที่ต้องเห็น: 1 แถวต่อห้องไม่ซ้ำ
+--   · ILIKE ค้นแบบไม่สนตัวพิมพ์ 'ชุด%' = ขึ้นต้นด้วย ชุด
+--   · DISTINCT ตัดห้องซ้ำ
+select distinct c.name as room
+from categories c
+join product_categories pc on pc.category_id = c.id
+join products p            on p.id = pc.product_id
+where p.name ilike 'ชุด%' or p.name ilike 'ตู้%'
+order by room;
+
+-- @@ M3 GROUP BY + HAVING + COUNT/SUM/AVG/MIN/MAX: สรุปสินค้าแต่ละห้อง (เฉพาะห้องที่มีเกิน 30 ตัวเลือก)
+-- ผลที่ต้องเห็น: 1 แถวต่อห้องที่มีเกิน 30 ตัวเลือก: จำนวน สต็อกรวม ราคาเฉลี่ย ต่ำสุด สูงสุด
+--   · WHERE กรองก่อนรวม HAVING กรองหลังรวม
+select c.name as room,
+       count(*)                as variants,
+       sum(v.stock_qty)        as total_stock,
+       round(avg(v.price), 2)  as avg_price,
+       min(v.price)            as min_price,
+       max(v.price)            as max_price
+from categories c
+join product_categories pc on pc.category_id = c.id
+join product_variants v    on v.product_id = pc.product_id and v.is_active
+group by c.name
+having count(*) > 30
+order by variants desc;
+
+-- @@ M4 CASE + COALESCE: แบ่งระดับราคาและสถานะสต็อก
+-- ผลที่ต้องเห็น: 10 แถว: price_level และ stock_status คำนวณด้วย CASE
+--   · คำอธิบายว่าง COALESCE เติมข้อความแทน
+select p.name, v.price,
+       case when v.price < 500  then 'ถูก (< 500)'
+            when v.price < 5000 then 'กลาง (500-4,999)'
+            else 'แพง (5,000 ขึ้นไป)' end as price_level,
+       case when v.stock_qty = 0 then 'หมด'
+            when v.stock_qty <= 3 then 'ใกล้หมด'
+            else 'มีของ' end as stock_status,
+       coalesce(p.description, '(ไม่มีคำอธิบาย)') as description
+from product_variants v
+join products p on p.id = v.product_id
+order by v.price desc
+limit 10;
+
+-- @@ M5 Subquery: สินค้าที่แพงกว่าราคาเฉลี่ยของห้องตัวเอง
+-- ผลที่ต้องเห็น: สินค้าที่แพงกว่าค่าเฉลี่ยของห้องตัวเอง พร้อม room_avg
+--   · subquery ในเงื่อนไขอ้างถึงห้องของแถวนั้น (correlated subquery)
+select c.name as room, p.name as product, v.price,
+       (select round(avg(v2.price), 2)
+        from product_variants v2
+        join product_categories pc2 on pc2.product_id = v2.product_id
+        where pc2.category_id = c.id) as room_avg
+from product_variants v
+join products p            on p.id = v.product_id
+join product_categories pc on pc.product_id = p.id
+join categories c          on c.id = pc.category_id
+where v.price > (select avg(v2.price)
+                 from product_variants v2
+                 join product_categories pc2 on pc2.product_id = v2.product_id
+                 where pc2.category_id = c.id)
+order by c.name, v.price desc;
+
+-- @@ M6 วันที่และเวลา: คำสั่งซื้อ 7 วันล่าสุด แยกรายวัน (date_trunc + interval)
+-- ผลที่ต้องเห็น: 1 แถวต่อวันที่มีคำสั่งซื้อใน 7 วันล่าสุด
+--   · date_trunc ตัดเวลาเหลือวัน
+--   · now() - interval = ย้อนหลัง 7 วัน
+select date_trunc('day', created_at)::date as day,
+       count(*) as orders,
+       sum(total_amount) as total
+from orders
+where created_at >= now() - interval '7 days'
+group by 1
+order by 1 desc;
+
+-- @@ M7 INSERT ... RETURNING: เพิ่มหมวดใหม่ สินค้า ตัวเลือก และผูกหมวด (rollback)
+-- ผลที่ต้องเห็น: 1 แถว: ตัวเลือก DEMO-M7 ที่เพิ่ง insert (RETURNING คืนแถวที่สร้างทันที ไม่ต้อง select ซ้ำ)
+--   · rollback หมวดและสินค้าทดสอบหายหมด
+begin;
+create temp table m7 on commit drop as
+with cat as (insert into categories (name) values ('ห้องทดสอบ M7') returning id),
+     prod as (insert into products (name, description) values ('สินค้าทดสอบ M7 โต๊ะทำงาน', 'สร้างจากบล็อก M7') returning id)
+select cat.id as category_id, prod.id as product_id from cat, prod;
+insert into product_categories (product_id, category_id) select product_id, category_id from m7;
+insert into product_variants (product_id, sku, name, price, stock_qty)
+select product_id, 'DEMO-M7', 'ขนาด 120 ซม.', 3590, 0 from m7
+returning sku, name, price, stock_qty;
+rollback;
+
+-- @@ M8 UPDATE ราคา: แก้ราคาแล้ว audit_logs เก็บ [ราคาเก่า, ราคาใหม่] และคนแก้ (rollback)
+-- ผลที่ต้องเห็น: 1 แถว: action = variant.price
+--   · changed_by = อีเมลแอดมิน
+--   · detail.price = [ราคาเก่า, ราคาใหม่] = trigger บันทึกเอง
+begin;
+select set_config('request.jwt.claims',
+       json_build_object('sub', id, 'role', 'authenticated')::text, true)
+from profiles where role = 'admin' and is_active order by created_at limit 1;
+update product_variants set price = price + 100
+where sku = (select sku from product_variants order by sku limit 1);
+select a.action, p.email as changed_by, a.detail
+from audit_logs a left join profiles p on p.id = a.actor_id
+where a.action = 'variant.price'
+order by a.id desc limit 1;
+rollback;
+
+-- @@ M9 UPDATE สต็อก: คลังเติมของ 10 ชิ้น -> stock_logs (adjust) บันทึกเอง (rollback)
+-- ผลที่ต้องเห็น: 1 แถว: stock_now เพิ่ม 10
+--   · change_qty = 10 reason = adjust
+--   · by_user = แอดมิน = trigger after_stock_change เขียน stock_logs ให้เอง
+begin;
+select set_config('request.jwt.claims',
+       json_build_object('sub', id, 'role', 'authenticated')::text, true)
+from profiles where role = 'admin' and is_active order by created_at limit 1;
+update product_variants set stock_qty = stock_qty + 10
+where sku = (select sku from product_variants order by sku limit 1);
+select v.sku, v.stock_qty as stock_now, l.change_qty, l.reason, p.email as by_user
+from stock_logs l
+join product_variants v on v.id = l.variant_id
+left join profiles p    on p.id = l.actor_id
+order by l.id desc limit 1;
+rollback;
+
+-- @@ M10 ปิดการขาย (soft delete): is_active = false แล้วสินค้าหายจากหน้าร้าน แต่ข้อมูลยังอยู่ (rollback)
+-- ผลที่ต้องเห็น: 1 แถว: shop_after น้อยกว่า shop_before (หายจากหน้าร้าน) แต่ table_after = table_before (ข้อมูลยังอยู่ครบ) = ปิดขายแทนการลบ
+begin;
+create temp table m10 on commit drop as
+select (select count(*) from variants_public) as shop_before,
+       (select count(*) from product_variants) as table_before;
+update products set is_active = false
+where id = (select id from products order by name limit 1);
+select b.shop_before,  (select count(*) from variants_public)  as shop_after,    -- ลดลง
+       b.table_before, (select count(*) from product_variants) as table_after    -- เท่าเดิม
+from m10 b;
+rollback;
+
+-- @@ M11 DELETE: ลบสินค้าออกจากตะกร้า (ลบได้เพราะไม่ใช่ประวัติ) (rollback)
+-- ผลที่ต้องเห็น: 1 แถว = แถวที่ถูกลบ (DELETE ... RETURNING)
+--   · ตะกร้าลบได้เพราะไม่ใช่ประวัติ ต่างจากคำสั่งซื้อและสลิปที่ลบไม่ได้
+begin;
+insert into cart_items (user_id, variant_id, quantity)
+select (select id from profiles where role = 'customer' order by created_at limit 1),
+       (select id from product_variants order by sku limit 1), 1
+on conflict (user_id, variant_id) do nothing;
+delete from cart_items
+where user_id = (select id from profiles where role = 'customer' order by created_at limit 1)
+  and variant_id = (select id from product_variants order by sku limit 1)
+returning user_id, variant_id, quantity;                              -- แถวที่ถูกลบ
+rollback;
+
+-- @@ M12 ตั้งค่าร้าน: เปลี่ยนค่าส่งและเวลาโอน -> audit_logs เก็บค่าใหม่ (rollback)
+-- ผลที่ต้องเห็น: 1 แถว: shipping_fee = 50
+--   · payment_window_hours = 12
+--   · trigger บันทึก store.update ลง audit_logs
+--   · rollback ค่าเดิมกลับ
+begin;
+select set_config('request.jwt.claims',
+       json_build_object('sub', id, 'role', 'authenticated')::text, true)
+from profiles where role = 'admin' and is_active order by created_at limit 1;
+update store_settings set shipping_fee = 50, payment_window_hours = 12
+returning store_name, shipping_fee, payment_window_hours;
+rollback;
+
+-- @@ M13 VIEW: ข้อมูลร้านและสินค้าแบบที่ผู้เยี่ยมชมเห็น (ไม่มีจำนวนสต็อกจริง)
+-- ผลที่ต้องเห็น: 5 แถว: ชื่อร้าน ค่าส่ง ตัวเลือก ราคา in_stock (true/false) = สิ่งที่หน้าร้านอ่านได้ ไม่มี stock_qty จริง
+select s.store_name, s.shipping_fee, v.name as option, v.price, v.in_stock
+from store_public s, variants_public v
+order by v.price
+limit 5;
+
+-- @@ M14 ดูผู้ใช้ทุก role: จำนวนต่อ role และรายชื่อพนักงาน
+-- ผลที่ต้องเห็น: 1 แถวต่อ role: จำนวนผู้ใช้ จำนวนที่เปิดใช้งาน และอีเมลพนักงาน (ลูกค้าไม่แสดงอีเมล)
+select role, count(*) as users,
+       count(*) filter (where is_active) as active,
+       string_agg(email, ', ' order by email) filter (where role <> 'customer') as staff_emails
+from profiles
+group by role
+order by role;
+
+-- @@ M15 Admin เปลี่ยน role ให้คนอื่นได้ + audit บันทึกว่าใครเปลี่ยน (rollback)
+--      คู่กับ G3: ลูกค้าเปลี่ยน role ตัวเองไม่ได้
+-- ผลที่ต้องเห็น: 1 แถว: changed_by = อีเมลแอดมิน
+--   · role_old_new = ["customer","warehouse"]
+--   · ทำในนามแอดมินผ่าน RLS จริง
+begin;
+select set_config('request.jwt.claims',
+       json_build_object('sub', id, 'role', 'authenticated')::text, true)
+from profiles where role = 'admin' and is_active order by created_at limit 1;
+set local role authenticated;
+update profiles set role = 'warehouse'
+where id = (select id from profiles where role = 'customer' order by created_at limit 1);
+select a.created_at, p.email as changed_by, a.detail->'role' as role_old_new
+from audit_logs a left join profiles p on p.id = a.actor_id
+where a.action = 'profile.access_change'
+order by a.id desc limit 1;
+rollback;
+
+-- @@ M16 ปิดบัญชีพนักงาน (แทนการลบ): is_active = false แล้วสิทธิ์หายทันที (rollback)
+-- ผลที่ต้องเห็น: 1 แถว: staff = อีเมลพนักงานคลัง
+--   · role_now = null = ปิดบัญชีแล้ว ฟังก์ชันเช็กสิทธิ์ไม่คืน role ทุก policy จึงไม่ให้ผ่าน
+begin;
+create temp table m16 on commit drop as
+select id from profiles where role = 'warehouse' order by created_at limit 1;
+update profiles set is_active = false where id = (select id from m16);
+select set_config('request.jwt.claims',
+       json_build_object('sub', id, 'role', 'authenticated')::text, true) from m16;
+select (select email from profiles where id = (select id from m16)) as staff,
+       public.current_user_role() as role_now;                       -- null = ไม่มีสิทธิ์แล้ว
+rollback;
 
 
 -- =====================================================================
@@ -103,6 +348,8 @@ order by tablename, cmd;
 -- @@ B1 สมัครสมาชิก: Supabase Auth เพิ่มแถวใน auth.users
 --      แล้ว trigger handle_new_user สร้าง profiles ให้อัตโนมัติ role = customer
 --      (บล็อกนี้รันได้บน PostgreSQL ทดสอบ ใน Supabase จริงให้สมัครผ่านหน้าเว็บแล้วรันเฉพาะ select ล่าง)
+-- ผลที่ต้องเห็น: 1 แถว: profiles ถูกสร้างอัตโนมัติจาก trigger handle_new_user role = customer
+--   · ใน Supabase จริงถ้า insert auth.users ไม่ได้ ให้สมัครผ่านหน้าเว็บ
 begin;
 insert into auth.users (id, email, raw_user_meta_data)
 values (gen_random_uuid(), 'demo.signup@mail.com', '{"full_name":"ทดสอบ สมัคร"}');
@@ -111,6 +358,7 @@ from profiles where email = 'demo.signup@mail.com';
 rollback;
 
 -- @@ B2 ผู้เยี่ยมชมดูสินค้าตามห้อง (หน้าแรก) ไม่ต้องล็อกอิน
+-- ผลที่ต้องเห็น: 1 แถวต่อ 1 ตัวเลือกในแต่ละห้อง (164 แถวในข้อมูลตัวอย่าง) ช่อง stock บอกแค่ มีสินค้า/หมด
 select c.name as room, p.name as product, v.name as option, v.price,
        case when v.stock_qty > 0 then 'มีสินค้า' else 'หมด' end as stock
 from categories c
@@ -120,6 +368,7 @@ join product_variants v   on v.product_id = p.id and v.is_active
 order by c.name, p.name, v.price;
 
 -- @@ B3 ค้นหาสินค้าด้วยคำค้น
+-- ผลที่ต้องเห็น: สินค้าที่ชื่อหรือคำอธิบายมีคำว่า "หม้อ" พร้อมราคาเริ่มต้น (6 รายการในข้อมูลตัวอย่าง)
 select p.name, min(v.price) as price_from
 from products p
 join product_variants v on v.product_id = p.id and v.is_active
@@ -127,6 +376,7 @@ where p.is_active and (p.name ilike '%' || 'หม้อ' || '%' or p.descriptio
 group by p.id, p.name;
 
 -- @@ B4 หน้ารายละเอียดสินค้า: ตัวเลือก + รูป + หมวด
+-- ผลที่ต้องเห็น: 1 แถว: ตัวเลือก รูป และห้องรวมเป็น JSON แบบที่หน้าสินค้าใช้
 select p.name, p.description, p.delivery_method,
        (select json_agg(json_build_object('sku', v.sku, 'name', v.name, 'price', v.price,
                                           'in_stock', v.stock_qty > 0) order by v.price)
@@ -141,6 +391,8 @@ where p.is_active
 limit 1;
 
 -- @@ B5 ใส่ตะกร้า (กดซ้ำ = เพิ่มจำนวน) และกดหัวใจ (กดซ้ำไม่เกิดแถวซ้ำ)
+-- ผลที่ต้องเห็น: ตะกร้าของลูกค้าคนแรก: line_total = จำนวน x ราคา และ cart_total = ยอดรวมทั้งตะกร้า (window function)
+--   · rollback ไม่บันทึก
 begin;
 insert into cart_items (user_id, variant_id, quantity)
 select pr.id, v.id, 1
@@ -165,6 +417,10 @@ rollback;
 
 -- @@ B6 สั่งซื้อ: สิ่งที่ place_order() ทำข้างใน (ฉบับสาธิตทีละขั้นใน transaction เดียว)
 --      ราคามาจากฐานข้อมูลเสมอ ไม่รับจากหน้าเว็บ (Security Design ข้อ 5)
+-- ผลที่ต้องเห็น: 1 แถว: คำสั่งซื้อใหม่ สถานะ pending_payment
+--   · items = จำนวนรายการ
+--   · history_rows = 1 (trigger บันทึกสถานะแรก)
+--   · rollback ไม่บันทึก
 begin;
 select set_config('hompb.system_stock', 'on', true);   -- เหมือนฟังก์ชันจริง: เขียน stock_logs เอง trigger ปรับสต็อกจึงข้าม
 -- 0) เลือกลูกค้าทดสอบ 1 คน (ต้องมีที่อยู่หลัก)
@@ -229,6 +485,7 @@ from orders o where o.id = (select id from demo_order);
 rollback;
 
 -- @@ B7 ลูกค้าอัปโหลดสลิป -> บัญชีอนุมัติ (BR6)
+-- ผลที่ต้องเห็น: 3 แถว = ประวัติสถานะ null → pending_payment → awaiting_approval → approved (trigger log_order_status บันทึกเอง)
 begin;
 create temp table demo_order on commit drop as
 with o as (
@@ -257,6 +514,8 @@ from order_status_history where order_id = (select id from demo_order) order by 
 rollback;
 
 -- @@ B8 สลิปไม่ผ่านครั้งที่ 1 -> อัปโหลดใหม่ได้ภายใน reupload_window_hours
+-- ผลที่ต้องเห็น: 2 แถว: ครั้งที่ 1 rejected พร้อมเหตุผล
+--   · ครั้งที่ 2 pending ใส่ได้ (ครั้งที่ 3 ติด CHECK ดู C4)
 begin;
 create temp table demo_order on commit drop as
 with o as (
@@ -286,6 +545,9 @@ rollback;
 
 -- @@ B9 ยกเลิกอัตโนมัติ (สิ่งที่ cancel_expired_orders() ทำผ่าน pg_cron)
 --      เกินเวลาโอน -> cancelled + คืนสต็อก + stock_logs เหตุผล cancel
+-- ผลที่ต้องเห็น: 1 แถว: status = cancelled
+--   · stock_after เพิ่มคืน
+--   · stock_logs reason = cancel
 begin;
 select set_config('hompb.system_stock', 'on', true);   -- เหมือนฟังก์ชันจริง: เขียน stock_logs เอง trigger ปรับสต็อกจึงข้าม
 create temp table demo_order on commit drop as
@@ -326,6 +588,8 @@ where o.id = (select id from demo_order);
 rollback;
 
 -- @@ B10 จัดส่ง: ฝ่ายจัดส่งรับงาน -> ใส่ขนส่ง + เลขพัสดุ -> ส่งถึง
+-- ผลที่ต้องเห็น: 1 แถว: คำสั่งซื้อ delivered
+--   · shipment delivered พร้อมขนส่งและเลขพัสดุ
 begin;
 create temp table demo_order on commit drop as
 with o as (
@@ -363,6 +627,8 @@ rollback;
 
 -- @@ B11 คืนเงินบางชิ้น -> คลังตรวจของ -> บัญชีจ่ายคืน (BR8)
 --      คืน 1 ใน 2 ชิ้น สถานะยังเป็น delivered / คืนครบทุกชิ้น trigger set_order_refunded เปลี่ยนเป็น refunded
+-- ผลที่ต้องเห็น: คืน 1 ใน 2 ชิ้น สถานะยัง delivered
+--   · คืนครบ 2 ชิ้น = refunded (trigger set_order_refunded)
 begin;
 create temp table demo_order on commit drop as
 with o as (
@@ -418,6 +684,7 @@ from orders o where o.id = (select id from demo_order);
 rollback;
 
 -- @@ B12 ยกเลิกก่อนส่ง: trigger set_no_return ตั้ง return_status = no_return ให้เอง
+-- ผลที่ต้องเห็น: 1 แถว: ยกเลิกก่อนส่ง return_status = no_return อัตโนมัติ (trigger set_no_return) ไม่ต้องให้คลังตรวจของ
 begin;
 create temp table demo_order on commit drop as
 with o as (
@@ -447,6 +714,7 @@ rollback;
 
 -- @@ B13 แชท: ลูกค้าเปิดห้อง -> ฝ่ายขายรับเรื่อง -> ตอบ
 --      ฝั่งลูกค้าแสดงชื่อ "ฝ่ายบริการ" ไม่ดึงชื่อพนักงาน (NFR-04)
+-- ผลที่ต้องเห็น: 2 แถว = ข้อความลูกค้าและคำตอบฝ่ายบริการ เรียงตามเวลา
 begin;
 create temp table demo_conv on commit drop as
 with c as (
@@ -477,6 +745,8 @@ order by m.created_at, m.sender_type;
 rollback;
 
 -- @@ B14 ดู log ย้อนหลัง (Admin): ประวัติสถานะ + การเคลื่อนไหวสต็อก
+-- ผลที่ต้องเห็น: 20 แถวล่าสุดของ stock_logs: change_qty บวก = เข้า ลบ = ออก
+--   · reason บอกสาเหตุ (order, cancel, adjust, return)
 select o.order_no, h.from_status, h.to_status, h.created_at, pr.email as actor
 from order_status_history h
 join orders o on o.id = h.order_id
@@ -495,6 +765,8 @@ limit 20;
 -- =====================================================================
 
 -- @@ R1 ยอดขายรายวัน (นับเฉพาะคำสั่งซื้อที่อนุมัติแล้วขึ้นไป)
+-- ผลที่ต้องเห็น: 1 แถวต่อวัน: จำนวนคำสั่งซื้อและยอดขาย นับเฉพาะ approved ขึ้นไป
+--   · ไม่มีคำสั่งซื้อ = 0 แถว
 select date_trunc('day', created_at)::date as day,
        count(*) as orders, sum(total_amount) as revenue
 from orders
@@ -503,6 +775,8 @@ group by 1
 order by 1 desc;
 
 -- @@ R2 สินค้าขายดี 5 อันดับ
+-- ผลที่ต้องเห็น: สินค้าขายดี 5 อันดับ: จำนวนชิ้นและยอดขาย
+--   · ไม่มีคำสั่งซื้อ = 0 แถว
 select oi.product_name, oi.variant_name, sum(oi.quantity) as qty_sold,
        sum(oi.quantity * oi.unit_price) as revenue
 from order_items oi
@@ -513,15 +787,22 @@ order by qty_sold desc
 limit 5;
 
 -- @@ R3 สินค้าใกล้หมด (ฝ่ายคลัง)
+-- ผลที่ต้องเห็น: ตัวเลือกที่เปิดขายและสต็อกเหลือ 3 ชิ้นหรือน้อยกว่า เรียงจากน้อยสุด (ที่ฝ่ายคลังต้องเติม)
+--   · ไม่มีของใกล้หมด = 0 แถว
 select p.name, v.sku, v.name as option, v.stock_qty
 from product_variants v join products p on p.id = v.product_id
 where v.is_active and v.stock_qty <= 3
 order by v.stock_qty;
 
 -- @@ R4 จำนวนคำสั่งซื้อแยกตามสถานะ (dashboard)
+-- ผลที่ต้องเห็น: 1 แถวต่อสถานะ: จำนวนคำสั่งซื้อแต่ละสถานะ (ตัวเลขเดียวกับ dashboard)
 select status, count(*) from orders group by status order by status;
 
 -- @@ R5 คิวงานของแต่ละฝ่าย
+-- ผลที่ต้องเห็น: 4 แถว = งานค้างของแต่ละฝ่าย: สลิปรอตรวจ
+--   · รอส่ง
+--   · แชทรอตอบ
+--   · ของคืนรอตรวจ
 select 'บัญชี: สลิปรอตรวจ' as queue, count(*) from payments where status = 'pending'
 union all
 select 'จัดส่ง: รอส่ง', count(*) from shipments where status = 'preparing'
@@ -538,6 +819,8 @@ select 'คลัง: ของคืนรอตรวจ', count(*) from refun
 -- @@ J1 INNER JOIN 4 ตาราง: สินค้าในแต่ละห้อง พร้อมราคาและสต็อก
 --      categories -> product_categories (M:N) -> products -> product_variants (1:N)
 --      INNER JOIN เอาเฉพาะแถวที่จับคู่ได้ครบทุกตาราง
+-- ผลที่ต้องเห็น: 10 แถว (limit 10): ห้อง สินค้า SKU ตัวเลือก ราคา สต็อก
+--   · INNER JOIN ได้เฉพาะแถวที่จับคู่ได้ครบ 4 ตาราง
 select c.name as room, p.name as product, v.sku, v.name as option, v.price, v.stock_qty
 from categories c
 join product_categories pc on pc.category_id = c.id
@@ -549,6 +832,8 @@ limit 10;
 
 -- @@ J2 LEFT JOIN + GROUP BY: นับสินค้าในแต่ละห้อง (ห้องที่ยังไม่มีสินค้าก็ยังแสดง เป็น 0)
 --      LEFT JOIN เก็บทุกแถวของตารางซ้าย ฝั่งขวาที่ไม่มีคู่เป็น null
+-- ผลที่ต้องเห็น: 5 แถว = 5 ห้อง: จำนวนสินค้า จำนวนตัวเลือก ราคาเริ่มต้น
+--   · LEFT JOIN ห้องที่ไม่มีสินค้าก็ยังขึ้นเป็น 0
 select c.id, c.name as room,
        count(distinct p.id) as products,
        count(v.id) as variants,
@@ -562,6 +847,8 @@ order by c.id;
 
 -- @@ J3 JOIN auth.users กับ profiles (1:1): ทุก role อยู่ตาราง profiles ตารางเดียว แยกด้วยคอลัมน์ role
 --      ลูกค้า แอดมิน และพนักงานทุกฝ่ายใช้ตารางเดียวกัน ต่างกันแค่ค่า role (enum app_role)
+-- ผลที่ต้องเห็น: 1 แถวต่อ role: จำนวนผู้ใช้ จำนวนที่เปิดใช้งาน วันที่สมัครคนแรก
+--   · ทุก role อยู่ตาราง profiles ตารางเดียว
 select p.role, count(*) as users,
        count(*) filter (where p.is_active) as active,
        min(u.created_at)::date as first_signup
@@ -573,6 +860,8 @@ order by p.role;
 -- @@ J4 รายละเอียดคำสั่งซื้อล่าสุด: orders + profiles + order_items + payments + shipments
 --      INNER JOIN กับลูกค้าและรายการสินค้า (ต้องมีเสมอ) · LEFT JOIN กับสลิปและการส่ง (อาจยังไม่มี)
 --      ใช้คู่กับเดโมเว็บ: สั่งซื้อบนเว็บแล้วรันบล็อกนี้ จะเห็นแถวใหม่ทันที
+-- ผลที่ต้องเห็น: 1 แถวต่อรายการในคำสั่งซื้อล่าสุด พร้อมสลิปและการจัดส่ง
+--   · ยังไม่มีสลิป/การส่ง = ช่องนั้นเป็น null (LEFT JOIN)
 select o.order_no, o.status, pr.full_name as customer,
        oi.product_name, oi.variant_name, oi.quantity, oi.unit_price,
        o.total_amount,
@@ -592,24 +881,29 @@ order by oi.product_name, pay.attempt_no;
 -- =====================================================================
 
 -- @@ C1 FK ผิด -> ERROR 23503 foreign_key_violation (ที่อยู่ของผู้ใช้ที่ไม่มีอยู่จริง)
+-- ผลที่ต้องเห็น: ERROR 23503 foreign_key_violation: ใส่ที่อยู่ให้ผู้ใช้ที่ไม่มีอยู่จริงไม่ได้
 begin;
 insert into addresses (user_id, recipient_name, phone, address_line, subdistrict, district, province, postcode)
 values (gen_random_uuid(), 'ไม่มีตัวตน', '0800000000', '1', 'x', 'x', 'x', '10000');
 rollback;
 
 -- @@ C2 CHECK ราคาติดลบ -> ERROR 23514 check_violation
+-- ผลที่ต้องเห็น: ERROR 23514 check_violation (product_variants_price_check): ราคาติดลบเข้าไม่ได้
+--   · บรรทัด DETAIL คือแถวที่ถูกปฏิเสธ ไม่ได้บันทึก
 begin;
 update product_variants set price = -1
 where id = (select id from product_variants order by sku limit 1);
 rollback;
 
 -- @@ C3 CHECK สต็อกติดลบ -> ERROR 23514 (ด่านสุดท้ายกันขายเกินสต็อก)
+-- ผลที่ต้องเห็น: ERROR 23514 (product_variants_stock_qty_check): สต็อกติดลบไม่ได้ ด่านสุดท้ายกันขายเกินสต็อก
 begin;
 update product_variants set stock_qty = stock_qty - 999999
 where id = (select id from product_variants order by sku limit 1);
 rollback;
 
 -- @@ C4 CHECK อัปโหลดสลิปครั้งที่ 3 -> ERROR 23514 (attempt_no in (1,2))
+-- ผลที่ต้องเห็น: ERROR 23514 (payments_attempt_no_check): แนบสลิปครั้งที่ 3 ไม่ได้ ได้แค่ 1 และ 2
 begin;
 with o as (
   insert into orders (user_id, shipping_address, subtotal, total_amount)
@@ -622,6 +916,9 @@ rollback;
 -- @@ C5 กฎขนส่งต้องมีเลขพัสดุ: ตรวจใน update_shipment() -> ERROR P0001
 --      กฎนี้ไม่ได้เป็น CHECK ในตาราง shipments เพราะต้องรู้ว่ากำลังเปลี่ยนเป็น in_transit
 --      และส่งด้วยบริษัทขนส่ง (ส่งด้วยรถของร้านไม่ต้องใส่) จึงตรวจใน RPC ที่หน้าเว็บเรียก
+-- ผลที่ต้องเห็น: ERROR P0001 "ส่งด้วยบริษัทขนส่งต้องใส่ชื่อขนส่งและเลขพัสดุก่อน"
+--   · P0001 = error ที่ฟังก์ชันสั่งเอง (raise exception)
+--   · กฎอยู่ใน update_shipment() เพราะรถของร้านไม่ต้องใส่
 begin;
 select set_config('request.jwt.claims',                              -- ทำในนามแอดมิน 1 คน
        json_build_object('sub', id, 'role', 'authenticated')::text, true)
@@ -637,6 +934,7 @@ select update_shipment((select id from c5_order), 'in_transit');      -- ไม�
 rollback;
 
 -- @@ C6 CHECK ข้อความแชทว่าง -> ERROR 23514 (ต้องมี body หรือ image_path)
+-- ผลที่ต้องเห็น: ERROR 23514 (messages_check): ข้อความแชทต้องมีข้อความหรือรูปอย่างน้อย 1 อย่าง
 begin;
 with c as (insert into conversations (customer_id)
            select id from profiles where role = 'customer' order by created_at limit 1 returning id, customer_id)
@@ -644,17 +942,20 @@ insert into messages (conversation_id, sender_type, sender_id) select id, 'custo
 rollback;
 
 -- @@ C7 UNIQUE sku ซ้ำ -> ERROR 23505 unique_violation
+-- ผลที่ต้องเห็น: ERROR 23505 unique_violation (product_variants_sku_key): SKU ซ้ำไม่ได้
 begin;
 insert into product_variants (product_id, sku, price)
 select product_id, sku, price from product_variants order by sku limit 1;
 rollback;
 
 -- @@ C8 UNIQUE หมวดชื่อซ้ำ -> ERROR 23505
+-- ผลที่ต้องเห็น: ERROR 23505 (categories_name_key): ชื่อหมวดซ้ำไม่ได้
 begin;
 insert into categories (name) select name from categories order by name limit 1;
 rollback;
 
 -- @@ C9 Partial UNIQUE ที่อยู่หลักได้แค่ 1 ที่ต่อคน -> ERROR 23505
+-- ผลที่ต้องเห็น: ERROR 23505 (addresses_one_default_per_user): ที่อยู่หลักได้ 1 ที่ต่อคน (partial unique index WHERE is_default)
 begin;
 insert into addresses (user_id, recipient_name, phone, address_line, subdistrict, district, province, postcode, is_default)
 select user_id, recipient_name, phone, address_line, subdistrict, district, province, postcode, true
@@ -662,11 +963,13 @@ from addresses where is_default order by created_at limit 1;
 rollback;
 
 -- @@ C10 ENUM ค่าที่ไม่มี -> ERROR 22P02 invalid_text_representation
+-- ผลที่ต้องเห็น: ERROR 22P02: ค่า 'lost' ไม่อยู่ใน enum order_status
 begin;
 update orders set status = 'lost' where id = (select id from orders order by created_at limit 1);
 rollback;
 
 -- @@ C11 NOT NULL -> ERROR 23502 not_null_violation
+-- ผลที่ต้องเห็น: ERROR 23502 not_null_violation: ชื่อสินค้าห้ามว่าง
 begin;
 insert into products (name) values (null);
 rollback;
@@ -679,6 +982,8 @@ rollback;
 -- =====================================================================
 
 -- @@ D1 CASCADE: ลบสินค้า -> ตัวเลือก รูป และการผูกหมวด หายตาม
+-- ผลที่ต้องเห็น: 1 แถว: before 1 / 1 / 1 → after 0 / 0 / 0 = ตัวเลือก รูป การผูกหมวด หายตามสินค้า (CASCADE)
+--   · ใช้สินค้าทดสอบเพราะของจริงมีประวัติใน stock_logs (RESTRICT)
 begin;
 create temp table d1 on commit drop as
 with p as (insert into products (name) values ('สินค้าทดสอบ D1') returning id)
@@ -703,6 +1008,8 @@ rollback;
 -- @@ D2 SET NULL: ลบตัวเลือกที่เคยขาย -> order_items ยังอยู่ ชื่อและราคาเดิมไม่หาย
 --      ของจริงตัวเลือกที่ขายไปแล้วมี stock_logs (RESTRICT) จะลบไม่ได้ ร้านใช้ is_active = false แทน
 --      บล็อกนี้ตัดเฉพาะเรื่อง SET NULL ของ order_items มาโชว์
+-- ผลที่ต้องเห็น: 1 แถว: ชื่อสินค้า ชื่อตัวเลือก ราคาเดิมอยู่ครบ variant_id_now_null = null (SET NULL)
+--   · ของจริงที่มีประวัติสต็อกลบไม่ได้ ร้านใช้ is_active = false แทน
 begin;
 create temp table d2 on commit drop as
 with v as (
@@ -723,6 +1030,8 @@ rollback;
 
 -- @@ D3 NO ACTION: ลบลูกค้าที่มีคำสั่งซื้อไม่ได้ -> ERROR 23503 (กันประวัติการเงินหาย)
 --      สร้างคำสั่งซื้อทดสอบให้ลูกค้า 1 คนก่อน แล้วลองลบลูกค้าคนนั้น
+-- ผลที่ต้องเห็น: ERROR 23503 (orders_user_id_fkey): ลบลูกค้าที่มีคำสั่งซื้อไม่ได้ กันประวัติการเงินหาย
+--   · ปิดบัญชีด้วย is_active แทน
 begin;
 create temp table d3 on commit drop as
 with o as (
@@ -741,7 +1050,8 @@ rollback;
 -- @@ E1 Atomicity: สั่ง 2 รายการ รายการที่ 2 สต็อกไม่พอ -> ทั้งชุดยกเลิก สต็อกรายการแรกกลับคืน
 --      กด Run ได้เลยทั้งบล็อก: block begin ... exception คือ transaction ย่อย
 --      error ตรงไหนก็ยกเลิกทุกคำสั่งในบล็อก (เหมือน raise exception ใน place_order())
---      ผลที่ต้องเห็น: result = ERROR 23514 ... และ rows_changed = 0 (สต็อกเท่าเดิมทุกตัว)
+-- ผลที่ต้องเห็น: 1 แถว: result = ERROR 23514 … rollback ทั้งชุด
+--   · rows_changed = 0 = รายการแรกที่ตัดไปแล้วก็ถูกคืน (Atomicity)
 drop table if exists e1_before, e1_log;
 create temp table e1_before as select id, stock_qty from product_variants;
 create temp table e1_log (result text);
@@ -759,6 +1069,7 @@ select (select result from e1_log) as result,
 from product_variants v join e1_before b on b.id = v.id;
 
 -- @@ E2 ตัดสต็อกแบบมีเงื่อนไข: สต็อกไม่พอ = UPDATE 0 แถว (ไม่ error ไม่ติดลบ)
+-- ผลที่ต้องเห็น: 0 แถว (Success. No rows returned) = สต็อกไม่พอ UPDATE ไม่โดนแถวไหน ไม่ error ไม่ติดลบ
 begin;
 update product_variants set stock_qty = stock_qty - 999999
 where id = (select id from product_variants limit 1) and stock_qty >= 999999
@@ -768,9 +1079,10 @@ rollback;
 -- @@ E3 Concurrency: ของเหลือ 1 ชิ้น 2 คนกดพร้อมกัน (กด Run ได้เลย ไม่ต้องแก้ sku)
 --      เปิด SQL Editor 2 แท็บ วาง SQL แท็บ A และแท็บ B ไว้ก่อน
 --      กด Run แท็บ A แล้วภายใน 15 วินาทีกด Run แท็บ B (ถ้ามีหน้าต่างเตือน drop ให้กด Run ต่อ)
---      ผลที่ต้องเห็น: แท็บ A ได้ stock_qty = 0
---                    แท็บ B หมุนรอจน A เสร็จ แล้วได้ tab_b_bought = 0 (ไม่ติดลบ)
 --      ใช้สินค้า sku แรกเรียงตามตัวอักษร แท็บ A จำสต็อกเดิมไว้ แท็บ B คืนให้เองตอนจบ
+-- ผลที่ต้องเห็น: แท็บ A: stock_qty = 0
+--   · แท็บ B หมุนรอจน A เสร็จ แล้วได้ tab_b_bought = 0 = คนที่ 2 ซื้อไม่ได้
+--   · แท็บ B คืนสต็อกเดิมให้เอง
 --
 -- ---- แท็บ A ----
 begin;
@@ -800,6 +1112,7 @@ from demo.e3_backup k where v.id = k.id;
 drop schema demo cascade;
 
 -- @@ E4 Isolation level ปัจจุบัน
+-- ผลที่ต้องเห็น: 1 แถว: read committed = ระดับ isolation ค่าเริ่มต้นของ PostgreSQL
 show transaction_isolation;
 
 
@@ -809,6 +1122,8 @@ show transaction_isolation;
 -- =====================================================================
 
 -- @@ G1 ผู้เยี่ยมชม (anon): เห็นสินค้า แต่ไม่เห็นคำสั่งซื้อ
+-- ผลที่ต้องเห็น: 1 แถว: products_visible = จำนวนสินค้า (ผู้เยี่ยมชมเห็น)
+--   · orders_visible = 0 (ไม่เห็นคำสั่งซื้อเลย)
 begin;
 set local role anon;
 select (select count(*) from products) as products_visible,   -- เห็นสินค้า
@@ -817,6 +1132,10 @@ rollback;
 
 -- @@ G2 ลูกค้า: เห็นเฉพาะคำสั่งซื้อของตัวเอง
 --      สร้างคำสั่งซื้อทดสอบ 2 ใบ (ของลูกค้าคนนี้ 1 ใบ ของคนอื่น 1 ใบ) แล้วสลับเป็นลูกค้าคนนี้
+-- ผลที่ต้องเห็น: 1 แถว: me = ไอดีลูกค้า (ต้องไม่ว่าง)
+--   · orders_in_db ≥ 2
+--   · my_orders ≥ 1
+--   · others_visible = 0 = เห็นเฉพาะของตัวเอง
 begin;
 create temp table g2 on commit drop as
 select id from profiles where role = 'customer' order by created_at limit 1;
@@ -836,6 +1155,7 @@ select auth.uid() as me,
 from orders;
 rollback;
 -- @@ G3 ลูกค้าพยายามเปลี่ยน role ตัวเองเป็น admin -> ERROR 42501 (trigger on_profile_update)
+-- ผลที่ต้องเห็น: ERROR 42501 "แก้ role, is_active หรือ email ได้เฉพาะ Admin" จาก trigger on_profile_update
 begin;
 select set_config('request.jwt.claims',
        json_build_object('sub', id, 'role', 'authenticated')::text, true)
@@ -846,6 +1166,8 @@ rollback;
 
 -- @@ G4 ฝ่ายคลังดูสลิปไม่ได้ (NFR-03)
 --      สร้างสลิปทดสอบ 1 ใบก่อน (slips_in_db > 0) แล้วสลับเป็นพนักงานคลัง
+-- ผลที่ต้องเห็น: 1 แถว: me ไม่ว่าง
+--   · slips_in_db ≥ 1 แต่ slips_visible = 0 = ฝ่ายคลังมองไม่เห็นสลิป
 begin;
 with o as (
   insert into orders (user_id, shipping_address, subtotal, total_amount)
@@ -866,6 +1188,7 @@ from payments;
 rollback;
 -- @@ G5 ลบข้อมูลการเงินไม่ได้แม้เป็น Admin -> ERROR 42501 permission denied
 --      security.sql ถอนสิทธิ์ delete ของตารางเงินและ log จาก authenticated ไว้ก่อนถึง RLS อีกชั้น
+-- ผลที่ต้องเห็น: ERROR 42501 permission denied for table payments: ถอนสิทธิ์ delete ไว้ตั้งแต่ระดับตาราง ไม่ถึงขั้น RLS
 begin;
 select set_config('request.jwt.claims',
        json_build_object('sub', id, 'role', 'authenticated')::text, true)
@@ -881,9 +1204,11 @@ rollback;
 
 -- @@ S1 ถ้าต่อ string เอง: คำค้น  x' or '1'='1  จะกลายเป็นเงื่อนไขจริงเสมอ
 --      SQL ที่ได้:  select * from products where name = 'x' or '1'='1';
+-- ผลที่ต้องเห็น: 1 แถว: leaked_rows = จำนวนสินค้าทั้งหมด (164 ในข้อมูลตัวอย่าง) = เงื่อนไข '1'='1' เป็นจริงทุกแถว ข้อมูลหลุดหมด
 select count(*) as leaked_rows from products where name = 'x' or '1'='1';
 
 -- @@ S2 แบบ parameterized (แบบที่ supabase-js ส่ง): คำค้นเป็นแค่ข้อความ หาไม่เจอ
+-- ผลที่ต้องเห็น: 1 แถว: rows = 0 = ข้อความ x' or '1'='1 ถูกมองเป็นคำค้นธรรมดา ไม่ใช่คำสั่ง SQL
 prepare search_product(text) as select count(*) as rows from products where name = $1;
 execute search_product('x'' or ''1''=''1');
 deallocate search_product;
@@ -896,18 +1221,23 @@ deallocate search_product;
 -- =====================================================================
 
 -- @@ X1 คิวสลิปของบัญชี -> index payments(status)
+-- ผลที่ต้องเห็น: แผนการรัน: เห็น Index Scan หรือ Bitmap Index Scan บน index ของ payments(status) = ใช้ index
+--   · actual time คือเวลาจริง
 begin;
 set local enable_seqscan = off;
 explain analyze select * from payments where status = 'pending';
 rollback;
 
 -- @@ X2 คำสั่งซื้อของลูกค้า -> index orders(user_id)
+-- ผลที่ต้องเห็น: แผนการรัน: เห็น index orders(user_id) ถูกใช้ (Bitmap Index Scan / Index Scan)
 begin;
 set local enable_seqscan = off;
 explain analyze select * from orders where user_id = (select id from profiles limit 1);
 rollback;
 
 -- @@ X3 โหลดข้อความในห้องแชทเรียงตามเวลา -> index messages(conversation_id, created_at)
+-- ผลที่ต้องเห็น: แผนการรัน: เห็น index messages(conversation_id, created_at)
+--   · ถ้าไม่มีบรรทัด Sort แปลว่า index เรียงให้แล้ว
 begin;
 set local enable_seqscan = off;
 explain analyze
@@ -923,6 +1253,8 @@ rollback;
 
 -- @@ Q1 ยอดเงินในคำสั่งซื้อตรงกับรายการสินค้าไหม (ต้องได้ 0 แถว)
 --      subtotal ต้องเท่ากับผลรวม จำนวน x ราคา ใน order_items และ total = subtotal + ค่าส่ง
+-- ผลที่ต้องเห็น: 0 แถว (Success. No rows returned) = ยอดทุกคำสั่งซื้อตรงกับผลรวมรายการสินค้า
+--   · ถ้ามีแถวขึ้น = คำสั่งซื้อนั้นยอดไม่ตรง
 select o.order_no, o.subtotal,
        coalesce(sum(oi.quantity * oi.unit_price), 0) as items_sum,
        o.shipping_fee, o.total_amount
@@ -935,6 +1267,8 @@ having o.subtotal <> coalesce(sum(oi.quantity * oi.unit_price), 0)
 -- @@ Q2 สต็อกปัจจุบันตรงกับผลรวมประวัติ stock_logs ไหม (mismatch ต้องเป็น 0)
 --      ทุกครั้งที่สต็อกเปลี่ยน (สั่งซื้อ ยกเลิก คืนของ คลังปรับ) ระบบเขียน stock_logs
 --      ผลรวม change_qty ของแต่ละตัวเลือกจึงต้องเท่ากับ stock_qty ตอนนี้
+-- ผลที่ต้องเห็น: 1 แถว: variants = จำนวนตัวเลือก
+--   · mismatch = 0 = สต็อกทุกตัวตรงกับผลรวมประวัติ ไม่มีใครแก้สต็อกข้ามระบบ
 select count(*) as variants,
        count(*) filter (where v.stock_qty <> coalesce(l.total, 0)) as mismatch
 from product_variants v
@@ -942,6 +1276,9 @@ left join (select variant_id, sum(change_qty) as total
            from stock_logs group by variant_id) l on l.variant_id = v.id;
 
 -- @@ Q3 FK ตัวไหนไม่มี index (ตั้งใจ: index เฉพาะคอลัมน์ที่ query ใช้จริง)
+-- ผลที่ต้องเห็น: 15 แถว = FK ที่ไม่มี index ส่วนใหญ่เป็นคอลัมน์ "ใครทำ" (reviewed_by, handled_by, actor_id) ที่ไม่ได้ใช้ค้นหา
+--   · FK ที่ query ใช้จริงมี index ครบ (สไลด์ 8)
+--   · ไม่ทำ index ทุกตัวเพราะทุก index ทำให้ insert/update ช้าลงและกินที่
 select c.conrelid::regclass as table_name, a.attname as fk_column,
        c.confrelid::regclass as references_table
 from pg_constraint c
@@ -954,12 +1291,16 @@ order by 1, 2;
 -- @@ Q4 ฟังก์ชัน security definer ทุกตัวล็อก search_path ไหม (no_search_path ต้องเป็น 0)
 --      security definer รันด้วยสิทธิ์เจ้าของฟังก์ชัน ถ้าไม่ล็อก search_path
 --      คนอื่นอาจสร้างตาราง/ฟังก์ชันชื่อซ้ำมาหลอกให้ถูกเรียกแทนได้
+-- ผลที่ต้องเห็น: 1 แถว: security_definer = 30
+--   · no_search_path = 0 = ทุกฟังก์ชันที่รันด้วยสิทธิ์สูงล็อก search_path กันโดนหลอกด้วยชื่อซ้ำ
 select count(*) filter (where prosecdef) as security_definer,
        count(*) filter (where prosecdef and proconfig is null) as no_search_path
 from pg_proc
 where pronamespace = 'public'::regnamespace;
 
 -- @@ Q5 view ซ่อนคอลัมน์: ผู้เยี่ยมชมเห็นแค่ "มี/หมด" ไม่เห็นจำนวนสต็อกจริง
+-- ผลที่ต้องเห็น: 2 แถว: ตารางจริงมี sku, stock_qty
+--   · view ที่หน้าร้านใช้เหลือแค่ in_stock (มี/หมด) = ซ่อนข้อมูลภายในระดับคอลัมน์
 select 'product_variants (ตารางจริง)' as source,
        string_agg(column_name, ', ' order by ordinal_position) as columns
 from information_schema.columns
@@ -972,6 +1313,9 @@ where table_schema = 'public' and table_name = 'variants_public';
 
 -- @@ Q6 สินค้าขายดีอันดับ 1-3 ของแต่ละห้อง (CTE + window function)
 --      นับเฉพาะคำสั่งซื้อที่อนุมัติแล้วขึ้นไป ถ้ายังไม่มีคำสั่งซื้อจะได้ 0 แถว
+-- ผลที่ต้องเห็น: 1 แถวต่ออันดับในแต่ละห้อง (rank 1-3)
+--   · ยอดขายเท่ากันได้อันดับเดียวกัน
+--   · ยังไม่มีคำสั่งซื้อที่อนุมัติ = 0 แถว
 with sold as (
   select c.name as room, oi.product_name, sum(oi.quantity) as qty
   from order_items oi
@@ -990,6 +1334,11 @@ where rank_in_room <= 3
 order by room, rank_in_room;
 
 -- @@ Q7 ใครทำอะไรล่าสุด (audit_logs 20 แถวล่าสุด)
+-- ผลที่ต้องเห็น: 20 แถวล่าสุด: เวลา
+--   · ใครทำ (ว่าง = ระบบ/trigger)
+--   · ทำอะไร
+--   · ตารางไหน
+--   · รายละเอียด [ค่าเก่า, ค่าใหม่]
 select a.created_at, coalesce(p.email, 'ระบบ') as actor, a.action,
        a.target_table, a.detail
 from audit_logs a
@@ -999,11 +1348,18 @@ limit 20;
 
 -- @@ Q8 งานอัตโนมัติ pg_cron (Supabase เท่านั้น)
 --      ยกเลิกคำสั่งซื้อที่เกินเวลาโอนทุก 5 นาที
+-- ผลที่ต้องเห็น: 1 แถว: hompb-cancel-expired-orders schedule */5 * * * * = ทุก 5 นาที
+--   · active = true
+--   · รันได้เฉพาะบน Supabase
 select jobname, schedule, command, active
 from cron.job;
 
 -- @@ Q9 Storage bucket เป็น private ไหม (Supabase เท่านั้น)
 --      สลิปและสลิปคืนเงินต้อง public = false เปิดได้ผ่าน signed URL อายุสั้นเท่านั้น
+-- ผลที่ต้องเห็น: 5 แถว: slips, refund-slips, chat-images, store เป็น public = false (เปิดผ่าน signed URL อายุสั้น)
+--   · product-images = true เพราะรูปสินค้าให้ทุกคนดู
+--   · มีจำกัดขนาดและชนิดไฟล์
+--   · รันได้เฉพาะบน Supabase
 select id, public, file_size_limit, allowed_mime_types
 from storage.buckets
 order by id;
@@ -1018,9 +1374,12 @@ order by id;
 -- @@ Z1 ล้างข้อมูลทดสอบที่ค้าง แล้วโชว์ว่าเหลือ 0 ทุกช่อง (บันทึกจริง)
 --      ลบเฉพาะของที่บล็อกสาธิตสร้าง ระบุได้แน่นอน ไม่แตะข้อมูลจริง
 --      - คำสั่งซื้อทดสอบ = ไม่มีชื่อผู้รับในที่อยู่ (ของจริงจาก place_order() มีเสมอ)
---      - สินค้า/ตัวเลือก/รูปทดสอบ = ชื่อ "สินค้าทดสอบ" · SKU ขึ้นต้น DEMO- · รูปใน demo/
+--      - สินค้า/ตัวเลือก/รูป/หมวดทดสอบ = ชื่อ "สินค้าทดสอบ" · SKU ขึ้นต้น DEMO- · รูปใน demo/ · หมวด "ห้องทดสอบ"
 --      - บัญชีทดสอบจาก B1 = demo.signup@mail.com
 --      - E3 ค้าง = คืนสต็อกจาก demo.e3_backup แล้วลบ schema demo
+-- ผลที่ต้องเห็น: 1 แถว: test_orders, test_variants, test_products, test_categories, test_users, demo_schema = 0 ทุกช่อง = ไม่มีของทดสอบค้าง
+--   · ลบเฉพาะของที่บล็อกสาธิตสร้าง (คำสั่งซื้อที่ไม่มีชื่อผู้รับ, SKU DEMO-, สินค้าทดสอบ, demo.signup@mail.com) และคืนสต็อก E3 ถ้าค้าง
+--   · รันซ้ำกี่ครั้งก็ได้
 begin;
 select set_config('hompb.system_stock', 'on', true);               -- คืนสต็อก E3 โดยไม่สร้าง log ปรับสต็อกปลอม
 do $$
@@ -1045,11 +1404,13 @@ delete from orders               where id       in (select id from z1_orders);
 delete from product_variants where sku like 'DEMO-%';
 delete from product_images   where image_path like 'demo/%';
 delete from products         where name like 'สินค้าทดสอบ%';
+delete from categories       where name like 'ห้องทดสอบ%';
 delete from auth.users       where email = 'demo.signup@mail.com';
 
 select (select count(*) from orders where not (shipping_address ? 'recipient_name')) as test_orders,
        (select count(*) from product_variants where sku like 'DEMO-%')                as test_variants,
        (select count(*) from products where name like 'สินค้าทดสอบ%')               as test_products,
+       (select count(*) from categories where name like 'ห้องทดสอบ%')               as test_categories,
        (select count(*) from profiles where email = 'demo.signup@mail.com')          as test_users,
        (select count(*) from pg_namespace where nspname = 'demo')                    as demo_schema;   -- ต้องได้ 0 ทุกช่อง
 commit;
@@ -1057,6 +1418,8 @@ commit;
 -- @@ Z2 เรียงเลขคำสั่งซื้อให้ต่อจากเลขล่าสุด (บันทึกจริง)
 --      ทุกบล็อกที่สร้างคำสั่งซื้อแล้ว rollback ทำให้เลข order_no ข้าม (sequence ไม่ย้อนกลับ)
 --      บล็อกนี้ตั้งให้คำสั่งซื้อจริงใบถัดไปได้เลข = เลขสูงสุดตอนนี้ + 1
+-- ผลที่ต้องเห็น: 1 แถว: next_order_no = เลขที่คำสั่งซื้อจริงใบถัดไปจะได้ (เลขสูงสุดตอนนี้ + 1)
+--   · ใช้หลังสาธิตเสร็จ ให้เลขต่อเนื่อง
 select setval(pg_get_serial_sequence('public.orders', 'order_no'),
               coalesce(max(order_no), 0) + 1, false) as next_order_no
 from orders;
