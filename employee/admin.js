@@ -304,15 +304,9 @@ function qrBox(url, payload, title) {
   }</div></div>`;
 }
 function qrSection() {
-  const saved = store.qrUrl ? qrBox(store.qrUrl, store.qrPayload, "QR ที่บันทึกไว้") : "";
-  if (store.qrPayload) return saved;
-  const fb = store.fbPayload
-    ? qrBox(store.fbUrl, store.fbPayload, "QR สำรองของร้าน (ลูกค้าเห็นอันนี้)")
-    : "";
-  const why = store.qrUrl
-    ? "รูปที่บันทึกไว้อ่านเป็น QR พร้อมเพย์ไม่ได้ ลูกค้าจึงเห็น QR สำรองของร้านแทน อัปโหลด QR พร้อมเพย์ของร้านใหม่ด้านล่าง"
-    : "ยังไม่ได้อัปโหลด QR ลูกค้าจะเห็น QR สำรองของร้านแทน";
-  return `<div class="note warn">${why}</div>${saved}${fb}`;
+  // แสดงเฉพาะ QR ที่ลูกค้าเห็นจริง: ที่บันทึกไว้ถ้าใช้ได้ ไม่งั้นเป็น QR สำรองของร้าน
+  if (store.qrPayload) return qrBox(store.qrUrl, store.qrPayload, "QR ที่ลูกค้าเห็น");
+  return store.fbPayload ? qrBox(store.fbUrl, store.fbPayload, "QR ที่ลูกค้าเห็น") : "";
 }
 // เลือกไฟล์ QR ใหม่: อ่านให้ดูก่อนบันทึก
 async function previewQr() {
