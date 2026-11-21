@@ -305,7 +305,7 @@ const { data } = await sb
   .eq("is_active", true);
 const url = sb.storage.from("product-images").getPublicUrl(image_path).data.publicUrl;
 ```
-ผู้เยี่ยมชมและลูกค้าอ่าน `product_variants` ไม่ได้ (มี SKU และจำนวนสต๊อก) ให้ใช้ view `variants_public` แทน ถ้า join ผ่าน `products` ไม่ได้ ให้ query `variants_public` แยกแล้วจับคู่ด้วย `product_id`
+ผู้เยี่ยมชมและลูกค้าอ่าน `product_variants` ไม่ได้ (มี SKU) ให้ใช้ view `variants_public` แทน (มี `in_stock` และ `stock_left` = จำนวนที่เหลือ) ถ้า join ผ่าน `products` ไม่ได้ ให้ query `variants_public` แยกแล้วจับคู่ด้วย `product_id`
 
 **ข้อมูลร้าน:**
 - ผู้เยี่ยมชม (ยังไม่ล็อกอิน): `sb.from("store_public").select("*").single()` ได้ชื่อร้าน เวลาทำการ ค่าส่ง
