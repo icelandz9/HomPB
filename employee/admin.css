@@ -370,14 +370,6 @@ tr.k td {
   margin-top: 6px
 }
 
-.note.warn {
-  background: var(--warnbg);
-  border-color: #5a4724;
-  color: var(--warn);
-  padding: 12px 16px;
-  margin: 12px 0
-}
-
 /* รูป QR พร้อมเพย์ในหน้าตั้งค่าร้าน (พื้นขาว ให้สแกนได้) */
 .qr {
   width: 120px;
