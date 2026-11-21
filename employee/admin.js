@@ -59,6 +59,41 @@ const SHIP_STATUS = {
   delivered: "จัดส่งสำเร็จ",
   failed: "ส่งไม่สำเร็จ",
 };
+// คำสั่งซื้อที่ยังจัดส่งต่อได้ (cancelled / refunded = ยกเลิกแล้ว ปุ่มจัดส่งต้องปิด)
+const OPEN_ORDER = ["approved", "shipping", "delivered"];
+// เปลี่ยนสถานะได้ทีละขั้นตาม update_shipment() ใน backend/functions.sql
+const NEXT_SHIP = {
+  preparing: ["preparing", "in_transit"],
+  in_transit: ["in_transit", "delivered", "failed"],
+  failed: ["failed", "in_transit"],
+  delivered: ["delivered"],
+};
+// ช่องสถานะ: ให้เลือกเฉพาะสถานะถัดไปที่ทำได้จริง
+function shipStatusCell(x, i) {
+  if (x.closed) return '<span class="pill r">คำสั่งซื้อถูกยกเลิก</span>';
+  const opts = (NEXT_SHIP[x.code] || [x.code])
+    .map((c) => `<option value="${c}"${c === x.code ? " selected" : ""}>${SHIP_STATUS[c] || c}</option>`)
+    .join("");
+  return `<select id="ss${i}" aria-label="สถานะการจัดส่ง"${x.code === "delivered" ? " disabled" : ""}>${opts}</select><br><span style="display:inline-block;margin-top:6px">${shipPill(x.status)}</span>`;
+}
+// ช่องขนส่ง + เลขพัสดุ: ส่งด้วยรถของร้านไม่ต้องใส่
+function shipCarrierCells(x, i) {
+  if (x.method === "store_truck")
+    return '<td colspan="2"><span class="pill w">รถของร้าน</span><br><small class="muted">ไม่ต้องใส่ขนส่งและเลขพัสดุ</small></td>';
+  return `<td><select id="cr${i}" aria-label="ขนส่ง"><option value="">เลือกขนส่ง</option>${CARRIERS.map((c) => `<option${c === x.carrier ? " selected" : ""}>${c}</option>`).join("")}</select></td>
+<td><input id="tk${i}" value="${esc(x.track || "")}" placeholder="เลขพัสดุ" aria-label="เลขพัสดุ"></td>`;
+}
+// อ่านค่าจากแถว แล้วเช็กแบบเดียวกับฐานข้อมูล คืน null ถ้ายังกรอกไม่ครบ
+function shipInput(x, i) {
+  const code = $("#ss" + i).value,
+    cr = x.method === "store_truck" ? "" : $("#cr" + i).value,
+    tk = x.method === "store_truck" ? "" : $("#tk" + i).value.trim();
+  if (x.method !== "store_truck" && code === "in_transit" && (!cr || !tk)) {
+    toast("ส่งด้วยบริษัทขนส่ง ต้องเลือกขนส่งและใส่เลขพัสดุก่อน");
+    return null;
+  }
+  return { p_order_id: x.orderId, p_status: code, p_carrier: cr || null, p_tracking_no: tk || null };
+}
 const CARRIERS = [
   "ไปรษณีย์ไทย",
   "Flash Express",
@@ -81,6 +116,7 @@ const STOCK_REASON = {
 };
 // วิธีส่ง (products.delivery_method) มีชิ้นไหนส่งรถร้าน คำสั่งซื้อนั้นส่งรถร้านทั้งหมด
 const DELIVERY = { carrier: "บริษัทขนส่ง", store_truck: "รถของร้าน" };
+const STORE_QR_FILE = "img/qr_code/K+.jpg"; // QR สำรองของร้าน ใช้เมื่อรูปในตั้งค่าร้านไม่ใช่ QR พร้อมเพย์ (เหมือน js/shop-orders.js)
 const IMG_TYPES = ["image/jpeg", "image/png", "image/webp"]; // ตรงกับ bucket product-images
 const IMG_MAX = 5 * 1024 * 1024; // 5 MB
 
@@ -247,7 +283,46 @@ async function loadStore() {
   if (error) return toast("โหลดตั้งค่าร้านไม่สำเร็จ: " + errText(error));
   // bucket store เป็น private ต้องขอลิงก์ชั่วคราวก่อนแสดงรูป
   const urls = data.promptpay_qr_path ? await signedUrls("store", [data.promptpay_qr_path]) : {};
-  store = { ...data, qrUrl: urls[data.promptpay_qr_path] || "" };
+  const qrUrl = urls[data.promptpay_qr_path] || "";
+  // อ่าน QR แบบเดียวกับหน้าคำสั่งซื้อของลูกค้า (js/shop-orders.js) เพื่อบอก Admin ว่าลูกค้าเห็น QR ไหนจริง
+  // รูปที่บันทึกไว้ไม่ใช่ QR พร้อมเพย์ → ลูกค้าเห็น QR สำรองของร้านในเว็บแทน
+  const qrPayload = qrUrl ? await ppReadImage(qrUrl) : null;
+  const fbUrl = site(STORE_QR_FILE);
+  const fbPayload = qrPayload ? null : await ppReadImage(fbUrl);
+  store = { ...data, qrUrl, qrPayload, fbUrl, fbPayload };
+}
+
+// กล่อง QR: รูป + สถานะ + บัญชีปลายทางที่อ่านได้จาก QR
+function qrBox(url, payload, title) {
+  const acc = payload && ppAccount(payload);
+  return `<div class="qr-box">
+<a href="${esc(url)}" target="_blank" rel="noopener"><img class="qr" src="${esc(url)}" alt="${esc(title)}"></a>
+<div><b>${esc(title)}</b><br>${
+    payload
+      ? `<span class="pill o">QR พร้อมเพย์ใช้ได้</span>${acc ? `<br><small class="muted">${esc(acc.type)}: <b>${esc(acc.id)}</b></small>` : ""}`
+      : '<span class="pill r">ไม่ใช่ QR พร้อมเพย์</span>'
+  }</div></div>`;
+}
+function qrSection() {
+  const saved = store.qrUrl ? qrBox(store.qrUrl, store.qrPayload, "QR ที่บันทึกไว้") : "";
+  if (store.qrPayload) return saved;
+  const fb = store.fbPayload
+    ? qrBox(store.fbUrl, store.fbPayload, "QR สำรองของร้าน (ลูกค้าเห็นอันนี้)")
+    : "";
+  const why = store.qrUrl
+    ? "รูปที่บันทึกไว้อ่านเป็น QR พร้อมเพย์ไม่ได้ ลูกค้าจึงเห็น QR สำรองของร้านแทน อัปโหลด QR พร้อมเพย์ของร้านใหม่ด้านล่าง"
+    : "ยังไม่ได้อัปโหลด QR ลูกค้าจะเห็น QR สำรองของร้านแทน";
+  return `<div class="note warn">${why}</div>${saved}${fb}`;
+}
+// เลือกไฟล์ QR ใหม่: อ่านให้ดูก่อนบันทึก
+async function previewQr() {
+  const f = $("#s_qr").files[0],
+    box = $("#qrNew");
+  if (!f) return (box.innerHTML = "");
+  box.innerHTML = '<span class="muted">กำลังอ่าน QR…</span>';
+  const tmp = URL.createObjectURL(f);
+  const payload = await ppReadImage(tmp);
+  box.innerHTML = qrBox(tmp, payload, "QR ที่เลือก (ยังไม่บันทึก)");
 }
 
 // บันทึกการทำงานของระบบ 50 รายการล่าสุด (trigger เขียนให้เอง หน้าเว็บอ่านอย่างเดียว)
@@ -433,7 +508,7 @@ async function loadShipments() {
   const { data, error } = await sb
     .from("shipments")
     .select(
-      "order_id, carrier, tracking_no, status, handled_by, shipped_at, delivered_at, orders ( order_no, shipping_address, created_at, order_items ( product_name, quantity ) )",
+      "order_id, method, carrier, tracking_no, status, handled_by, shipped_at, delivered_at, orders ( order_no, status, shipping_address, created_at, order_items ( product_name, quantity ) )",
     );
   if (error) return toast("โหลดงานจัดส่งไม่สำเร็จ: " + errText(error));
 
@@ -456,6 +531,9 @@ async function loadShipments() {
           .join(", "),
         date: new Date(o.created_at).toLocaleString("th-TH"),
         status: SHIP_STATUS[x.status] || x.status,
+        code: x.status, // preparing / in_transit / delivered / failed
+        method: x.method, // carrier = บริษัทขนส่ง, store_truck = รถของร้าน (ไม่ต้องมีเลขพัสดุ)
+        closed: !OPEN_ORDER.includes(o.status), // คำสั่งซื้อถูกยกเลิก / คืนเงินแล้ว ส่งต่อไม่ได้
         carrier: x.carrier || "",
         track: x.tracking_no || "",
         handledBy: x.handled_by, // null = ยังไม่มีคนรับ
@@ -970,8 +1048,12 @@ ${f("s_accname", "ชื่อบัญชี", store.bank_account_name)}
 ${f("s_pay", "เวลาให้โอน หลังสั่งซื้อ (ชั่วโมง)", store.payment_window_hours, 'type="number" min="1" step="1"')}
 ${f("s_reup", "เวลาให้ส่งสลิปใหม่ หลังสลิปไม่ผ่าน (ชั่วโมง)", store.reupload_window_hours, 'type="number" min="1" step="1"')}
 </div><br>
-<label for="s_qr">QR พร้อมเพย์ (JPG/PNG ไม่เกิน 2 MB)</label>
-<div class="pname">${store.qrUrl ? `<a href="${esc(store.qrUrl)}" target="_blank" rel="noopener"><img class="qr" src="${esc(store.qrUrl)}" alt="QR พร้อมเพย์ปัจจุบัน"></a>` : '<span class="muted">ยังไม่มี QR</span>'}<input id="s_qr" type="file" accept="image/jpeg,image/png"></div>`,
+<h3 class="qr-h">QR พร้อมเพย์รับเงิน</h3>
+<p class="muted">หน้าคำสั่งซื้อจะอ่าน QR นี้แล้วสร้าง QR ที่ใส่ยอดของแต่ละคำสั่งซื้อให้ลูกค้าสแกนจ่าย</p>
+${qrSection()}
+<label for="s_qr">อัปโหลด QR ใหม่ (JPG/PNG ไม่เกิน 2 MB · ใช้รูป QR จากแอปธนาคาร ไม่ตัดขอบ)</label>
+<input id="s_qr" type="file" accept="image/jpeg,image/png" onchange="previewQr()">
+<div id="qrNew"></div>`,
         1,
       ) +
       `<button class="btn" id="s_save" onclick="saveStore()">บันทึกตั้งค่าร้าน</button>` +
@@ -1105,10 +1187,9 @@ function shipRows() {
       ({ x, i }) => `<tr>
 <td><b>${x.code}</b><br><small class="muted">${x.date}</small></td>
 <td>${esc(x.name)} · ${esc(x.phone)}<br><small class="muted">${esc(x.addr)}</small><br><small class="muted">${esc(x.items)}</small></td>
-<td><select id="ss${i}" aria-label="สถานะการจัดส่ง">${STATUSES.map((t) => `<option${t === x.status ? " selected" : ""}>${t}</option>`).join("")}</select><br><span style="display:inline-block;margin-top:6px">${shipPill(x.status)}</span></td>
-<td><select id="cr${i}" aria-label="ขนส่ง"><option value="">เลือกขนส่ง</option>${CARRIERS.map((c) => `<option${c === x.carrier ? " selected" : ""}>${c}</option>`).join("")}</select></td>
-<td><input id="tk${i}" value="${esc(x.track || "")}" placeholder="เลขพัสดุ" aria-label="เลขพัสดุ"></td>
-<td><div class="acts"><button class="btn sm" onclick="saveS(${i})">บันทึก</button><button class="btn line sm" onclick="copyAddr(${i})">คัดลอกที่อยู่</button></div></td></tr>`,
+<td>${shipStatusCell(x, i)}</td>
+${shipCarrierCells(x, i)}
+<td><div class="acts">${x.closed || x.code === "delivered" ? "" : `<button class="btn sm" onclick="saveS(${i})">บันทึก</button>`}<button class="btn line sm" onclick="copyAddr(${i})">คัดลอกที่อยู่</button></div></td></tr>`,
     )
     .join("");
 }
@@ -1508,29 +1589,10 @@ async function markPaid(i) {
 // ========== จัดส่ง: จัดการ ==========
 async function saveS(i) {
   if (!guard("shipping") || busy) return;
-  const x = shipments[i],
-    st = $("#ss" + i).value,
-    cr = $("#cr" + i).value,
-    tk = $("#tk" + i).value.trim();
-  // เริ่มส่งแล้วต้องมีขนส่งและเลขพัสดุ
-  if (st !== "รอจัดส่ง" && (!cr || !tk)) {
-    toast("เลือกขนส่งและใส่เลขพัสดุก่อนเปลี่ยนสถานะ");
-    return;
-  }
-  // แปลงภาษาไทยกลับเป็นรหัส เช่น "กำลังจัดส่ง" → "in_transit"
-  const code = Object.keys(SHIP_STATUS).find((k) => SHIP_STATUS[k] === st);
-
+  const args = shipInput(shipments[i], i);
+  if (!args) return;
   // Admin ไม่ต้องรับงานก่อน ถ้ายังไม่มีคนรับ ระบบตั้งให้เป็นงานของ Admin เอง
-  await callRpc(
-    "update_shipment",
-    {
-      p_order_id: x.orderId,
-      p_status: code,
-      p_carrier: cr || null,
-      p_tracking_no: tk || null,
-    },
-    "บันทึกแล้ว",
-  );
+  await callRpc("update_shipment", args, "บันทึกแล้ว");
 }
 function copyAddr(i) {
   const x = shipments[i],

@@ -24,6 +24,41 @@ const SHIP_STATUS = {
   delivered: "จัดส่งสำเร็จ",
   failed: "ส่งไม่สำเร็จ",
 };
+// คำสั่งซื้อที่ยังจัดส่งต่อได้ (cancelled / refunded = ยกเลิกแล้ว ปุ่มจัดส่งต้องปิด)
+const OPEN_ORDER = ["approved", "shipping", "delivered"];
+// เปลี่ยนสถานะได้ทีละขั้นตาม update_shipment() ใน backend/functions.sql
+const NEXT_SHIP = {
+  preparing: ["preparing", "in_transit"],
+  in_transit: ["in_transit", "delivered", "failed"],
+  failed: ["failed", "in_transit"],
+  delivered: ["delivered"],
+};
+// ช่องสถานะ: ให้เลือกเฉพาะสถานะถัดไปที่ทำได้จริง
+function shipStatusCell(x, i) {
+  if (x.closed) return '<span class="pill r">คำสั่งซื้อถูกยกเลิก</span>';
+  const opts = (NEXT_SHIP[x.code] || [x.code])
+    .map((c) => `<option value="${c}"${c === x.code ? " selected" : ""}>${SHIP_STATUS[c] || c}</option>`)
+    .join("");
+  return `<select id="ss${i}" aria-label="สถานะการจัดส่ง"${x.code === "delivered" ? " disabled" : ""}>${opts}</select><br><span style="display:inline-block;margin-top:6px">${shipPill(x.status)}</span>`;
+}
+// ช่องขนส่ง + เลขพัสดุ: ส่งด้วยรถของร้านไม่ต้องใส่
+function shipCarrierCells(x, i) {
+  if (x.method === "store_truck")
+    return '<td colspan="2"><span class="pill w">รถของร้าน</span><br><small class="muted">ไม่ต้องใส่ขนส่งและเลขพัสดุ</small></td>';
+  return `<td><select id="cr${i}" aria-label="ขนส่ง"><option value="">เลือกขนส่ง</option>${CARRIERS.map((c) => `<option${c === x.carrier ? " selected" : ""}>${c}</option>`).join("")}</select></td>
+<td><input id="tk${i}" value="${esc(x.track || "")}" placeholder="เลขพัสดุ" aria-label="เลขพัสดุ"></td>`;
+}
+// อ่านค่าจากแถว แล้วเช็กแบบเดียวกับฐานข้อมูล คืน null ถ้ายังกรอกไม่ครบ
+function shipInput(x, i) {
+  const code = $("#ss" + i).value,
+    cr = x.method === "store_truck" ? "" : $("#cr" + i).value,
+    tk = x.method === "store_truck" ? "" : $("#tk" + i).value.trim();
+  if (x.method !== "store_truck" && code === "in_transit" && (!cr || !tk)) {
+    toast("ส่งด้วยบริษัทขนส่ง ต้องเลือกขนส่งและใส่เลขพัสดุก่อน");
+    return null;
+  }
+  return { p_order_id: x.orderId, p_status: code, p_carrier: cr || null, p_tracking_no: tk || null };
+}
 
 // ========== ข้อมูล (ว่างไว้ก่อน ค่อยเชื่อม API/ฐานข้อมูลภายหลัง) ==========
 // shipments: เฉพาะคำสั่งซื้อที่ชำระเงินแล้ว
@@ -76,7 +111,7 @@ async function loadData() {
   const { data, error } = await sb
     .from("shipments")
     .select(
-      "order_id, carrier, tracking_no, status, handled_by, shipped_at, delivered_at,orders ( order_no, shipping_address, created_at, order_items ( product_name, quantity ) )",
+      "order_id, method, carrier, tracking_no, status, handled_by, shipped_at, delivered_at, orders ( order_no, status, shipping_address, created_at, order_items ( product_name, quantity ) )",
     );
   if (error) return toast("โหลดงานจัดส่งไม่สำเร็จ: " + errText(error));
 
@@ -102,6 +137,9 @@ async function loadData() {
           .join(", "),
         date: new Date(o.created_at).toLocaleString("th-TH"),
         status: SHIP_STATUS[x.status] || x.status,
+        code: x.status, // preparing / in_transit / delivered / failed
+        method: x.method, // carrier = บริษัทขนส่ง, store_truck = รถของร้าน (ไม่ต้องมีเลขพัสดุ)
+        closed: !OPEN_ORDER.includes(o.status), // คำสั่งซื้อถูกยกเลิก / คืนเงินแล้ว ส่งต่อไม่ได้
         carrier: x.carrier || "",
         track: x.tracking_no || "",
         handledBy: x.handled_by, // null = ยังไม่มีคนรับ
@@ -191,11 +229,13 @@ const VIEWS = {
   // ---- ภาพรวม (ดูอย่างเดียว) ----
   overview() {
     const k = (l, v) => `<div class="kpi"><p>${l}</p><b>${v}</b></div>`;
-    const n = (s) => shipments.filter((x) => x.status === s).length;
+    const open = shipments.filter((x) => !x.closed);
+    const n = (s) => open.filter((x) => x.status === s).length;
     return `<div class="kpis">
-${k("งานจัดส่งทั้งหมด", shipments.length)}
+${k("งานจัดส่งทั้งหมด", open.length)}
 ${k("รอจัดส่ง", n("รอจัดส่ง"))}
 ${k("กำลังจัดส่ง", n("กำลังจัดส่ง"))}
+${k("ส่งไม่สำเร็จ", n("ส่งไม่สำเร็จ"))}
 ${k("จัดส่งสำเร็จ", n("จัดส่งสำเร็จ"))}
 </div>`;
   },
@@ -285,10 +325,9 @@ function rowsHtml() {
       ({ x, i }) => `<tr>
 <td><b>${x.code}</b><br><small class="muted">${x.date}</small></td>
 <td>${esc(x.name)} · ${esc(x.phone)}<br><small class="muted">${esc(x.addr)}</small><br><small class="muted">${esc(x.items)}</small></td>
-<td><select id="ss${i}" aria-label="สถานะการจัดส่ง">${STATUSES.map((s) => `<option${s === x.status ? " selected" : ""}>${s}</option>`).join("")}</select><br><span style="display:inline-block;margin-top:6px">${shipPill(x.status)}</span></td>
-<td><select id="cr${i}" aria-label="ขนส่ง"><option value="">เลือกขนส่ง</option>${CARRIERS.map((c) => `<option${c === x.carrier ? " selected" : ""}>${c}</option>`).join("")}</select></td>
-<td><input id="tk${i}" value="${esc(x.track || "")}" placeholder="เลขพัสดุ" aria-label="เลขพัสดุ"></td>
-<td><div class="acts">${x.handledBy ? `<button class="btn sm" onclick="saveS(${i})">บันทึก</button>` : `<button class="btn sm" onclick="claim(${i})">รับงาน</button>`}<button class="btn line sm" onclick="copyAddr(${i})">คัดลอกที่อยู่</button></div></td></tr>`,
+<td>${shipStatusCell(x, i)}</td>
+${shipCarrierCells(x, i)}
+<td><div class="acts">${x.closed || x.code === "delivered" ? "" : x.handledBy ? `<button class="btn sm" onclick="saveS(${i})">บันทึก</button>` : `<button class="btn sm" onclick="claim(${i})">รับงาน</button>`}<button class="btn line sm" onclick="copyAddr(${i})">คัดลอกที่อยู่</button></div></td></tr>`,
     )
     .join("");
 }
@@ -312,25 +351,9 @@ async function claim(i) {
 }
 async function saveS(i) {
   if (!guard("shipping")) return;
-  const x = shipments[i],
-    st = $("#ss" + i).value,
-    cr = $("#cr" + i).value,
-    tk = $("#tk" + i).value.trim();
-  // เริ่มส่งแล้วต้องมีขนส่งและเลขพัสดุ
-  if (st !== "รอจัดส่ง" && (!cr || !tk)) {
-    toast("เลือกขนส่งและใส่เลขพัสดุก่อนเปลี่ยนสถานะ");
-    return;
-  }
-
-  // แปลงภาษาไทยกลับเป็นรหัส เช่น "กำลังจัดส่ง" → "in_transit"
-  const code = Object.keys(SHIP_STATUS).find((k) => SHIP_STATUS[k] === st);
-
-  const { error } = await sb.rpc("update_shipment", {
-    p_order_id: x.orderId,
-    p_status: code,
-    p_carrier: cr || null,
-    p_tracking_no: tk || null,
-  });
+  const args = shipInput(shipments[i], i);
+  if (!args) return;
+  const { error } = await sb.rpc("update_shipment", args);
   if (error) return toast("บันทึกไม่สำเร็จ: " + errText(error));
 
   await loadData();
