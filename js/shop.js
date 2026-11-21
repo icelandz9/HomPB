@@ -38,7 +38,8 @@ const ic = (name, size = 20) =>
 
 function toast(msg, bad) {
   const t = document.createElement("div");
-  t.className = "shop-toast" + (bad ? " bad" : "");
+  // .toast = สไตล์ใน main_page.css (หน้าแรก), .shop-toast = shop.css (หน้าอื่น)
+  t.className = "toast shop-toast" + (bad ? " bad" : "");
   t.setAttribute("role", "status");
   t.textContent = msg;
   document.body.appendChild(t);
@@ -82,14 +83,15 @@ async function renderHeader() {
   refreshCartCount();
 }
 
-// จำนวนชิ้นในตะกร้าบนไอคอน
+// จำนวนชิ้นในตะกร้าบนไอคอน (หัวเว็บหน้าร้าน .shop-icons และหัวเว็บหน้าแรก .hdr-icons)
 async function refreshCartCount() {
-  const a = document.querySelector('.shop-icons a[href$="cart.html"]');
-  if (!a || !me) return;
+  const a = document.querySelector('.shop-icons a[href$="cart.html"], .hdr-icons a.i-cart');
+  if (!a || !me || me.role !== "customer") return;
   const { data } = await sb.from("cart_items").select("quantity");
   const n = (data || []).reduce((s, x) => s + x.quantity, 0);
   a.querySelector(".badge")?.remove();
-  if (n) a.insertAdjacentHTML("beforeend", `<span class="badge">${n}</span>`);
+  if (n) a.insertAdjacentHTML("beforeend", `<span class="badge">${n > 99 ? "99+" : n}</span>`);
+  a.setAttribute("aria-label", n ? `ตะกร้า ${n} ชิ้น` : "ตะกร้า");
 }
 
 // ========== สินค้า ==========
@@ -99,6 +101,11 @@ const imgUrl = (path) =>
 
 // สินค้าที่ยังไม่มีรูปในฐานข้อมูล: ใช้รูปในเว็บ (img/products) ที่ชื่อสินค้าตรงกัน ไม่ตรงเลยใช้รูปห้องของโซนนั้น (img/rooms)
 // พอคลังอัปโหลดรูปจริงในหน้าสินค้า รูปจริงจะขึ้นแทนเอง
+// ชื่อตรงทั้งคำ (ไม่ใช่แค่มีคำนี้อยู่ในชื่อ) เช่น "แก้ว" ไม่ไปจับ "ชุดจานรองแก้วไม้"
+const LOCAL_IMG_EXACT = {
+  "แก้ว": "kitchen/glass.jpg",
+  "แก้วน้ำ": "kitchen/glass.jpg",
+};
 const LOCAL_IMG = [
   ["หมอน", "bed/pillow"],
   ["ผ้าห่ม", "bed/blanket"],
@@ -111,6 +118,8 @@ const LOCAL_IMG = [
   ["กาต้มน้ำ", "appliance/kettle"],
 ];
 function fallbackImg(name, zone) {
+  const exact = LOCAL_IMG_EXACT[name.trim()];
+  if (exact) return site(`img/products/${exact}`);
   const hit = LOCAL_IMG.find(([word]) => name.includes(word));
   if (hit) return site(`img/products/${hit[1]}.jpg`);
   const slug = zoneSlug(zone);
@@ -134,9 +143,14 @@ async function fetchProducts(opts = {}) {
     return [];
   }
   const ids = data.map((p) => p.id);
-  const { data: vs } = ids.length
-    ? await sb.from("variants_public").select("id, product_id, name, price, in_stock").in("product_id", ids)
-    : { data: [] };
+  const variantsOf = (cols) => sb.from("variants_public").select(cols).in("product_id", ids);
+  let vs = [];
+  if (ids.length) {
+    let r = await variantsOf("id, product_id, name, price, in_stock, stock_left");
+    // ฐานข้อมูลที่ยังไม่ได้รัน backend/add_stock_left.sql ไม่มี stock_left: โหลดแบบเดิม ไม่โชว์จำนวน
+    if (r.error) r = await variantsOf("id, product_id, name, price, in_stock");
+    vs = r.data;
+  }
   const byProduct = {};
   for (const v of vs || []) (byProduct[v.product_id] ||= []).push(v);
   let list = data
@@ -155,10 +169,20 @@ async function fetchProducts(opts = {}) {
         variants,
         price: variants[0].price,
         inStock: variants.some((v) => v.in_stock),
+        // รวมทุกแบบ (สี/ขนาด) null = ไม่รู้จำนวน
+        stockLeft: variants.every((v) => v.stock_left != null) ? variants.reduce((n, v) => n + v.stock_left, 0) : null,
       };
     });
   if (opts.zone) list = list.filter((p) => p.slug === opts.zone);
   return list;
+}
+
+// ป้ายสต๊อก: "เหลือ N ชิ้น" (เหลือน้อยเป็นสีเตือน) หรือ "สินค้าหมด"
+const LOW_STOCK = 5;
+function stockBadge(inStock, left) {
+  if (!inStock) return `<span class="stock out">${ic("x", 14)}สินค้าหมด</span>`;
+  if (left == null) return `<span class="stock">${ic("check", 14)}มีสินค้า</span>`;
+  return `<span class="stock${left <= LOW_STOCK ? " low" : ""}">${ic("check", 14)}เหลือ ${left.toLocaleString("th-TH")} ชิ้น</span>`;
 }
 
 // การ์ดสินค้า (markup เดียวกับหน้าแรก ใช้ CSS ใน main_page.css)
@@ -166,11 +190,11 @@ function productCard(p, favs = new Set()) {
   const v = p.variants.find((x) => x.in_stock) || p.variants[0];
   const url = site("product.html?id=" + p.id);
   return `<article class="card${p.slug ? " z-" + p.slug : ""}">
-<div class="img">${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy">` : `<span class="noimg">${ic("box", 64)}</span>`}
+<div class="img"><a href="${url}" class="img-link" tabindex="-1" aria-hidden="true">${p.img ? `<img src="${esc(p.img)}" alt="" loading="lazy">` : `<span class="noimg">${ic("box", 64)}</span>`}</a>
 <button type="button" class="icon-btn fav${favs.has(p.id) ? " on" : ""}" data-fav="${p.id}" aria-pressed="${favs.has(p.id)}" aria-label="บันทึก ${esc(p.name)} ในรายการโปรด">${ic("heart", 22)}</button></div>
 <span class="zone">${esc(p.zone || "-")}</span>
 <a href="${url}" class="name">${esc(p.name)}</a>
-${p.inStock ? "" : `<span class="stock out">${ic("x", 14)}สินค้าหมด</span>`}
+${stockBadge(p.inStock, p.stockLeft)}
 <div class="foot"><span class="price num"><span class="cur">฿</span><span class="amt">${Number(v.price).toLocaleString("th-TH")}</span></span>
 <button type="button" class="btn sm" data-add="${v.id}"${p.inStock ? "" : " disabled"} aria-label="เพิ่ม ${esc(p.name)} ลงตะกร้า">${ic("cart", 16)}<span>ใส่ตะกร้า</span></button></div>
 </article>`;
@@ -205,7 +229,7 @@ async function addToCart(variantId, qty = 1) {
     toast("เพิ่มลงตะกร้าไม่สำเร็จ: " + errText(error), true);
     return false;
   }
-  toast("เพิ่มลงตะกร้าแล้ว");
+  toast(`เพิ่มลงตะกร้าแล้ว ${qty} ชิ้น`);
   refreshCartCount();
   return true;
 }
@@ -245,3 +269,112 @@ const ORDER_STATUS = {
   refunded: ["คืนเงินแล้ว", "neutral"],
 };
 const pill = ([text, kind]) => `<span class="pill ${kind}">${text}</span>`;
+
+// ========== คำแนะนำตอนพิมพ์ค้นหา (ทุกช่องค้นหา: หัวเว็บหน้าแรก #q และหน้าร้าน #sq) ==========
+// โหลดชื่อสินค้าครั้งเดียวตอนเริ่มพิมพ์ แล้วกรองในเครื่อง พิมพ์ไม่ครบก็เจอ (เช่น "หม" → หมอน หม้อ...)
+// คำที่ขึ้นต้นด้วยคำค้นขึ้นก่อน ตามด้วยคำที่มีคำค้นอยู่ตรงกลาง
+const SUGGEST_MAX = 8;
+let suggestNames = null; // [{ name, href, zone }]
+
+async function loadSuggestNames() {
+  if (suggestNames) return suggestNames;
+  const { data } = await sb.from("products").select("id, name").eq("is_active", true);
+  const real = (data || []).map((p) => ({ name: p.name, href: site("product.html?id=" + p.id) }));
+  const seen = new Set(real.map((x) => x.name.trim()));
+  const samples = (typeof SAMPLES !== "undefined" ? SAMPLES : [])
+    .filter((s) => !seen.has(s.name))
+    .map((s) => ({ name: s.name, href: site("search.html?q=" + encodeURIComponent(s.name)) }));
+  return (suggestNames = [...real, ...samples]);
+}
+
+function matchSuggest(list, q) {
+  const k = q.toLowerCase();
+  const starts = [], has = [];
+  for (const x of list) {
+    const i = x.name.toLowerCase().indexOf(k);
+    if (i === 0) starts.push(x);
+    else if (i > 0) has.push(x);
+  }
+  return [...starts, ...has].slice(0, SUGGEST_MAX);
+}
+
+function suggestBox(input) {
+  const form = input.form;
+  let box = form.querySelector(".suggest");
+  if (!box) {
+    form.classList.add("has-suggest");
+    box = document.createElement("ul");
+    box.className = "suggest";
+    box.id = input.id + "-suggest";
+    box.setAttribute("role", "listbox");
+    box.hidden = true;
+    form.appendChild(box);
+    input.setAttribute("autocomplete", "off"); // ปิดประวัติของเบราว์เซอร์ ไม่ให้ซ้อนกัน
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-controls", box.id);
+    input.setAttribute("aria-expanded", "false");
+  }
+  return box;
+}
+
+function closeSuggest(input) {
+  const box = input.form?.querySelector(".suggest");
+  if (!box) return;
+  box.hidden = true;
+  input.setAttribute("aria-expanded", "false");
+  input.removeAttribute("aria-activedescendant");
+}
+
+async function showSuggest(input) {
+  const box = suggestBox(input);
+  const q = input.value.trim();
+  if (!q) return closeSuggest(input);
+  const hits = matchSuggest(await loadSuggestNames(), q);
+  if (input.value.trim() !== q) return; // พิมพ์ต่อระหว่างโหลด รอบใหม่จะวาดเอง
+  if (!hits.length) return closeSuggest(input);
+  const k = q.toLowerCase();
+  box.innerHTML = hits
+    .map((x, i) => {
+      const at = x.name.toLowerCase().indexOf(k);
+      const label = esc(x.name.slice(0, at)) + "<mark>" + esc(x.name.slice(at, at + q.length)) + "</mark>" + esc(x.name.slice(at + q.length));
+      return `<li role="option" id="${box.id}-${i}"><a href="${esc(x.href)}" tabindex="-1">${ic("search", 16)}<span>${label}</span></a></li>`;
+    })
+    .join("");
+  box.hidden = false;
+  input.setAttribute("aria-expanded", "true");
+}
+
+const SEARCH_INPUT = 'form[role="search"] input[name="q"]';
+
+document.addEventListener("input", (e) => {
+  if (e.target.matches?.(SEARCH_INPUT)) showSuggest(e.target);
+});
+document.addEventListener("focusin", (e) => {
+  if (e.target.matches?.(SEARCH_INPUT) && e.target.value.trim()) showSuggest(e.target);
+});
+document.addEventListener("keydown", (e) => {
+  const input = e.target;
+  if (!input.matches?.(SEARCH_INPUT)) return;
+  const box = input.form.querySelector(".suggest");
+  if (!box || box.hidden) return;
+  const items = [...box.querySelectorAll("li")];
+  let i = items.findIndex((li) => li.classList.contains("on"));
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    items[i]?.classList.remove("on");
+    i = e.key === "ArrowDown" ? (i + 1) % items.length : (i <= 0 ? items.length : i) - 1;
+    items[i].classList.add("on");
+    input.setAttribute("aria-activedescendant", items[i].id);
+  } else if (e.key === "Enter" && i >= 0) {
+    e.preventDefault();
+    location.href = items[i].querySelector("a").href;
+  } else if (e.key === "Escape") {
+    closeSuggest(input);
+  }
+});
+// คลิกที่อื่น = ปิด
+document.addEventListener("pointerdown", (e) => {
+  document.querySelectorAll(SEARCH_INPUT).forEach((input) => {
+    if (!input.form.contains(e.target)) closeSuggest(input);
+  });
+});

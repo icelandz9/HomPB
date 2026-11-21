@@ -42,9 +42,9 @@
   const showVariant = () => {
     const v = current();
     $("#price").textContent = baht(v.price);
-    $("#stock").className = "stock" + (v.in_stock ? "" : " out");
-    $("#stock").innerHTML = ic(v.in_stock ? "check" : "x", 14) + (v.in_stock ? "มีสินค้า" : "สินค้าหมด");
+    $("#stock").outerHTML = stockBadge(v.in_stock, v.stock_left).replace("<span ", '<span id="stock" ');
     $("#addBtn").disabled = !v.in_stock;
+    if (v.stock_left != null) $("#qty").max = Math.max(1, v.stock_left);
   };
   showVariant();
   $("#variant")?.addEventListener("change", showVariant);

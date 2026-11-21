@@ -411,9 +411,9 @@ create policy audit_logs_select on audit_logs for select using (public.has_role(
 -- VIEWS ซ่อนคอลัมน์ (Security Design ข้อ 13, 18) ----------------------
 -- view เหล่านี้รันด้วยสิทธิ์เจ้าของ (ข้าม RLS) จึงกรองแถวเองใน WHERE
 
--- สินค้าสำหรับหน้าร้าน: ไม่มี sku และ stock_qty เห็นแค่ in_stock
+-- สินค้าสำหรับหน้าร้าน: ไม่มี sku เห็น in_stock และ stock_left (จำนวนที่เหลือ ไว้โชว์ "เหลือ N ชิ้น")
 create view public.variants_public with (security_barrier) as
-  select v.id, v.product_id, v.name, v.price, (v.stock_qty > 0) as in_stock
+  select v.id, v.product_id, v.name, v.price, (v.stock_qty > 0) as in_stock, v.stock_qty as stock_left
   from public.product_variants v
   join public.products p on p.id = v.product_id
   where v.is_active and p.is_active;

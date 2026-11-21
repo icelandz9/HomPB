@@ -17,11 +17,32 @@ function renderHome(list, favs) {
   $("#homeGrid").innerHTML = cards.join("");
 }
 
-renderHome([], new Set());
+// จำสินค้าที่โหลดล่าสุดไว้ในแท็บนี้ (sessionStorage) กดดูสินค้าแล้วกดย้อนกลับ
+// จะวาดสินค้าชุดเดิมทันที ไม่ขึ้นการ์ดตัวอย่างก่อน และเบราว์เซอร์เลื่อนกลับไปตำแหน่งเดิมได้ถูก
+// แล้วค่อยโหลดใหม่จากฐานข้อมูลมาแทน (ราคา / สต๊อกล่าสุด)
+const HOME_CACHE = "hompb-home";
+function readHomeCache() {
+  try {
+    const c = JSON.parse(sessionStorage.getItem(HOME_CACHE));
+    if (c && Array.isArray(c.list)) return c;
+  } catch {}
+  return null;
+}
+function saveHomeCache(list, favs) {
+  try {
+    sessionStorage.setItem(HOME_CACHE, JSON.stringify({ list, favs: [...favs] }));
+  } catch {}
+}
+
+const cached = readHomeCache();
+renderHome(cached?.list || [], new Set(cached?.favs || []));
 
 (async () => {
   me = await currentProfile();
   if (me && !me.is_active) me = null;
+  refreshCartCount(); // ตัวเลขบนไอคอนตะกร้าที่หัวเว็บ
   const [list, favs] = await Promise.all([fetchProducts(), myFavorites()]);
-  if (list.length) renderHome(list, favs);
+  if (!list.length) return;
+  renderHome(list, favs);
+  saveHomeCache(list, favs);
 })();
