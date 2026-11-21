@@ -195,7 +195,11 @@ async function loadReturns() {
     .map((x) => ({
       id: x.id,
       code: code[x.order_items.order_id] || "-",
-      item: x.order_items.product_name,
+      item:
+        x.order_items.product_name +
+        (x.order_items.variant_name && x.order_items.variant_name !== "มาตรฐาน"
+          ? ` (${x.order_items.variant_name})`
+          : ""),
       qty: x.quantity,
     }));
 }

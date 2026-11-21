@@ -39,6 +39,26 @@ function ppValid(payload) {
   return !!(acct && crc && payload.endsWith(crc[1]) && ppCrc(payload.slice(0, -4)) === crc[1]);
 }
 
+// บัญชีปลายทางใน QR (ให้ Admin เช็กว่าเป็นของร้านจริง) คืน { type, id } หรือ null
+// tag 29 ข้างในมี 01 = เบอร์มือถือ (0066xxxxxxxxx), 02 = เลขบัตรประชาชน/เลขผู้เสียภาษี, 03 = e-Wallet
+// tag 30 (bill payment) ข้างในมี 01 = Biller ID
+function ppAccount(payload) {
+  if (!ppValid(payload)) return null;
+  const outer = ppParse(payload).find(([k, v]) => (k === "29" || k === "30") && PROMPTPAY_AID.test(v));
+  const inner = outer && ppParse(outer[1]);
+  if (!inner) return null;
+  const get = (t) => inner.find(([k]) => k === t)?.[1];
+  if (outer[0] === "30") return get("01") ? { type: "Biller ID", id: get("01") } : null;
+  const phone = get("01");
+  if (phone) {
+    const local = "0" + phone.replace(/^0066/, "").replace(/^0+/, "");
+    return { type: "เบอร์มือถือ", id: local.replace(/^(\d{3})(\d{3})(\d{4})$/, "$1-$2-$3") };
+  }
+  if (get("02")) return { type: "เลขประจำตัวประชาชน / ผู้เสียภาษี", id: get("02") };
+  if (get("03")) return { type: "e-Wallet", id: get("03") };
+  return null;
+}
+
 // ใส่ยอดเงิน: tag 01 = 12 (QR ใช้ครั้งเดียว มียอด), tag 54 = ยอด ทศนิยม 2 ตำแหน่ง แล้วคำนวณ CRC ใหม่
 function ppWithAmount(payload, amount) {
   if (!ppValid(payload)) return null;

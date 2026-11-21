@@ -353,10 +353,36 @@ tr.k td {
   display: inline-block
 }
 
+/* กล่อง QR: รูป + สถานะ + บัญชีปลายทาง */
+.qr-h {
+  margin: 0 0 4px;
+  font-size: 17px
+}
+
+.qr-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 12px 0 16px
+}
+
+.qr-box .pill {
+  margin-top: 6px
+}
+
+.note.warn {
+  background: var(--warnbg);
+  border-color: #5a4724;
+  color: var(--warn);
+  padding: 12px 16px;
+  margin: 12px 0
+}
+
 /* รูป QR พร้อมเพย์ในหน้าตั้งค่าร้าน (พื้นขาว ให้สแกนได้) */
 .qr {
-  width: 96px;
-  height: 96px;
+  width: 120px;
+  height: 120px;
+  flex: none;
   object-fit: contain;
   background: #fff;
   border-radius: 10px
