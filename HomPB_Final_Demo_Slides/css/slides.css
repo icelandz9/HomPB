@@ -58,6 +58,8 @@ a:hover{color:var(--accent-strong)}
 #dock button{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:999px;background:none}
 #dock button:hover{background:var(--soft)}
 #counter{min-width:64px;text-align:center;font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600}
+#counter i{font-style:normal;margin:0 4px;color:var(--muted)}
+#counter span{color:var(--muted)}
 .dock-sep{width:1px;height:22px;background:var(--line);margin:0 4px}
 #themeBtn .i-moon{display:none}
 :root[data-theme="light"] #themeBtn .i-sun{display:none}
@@ -252,6 +254,96 @@ table.matrix th{font-size:12.5px}
 #overview .close{border:1.5px solid var(--line-2);background:var(--panel);color:var(--ink);border-radius:12px;padding:8px 16px}
 #toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:70;background:var(--accent-bg);color:var(--on-accent);padding:10px 18px;border-radius:12px;font-size:15px;display:flex;gap:8px;align-items:center;transition:opacity .2s,transform .2s;box-shadow:var(--shadow)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* role card: รหัส role ชิดไอคอน ป้ายจำนวนคนชิดขวา */
+.role .top code{margin-right:auto;margin-left:4px}
+
+/* ---------- จอคอม: 1 สไลด์ = 1 หน้าจอพอดี ----------
+   เนื้อหาที่สูงเกินจอ slides.js ย่อด้วย zoom ให้พอดี (ไม่ให้ล้นไปทับแถบปุ่มด้านล่าง) */
+@media (min-width:1025px) and (min-height:600px){
+  html{scroll-snap-type:y mandatory}
+  .slide{height:100vh;min-height:0;padding:24px 92px 24px 48px}
+  /* แถบปุ่มย้ายไปขอบขวาแนวตั้ง ไม่กินพื้นที่ด้านล่างของสไลด์ */
+  #dock{left:auto;right:16px;bottom:auto;top:50%;transform:translateY(-50%);flex-direction:column;gap:4px;padding:8px 6px;border-radius:18px}
+  #dock button{width:40px;height:40px;border-radius:12px;color:var(--muted);transition:background .15s,color .15s}
+  #dock button:hover{background:var(--accent-tint);color:var(--accent)}
+  #prev svg,#next svg{transform:rotate(90deg)}   /* ลูกศรชี้ขึ้น/ลง ตามแนวแถบ */
+  #counter{display:flex;flex-direction:column;align-items:center;min-width:0;width:40px;padding:6px 0;font-size:12px;line-height:1.2}
+  #counter b{font-size:18px;font-weight:700;color:var(--accent)}
+  #counter i{display:block;width:18px;height:1.5px;margin:5px 0 4px;background:var(--line-2);font-size:0}
+  #counter span{color:var(--muted);font-weight:500}
+  .dock-sep{width:24px;height:1px;margin:4px 0}
+  .head{margin-bottom:20px;padding-bottom:14px}
+  .wb-side{position:static}
+  /* กล่องโค้ดยาว: เลื่อนดูในกล่อง จะได้ไม่ต้องย่อทั้งสไลด์จนตัวเล็ก */
+  pre.sql{max-height:40vh}
+  .wb-list{max-height:56vh}
+  /* ตารางแน่นขึ้นเล็กน้อย สไลด์จะได้ย่อน้อยลง */
+  table.clean th,table.clean td{padding:7px 10px}
+  table.walk td,table.tp td{padding:6px 10px}
+  .er-t{margin-bottom:6px}
+  /* ตัวหนังสือเล็ก (ป้าย ตาราง โค้ด คำอธิบาย) ใหญ่ขึ้นให้อ่านง่ายบนจอนำเสนอ */
+  .kicker{font-size:15px}
+  .meta-tag{font-size:14px}
+  .small{font-size:16.5px}
+  .tiny{font-size:15px}
+  .mono{font-size:15px}
+  .pill{font-size:14.5px;padding:4px 12px}
+  .cmp div{font-size:16px}
+  .cmp h4{font-size:14.5px}
+  .mig{font-size:16px}
+  .br .enf{font-size:14px}
+  .role code{font-size:15px}
+  .fact-strip span{font-size:15.5px}
+  .arch .sb div{font-size:15.5px}
+  .arch .sb b{font-size:16px}
+  .st{font-size:15px}
+  .st small{font-size:14px}
+  table.clean{font-size:16.5px}
+  table.clean th{font-size:14.5px}
+  table.clean code,.code-inline{font-size:14.5px}
+  table.walk td,table.tp td,table.out td{font-size:15.5px}
+  table.out th,table.out td{font-size:14.5px}
+  table.tp .pill{font-size:13.5px}
+  table.matrix th{font-size:14px}
+  table.matrix .pill{font-size:13.5px}
+  .er-col h3{font-size:15.5px}
+  .er-t{font-size:14px}
+  .er-t b{font-size:14.5px}
+  .tl{font-size:16px}
+  .tl code{font-size:14px}
+  .step h4{font-size:14.5px}
+  .step p{font-size:17px}
+  .wb-list button{font-size:16px}
+  .wb-list button b{font-size:14px}
+  .wb-group{font-size:14px}
+  .sql-title{font-size:15px}
+  .sql-tabs-bar button{font-size:14px}
+  .copy{font-size:14px}
+  pre.sql{font-size:14.5px}
+  .expect{font-size:16.5px}
+  .expect h4{font-size:15px}
+  .note{font-size:16px}
+  /* ER: 21 ตารางไหลต่อกัน 5 คอลัมน์ สูงเท่าๆ กัน (เดิมกลุ่มสินค้า 7 ตารางสูงกว่ากลุ่มอื่นมาก) */
+  .er{display:block;column-count:5;column-gap:14px}
+  .er-col{display:contents}
+  .er-col h3{break-after:avoid;margin-bottom:6px}
+  .er-t{break-inside:avoid}
+  .er-t+h3,.er-col+.er-col h3{margin-top:10px}
+  /* สไลด์ 8: กล่อง SQL ด้านล่างเตี้ยลง (เลื่อนดูในกล่อง) */
+  #slide-8 pre.sql{max-height:16vh}
+  #slide-10 pre.sql:not(.solo),#slide-11 pre.sql{max-height:26vh}
+  /* สไลด์ 12 คลัง SQL: ฝั่งขวาสูงเท่ารายการซ้าย กล่องโค้ดยืดเต็ม "ผลที่ต้องเห็น" ชิดล่าง ไม่มีที่ว่างโล่ง */
+  #slide-12 .wb{align-items:stretch}
+  #slide-12 .wb-list{height:58vh;max-height:none}
+  #slide-12 .wb>.stack{contain:size;display:flex;flex-direction:column;gap:14px}
+  #slide-12 .wb>.stack>*+*{margin-top:0}
+  #libBox{flex:1;display:flex;min-height:0}
+  #libBox .sql-box{flex:1;display:flex;flex-direction:column;min-height:0}
+  #libBox pre.sql{flex:1;max-height:none;min-height:0;font-size:16.5px;line-height:1.8;padding:20px 24px}
+  #slide-12 .expect{flex:none;max-height:30%;overflow:auto;padding:14px 20px}
+  .lead{max-width:none}
+}
 
 @media (max-width:1024px){
   .slide{padding:44px 20px 112px}

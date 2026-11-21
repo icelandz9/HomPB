@@ -1,6 +1,6 @@
 /* HomPB slides: สร้างกล่อง SQL, Traceability, ER, Data Dictionary และการเลื่อนสไลด์ (ต้องโหลด sql-data.js ก่อน) */
 /* ---------- แยกบล็อกตามบรรทัด -- @@ ---------- */
-const GROUPS = {A:"A โครงสร้าง",B:"B ฟีเจอร์",R:"R รายงาน",J:"J JOIN",C:"C constraint",D:"D ON DELETE",E:"E ACID",G:"G RLS",S:"S SQL Injection",X:"X EXPLAIN"};
+const GROUPS = {A:"A โครงสร้าง",B:"B ฟีเจอร์",R:"R รายงาน",J:"J JOIN",C:"C constraint",D:"D ON DELETE",E:"E ACID",G:"G RLS",S:"S SQL Injection",X:"X EXPLAIN",Q:"Q คำถามที่มักโดนถาม",Z:"Z ล้างของค้าง"};
 /* ชื่อสั้นในรายการคลัง SQL (ชื่อเต็ม + คำอธิบายอยู่ในกล่องโค้ดตอนกดเข้าไป) */
 const SHORT = {
   A1:"ตารางทั้งหมด", A2:"นับ constraint", A3:"กฎ ON DELETE", A4:"CHECK ทั้งหมด", A5:"enum ทั้งหมด", A6:"trigger ทั้งหมด",
@@ -17,6 +17,9 @@ const SHORT = {
   G1:"ผู้เยี่ยมชมเห็นอะไร", G2:"ลูกค้าเห็นแค่ของตัวเอง", G3:"ลูกค้าแอบเปลี่ยน role", G4:"คลังดูสลิปไม่ได้", G5:"ลบข้อมูลการเงินไม่ได้",
   S1:"ต่อ string เอง (โดนเจาะ)", S2:"parameterized (ปลอดภัย)",
   X1:"คิวสลิป", X2:"คำสั่งซื้อของลูกค้า", X3:"ข้อความแชท",
+  Q1:"ยอดเงินตรงกับรายการ", Q2:"สต็อกตรงกับประวัติ", Q3:"FK ที่ไม่มี index", Q4:"security definer ปลอดภัย", Q5:"view ซ่อนคอลัมน์",
+  Q6:"ขายดีต่อห้อง (window)", Q7:"ใครทำอะไรล่าสุด", Q8:"งานอัตโนมัติ pg_cron", Q9:"Storage เป็น private",
+  Z1:"ล้างข้อมูลทดสอบที่ค้าง", Z2:"เรียงเลขคำสั่งซื้อใหม่",
 };
 const BLOCKS = {}; const ORDER = [];
 (function parse(){
@@ -36,40 +39,94 @@ const BLOCKS = {}; const ORDER = [];
   close();
 })();
 
-/* ผลที่ต้องเห็น: comment หัวบล็อก + ผลทดสอบจริง */
-const RESULT = {
-  D1:"บน schema ปัจจุบัน: ERROR 23503 ที่ stock_logs_variant_id_fkey เพราะ variant มีประวัติใน stock_logs (RESTRICT) ทั้ง transaction ไม่ลบอะไร",
-  D2:"บน schema ปัจจุบัน: ERROR 23503 ที่ stock_logs_variant_id_fkey (RESTRICT) ถ้าตัวเลือกนั้นมีประวัติสต็อก ส่วน order_items.variant_id เองยังเป็น SET NULL",
-  D3:"ERROR 23503 orders.user_id เป็น NO ACTION",
-  C5:"บน schema ปัจจุบัน: ไม่ error เพราะตาราง shipments ไม่มี CHECK นี้ (บล็อกจบด้วย rollback ข้อมูลไม่เปลี่ยน) กฎ carrier + tracking_no บังคับอยู่ในฟังก์ชัน update_shipment() แทน",
-  B11:"คืน 1 ใน 2 ชิ้น สถานะยัง delivered · คืนครบเป็น refunded",
-  B12:"return_status = no_return",
-  E1:"result = ERROR 23514 … rollback ทั้งชุด · rows_changed = 0 (สต็อกเท่าเดิมทุกตัว)",
-  E2:"UPDATE 0 แถว ไม่ error ไม่ติดลบ",
-  E3:"แท็บ A ได้ stock_qty = 0 · แท็บ B รอ lock จน A commit แล้วได้ tab_b_bought = 0 · สต็อกคืนค่าเดิมเอง",
-  E4:"read committed",
-  S1:"leaked_rows = 3 (ตามข้อมูลตัวอย่างที่ทดสอบ)",
-  S2:"rows = 0",
-  G3:"ERROR 42501 แก้ role, is_active หรือ email ได้เฉพาะ Admin (trigger on_profile_update)",
-  J1:"10 แถว (limit 10) จากสินค้าตัวอย่างใน seed_products.sql · ดูตารางในสไลด์ 15",
-  J2:"5 ห้อง: ห้องครัว 35 · ห้องนอน 35 · ห้องนั่งเล่น 34 · ห้องน้ำ 34 · เครื่องใช้ไฟฟ้า 26 สินค้า",
-  J3:"1 แถวต่อ role ที่มีผู้ใช้ จำนวนขึ้นกับข้อมูลจริงใน Supabase",
-  J4:"1 แถวต่อรายการสินค้าในคำสั่งซื้อล่าสุด · ยังไม่มีการส่ง = shipment_status เป็น null",
-  G5:"บน schema ปัจจุบัน: ERROR 42501 permission denied for table payments เพราะ security.sql revoke delete ของตารางเงินและ log จาก authenticated ไว้อีกชั้น (แน่นกว่า 0 แถว)",
+/* อ่านผลยังไง: รันแล้วได้อะไร และผลนั้นบอกอะไร (ทดสอบกับ schema จริงในเครื่อง ด้วยผู้ใช้ทุก role) */
+const HOW = {
+  A1:"21 แถว = 21 ตาราง แต่ละแถวบอกจำนวนคอลัมน์ ใช้ตอบ \"มีกี่ตาราง\"",
+  A2:"4 แถว: PRIMARY KEY 21 · FOREIGN KEY 34 · UNIQUE 6 · CHECK 19 ตรงกับตัวเลขในสไลด์ 1",
+  A3:"34 แถว = FK ทุกตัว พร้อมนโยบาย ON DELETE: CASCADE 11 · SET NULL 12 · RESTRICT 7 · NO ACTION 4",
+  A4:"19 แถว = กฎ CHECK ทุกข้อ เช่น price >= 0, stock_qty >= 0, attempt_no IN (1,2)",
+  A5:"10 แถว = enum 10 ตัว พร้อมค่าที่อนุญาต เช่น order_status มี 7 สถานะ",
+  A6:"16 แถว = trigger ทุกตัว (รวม 2 ตัวบน auth.users) · set_updated_at ใช้ชื่อเดียวกันบน 3 ตาราง ชื่อไม่ซ้ำจึงมี 14",
+  A7:"47 แถว = index ทั้งหมด: PK 21 + UNIQUE 6 + index ที่สร้างเอง 20 (สไลด์ 8)",
+  A8:"33 แถว = ฟังก์ชันทั้งหมด: RPC ที่หน้าเว็บเรียก 10 ตัว ที่เหลือเป็นฟังก์ชันของ trigger และตัวช่วยเช็กสิทธิ์ · security definer 30 ตัว",
+  A9:"1 แถว = โค้ดเต็มของ place_order() ของจริง ใช้คู่กับ B6 เพื่อยืนยันว่าเดโมทำแบบเดียวกัน (เปลี่ยนชื่อในบรรทัดล่างได้)",
+  A10:"21 แถว rls_enabled = true ทุกตาราง และทุกตารางมี policy อย่างน้อย 1 ตัว",
+  A11:"33 แถว = policy ทุกตัว: using_expr คือเงื่อนไขว่าเห็นแถวไหน with_check คือเงื่อนไขตอนเขียน",
+  B1:"1 แถว: profiles ถูกสร้างอัตโนมัติจาก trigger handle_new_user role = customer · ใน Supabase จริงถ้า insert auth.users ไม่ได้ ให้สมัครผ่านหน้าเว็บ",
+  B2:"1 แถวต่อ 1 ตัวเลือกในแต่ละห้อง (164 แถวในข้อมูลตัวอย่าง) ช่อง stock บอกแค่ มีสินค้า/หมด",
+  B3:"สินค้าที่ชื่อหรือคำอธิบายมีคำว่า \"หม้อ\" พร้อมราคาเริ่มต้น (6 รายการในข้อมูลตัวอย่าง)",
+  B4:"1 แถว: ตัวเลือก รูป และห้องรวมเป็น JSON แบบที่หน้าสินค้าใช้",
+  B5:"ตะกร้าของลูกค้าคนแรก: line_total = จำนวน x ราคา และ cart_total = ยอดรวมทั้งตะกร้า (window function) · rollback ไม่บันทึก",
+  B6:"1 แถว: คำสั่งซื้อใหม่ สถานะ pending_payment · items = จำนวนรายการ · history_rows = 1 (trigger บันทึกสถานะแรก) · rollback ไม่บันทึก",
+  B7:"3 แถว = ประวัติสถานะ null → pending_payment → awaiting_approval → approved (trigger log_order_status บันทึกเอง)",
+  B8:"2 แถว: ครั้งที่ 1 rejected พร้อมเหตุผล · ครั้งที่ 2 pending ใส่ได้ (ครั้งที่ 3 ติด CHECK ดู C4)",
+  B9:"1 แถว: status = cancelled · stock_after เพิ่มคืน · stock_logs reason = cancel",
+  B10:"1 แถว: คำสั่งซื้อ delivered · shipment delivered พร้อมขนส่งและเลขพัสดุ",
+  B11:"คืน 1 ใน 2 ชิ้น สถานะยัง delivered · คืนครบ 2 ชิ้น = refunded (trigger set_order_refunded)",
+  B12:"1 แถว: ยกเลิกก่อนส่ง return_status = no_return อัตโนมัติ (trigger set_no_return) ไม่ต้องให้คลังตรวจของ",
+  B13:"2 แถว = ข้อความลูกค้าและคำตอบฝ่ายบริการ เรียงตามเวลา",
+  B14:"20 แถวล่าสุดของ stock_logs: change_qty บวก = เข้า ลบ = ออก · reason บอกสาเหตุ (order, cancel, adjust, return)",
+  R1:"1 แถวต่อวัน: จำนวนคำสั่งซื้อและยอดขาย นับเฉพาะ approved ขึ้นไป · ไม่มีคำสั่งซื้อ = 0 แถว",
+  R2:"สินค้าขายดี 5 อันดับ: จำนวนชิ้นและยอดขาย · ไม่มีคำสั่งซื้อ = 0 แถว",
+  R3:"ตัวเลือกที่เปิดขายและสต็อกเหลือ 3 ชิ้นหรือน้อยกว่า เรียงจากน้อยสุด (ที่ฝ่ายคลังต้องเติม) · ไม่มีของใกล้หมด = 0 แถว",
+  R4:"1 แถวต่อสถานะ: จำนวนคำสั่งซื้อแต่ละสถานะ (ตัวเลขเดียวกับ dashboard)",
+  R5:"4 แถว = งานค้างของแต่ละฝ่าย: สลิปรอตรวจ · รอส่ง · แชทรอตอบ · ของคืนรอตรวจ",
+  J1:"10 แถว (limit 10): ห้อง สินค้า SKU ตัวเลือก ราคา สต็อก · INNER JOIN ได้เฉพาะแถวที่จับคู่ได้ครบ 4 ตาราง",
+  J2:"5 แถว = 5 ห้อง: จำนวนสินค้า จำนวนตัวเลือก ราคาเริ่มต้น · LEFT JOIN ห้องที่ไม่มีสินค้าก็ยังขึ้นเป็น 0",
+  J3:"1 แถวต่อ role: จำนวนผู้ใช้ จำนวนที่เปิดใช้งาน วันที่สมัครคนแรก · ทุก role อยู่ตาราง profiles ตารางเดียว",
+  J4:"1 แถวต่อรายการในคำสั่งซื้อล่าสุด พร้อมสลิปและการจัดส่ง · ยังไม่มีสลิป/การส่ง = ช่องนั้นเป็น null (LEFT JOIN)",
+  C1:"ERROR 23503 foreign_key_violation: ใส่ที่อยู่ให้ผู้ใช้ที่ไม่มีอยู่จริงไม่ได้",
+  C2:"ERROR 23514 check_violation (product_variants_price_check): ราคาติดลบเข้าไม่ได้ · บรรทัด DETAIL คือแถวที่ถูกปฏิเสธ ไม่ได้บันทึก",
+  C3:"ERROR 23514 (product_variants_stock_qty_check): สต็อกติดลบไม่ได้ ด่านสุดท้ายกันขายเกินสต็อก",
+  C4:"ERROR 23514 (payments_attempt_no_check): แนบสลิปครั้งที่ 3 ไม่ได้ ได้แค่ 1 และ 2",
+  C5:"ERROR P0001 \"ส่งด้วยบริษัทขนส่งต้องใส่ชื่อขนส่งและเลขพัสดุก่อน\" · P0001 = error ที่ฟังก์ชันสั่งเอง (raise exception) · กฎอยู่ใน update_shipment() เพราะรถของร้านไม่ต้องใส่",
+  C6:"ERROR 23514 (messages_check): ข้อความแชทต้องมีข้อความหรือรูปอย่างน้อย 1 อย่าง",
+  C7:"ERROR 23505 unique_violation (product_variants_sku_key): SKU ซ้ำไม่ได้",
+  C8:"ERROR 23505 (categories_name_key): ชื่อหมวดซ้ำไม่ได้",
+  C9:"ERROR 23505 (addresses_one_default_per_user): ที่อยู่หลักได้ 1 ที่ต่อคน (partial unique index WHERE is_default)",
+  C10:"ERROR 22P02: ค่า 'lost' ไม่อยู่ใน enum order_status",
+  C11:"ERROR 23502 not_null_violation: ชื่อสินค้าห้ามว่าง",
+  D1:"1 แถว: before 1 / 1 / 1 → after 0 / 0 / 0 = ตัวเลือก รูป การผูกหมวด หายตามสินค้า (CASCADE) · ใช้สินค้าทดสอบเพราะของจริงมีประวัติใน stock_logs (RESTRICT)",
+  D2:"1 แถว: ชื่อสินค้า ชื่อตัวเลือก ราคาเดิมอยู่ครบ variant_id_now_null = null (SET NULL) · ของจริงที่มีประวัติสต็อกลบไม่ได้ ร้านใช้ is_active = false แทน",
+  D3:"ERROR 23503 (orders_user_id_fkey): ลบลูกค้าที่มีคำสั่งซื้อไม่ได้ กันประวัติการเงินหาย · ปิดบัญชีด้วย is_active แทน",
+  E1:"1 แถว: result = ERROR 23514 … rollback ทั้งชุด · rows_changed = 0 = รายการแรกที่ตัดไปแล้วก็ถูกคืน (Atomicity)",
+  E2:"0 แถว (Success. No rows returned) = สต็อกไม่พอ UPDATE ไม่โดนแถวไหน ไม่ error ไม่ติดลบ",
+  E3:"แท็บ A: stock_qty = 0 · แท็บ B หมุนรอจน A เสร็จ แล้วได้ tab_b_bought = 0 = คนที่ 2 ซื้อไม่ได้ · แท็บ B คืนสต็อกเดิมให้เอง",
+  E4:"1 แถว: read committed = ระดับ isolation ค่าเริ่มต้นของ PostgreSQL",
+  G1:"1 แถว: products_visible = จำนวนสินค้า (ผู้เยี่ยมชมเห็น) · orders_visible = 0 (ไม่เห็นคำสั่งซื้อเลย)",
+  G2:"1 แถว: me = ไอดีลูกค้า (ต้องไม่ว่าง) · orders_in_db ≥ 2 · my_orders ≥ 1 · others_visible = 0 = เห็นเฉพาะของตัวเอง",
+  G3:"ERROR 42501 \"แก้ role, is_active หรือ email ได้เฉพาะ Admin\" จาก trigger on_profile_update",
+  G4:"1 แถว: me ไม่ว่าง · slips_in_db ≥ 1 แต่ slips_visible = 0 = ฝ่ายคลังมองไม่เห็นสลิป",
+  G5:"ERROR 42501 permission denied for table payments: ถอนสิทธิ์ delete ไว้ตั้งแต่ระดับตาราง ไม่ถึงขั้น RLS",
+  S1:"1 แถว: leaked_rows = จำนวนสินค้าทั้งหมด (164 ในข้อมูลตัวอย่าง) = เงื่อนไข '1'='1' เป็นจริงทุกแถว ข้อมูลหลุดหมด",
+  S2:"1 แถว: rows = 0 = ข้อความ x' or '1'='1 ถูกมองเป็นคำค้นธรรมดา ไม่ใช่คำสั่ง SQL",
+  X1:"แผนการรัน: เห็น Index Scan หรือ Bitmap Index Scan บน index ของ payments(status) = ใช้ index · actual time คือเวลาจริง",
+  X2:"แผนการรัน: เห็น index orders(user_id) ถูกใช้ (Bitmap Index Scan / Index Scan)",
+  X3:"แผนการรัน: เห็น index messages(conversation_id, created_at) · ถ้าไม่มีบรรทัด Sort แปลว่า index เรียงให้แล้ว",
+  Q1:"0 แถว (Success. No rows returned) = ยอดทุกคำสั่งซื้อตรงกับผลรวมรายการสินค้า · ถ้ามีแถวขึ้น = คำสั่งซื้อนั้นยอดไม่ตรง",
+  Q2:"1 แถว: variants = จำนวนตัวเลือก · mismatch = 0 = สต็อกทุกตัวตรงกับผลรวมประวัติ ไม่มีใครแก้สต็อกข้ามระบบ",
+  Q3:"15 แถว = FK ที่ไม่มี index ส่วนใหญ่เป็นคอลัมน์ \"ใครทำ\" (reviewed_by, handled_by, actor_id) ที่ไม่ได้ใช้ค้นหา · FK ที่ query ใช้จริงมี index ครบ (สไลด์ 8) · ไม่ทำ index ทุกตัวเพราะทุก index ทำให้ insert/update ช้าลงและกินที่",
+  Q4:"1 แถว: security_definer = 30 · no_search_path = 0 = ทุกฟังก์ชันที่รันด้วยสิทธิ์สูงล็อก search_path กันโดนหลอกด้วยชื่อซ้ำ",
+  Q5:"2 แถว: ตารางจริงมี sku, stock_qty · view ที่หน้าร้านใช้เหลือแค่ in_stock (มี/หมด) = ซ่อนข้อมูลภายในระดับคอลัมน์",
+  Q6:"1 แถวต่ออันดับในแต่ละห้อง (rank 1-3) · ยอดขายเท่ากันได้อันดับเดียวกัน · ยังไม่มีคำสั่งซื้อที่อนุมัติ = 0 แถว",
+  Q7:"20 แถวล่าสุด: เวลา · ใครทำ (ว่าง = ระบบ/trigger) · ทำอะไร · ตารางไหน · รายละเอียด [ค่าเก่า, ค่าใหม่]",
+  Q8:"1 แถว: hompb-cancel-expired-orders schedule */5 * * * * = ทุก 5 นาที · active = true · รันได้เฉพาะบน Supabase",
+  Z1:"1 แถว: test_orders, test_variants, test_products, test_users, demo_schema = 0 ทุกช่อง = ไม่มีของทดสอบค้าง · ลบเฉพาะของที่บล็อกสาธิตสร้าง (คำสั่งซื้อที่ไม่มีชื่อผู้รับ, SKU DEMO-, สินค้าทดสอบ, demo.signup@mail.com) และคืนสต็อก E3 ถ้าค้าง · รันซ้ำกี่ครั้งก็ได้",
+  Z2:"1 แถว: next_order_no = เลขที่คำสั่งซื้อจริงใบถัดไปจะได้ (เลขสูงสุดตอนนี้ + 1) · ใช้หลังสาธิตเสร็จ ให้เลขต่อเนื่อง",
+  Q9:"5 แถว: slips, refund-slips, chat-images, store เป็น public = false (เปิดผ่าน signed URL อายุสั้น) · product-images = true เพราะรูปสินค้าให้ทุกคนดู · มีจำกัดขนาดและชนิดไฟล์ · รันได้เฉพาะบน Supabase",
 };
 function expectText(b){
   const parts = [];
-  if (b.desc.length) parts.push(b.desc.join(" "));
-  else parts.push(b.title);
-  if (RESULT[b.code]) parts.push("ผลทดสอบ: " + RESULT[b.code]);
-  if (b.code[0] === "G") parts.push("ต้องรันบน Supabase จริงที่เปิด RLS แล้ว");
-  if (b.code[0] === "X") parts.push("แผนและเวลา: รันสดตอนนำเสนอ");
-  if (b.code[0] === "C" && b.code !== "C5") parts.push("ตั้งใจให้ error ตามรหัสในชื่อบล็อก");
+  parts.push(HOW[b.code] || b.title);
+  if (b.desc.length) parts.push("หมายเหตุ: " + b.desc.join(" "));
+  if (b.code[0] === "G") parts.push("รันบน Supabase จริงที่เปิด RLS แล้ว");
+  if (b.code[0] === "Z") parts.push("บล็อกนี้บันทึกจริง (commit) แต่แตะเฉพาะข้อมูลทดสอบ");
+  if (b.code[0] === "C") parts.push("ตั้งใจให้ error ทุกบล็อกครอบ begin … rollback ข้อมูลไม่เปลี่ยน");
   return parts;
 }
 
 /* ---------- syntax highlight (สร้าง DOM ด้วย textContent) ---------- */
-const KW = new Set(("select from where and or not in is null insert into values update set delete returning begin commit rollback create table temp as with case when then else end group by order limit union all exists distinct over partition left join on conflict do nothing filter show prepare execute deallocate explain analyze local role drop if interval true false like ilike desc asc count sum min max json_agg json_build_object string_agg coalesce now date_trunc make_interval gen_random_uuid to_jsonb set_config pg_sleep text drop").split(" "));
+const KW = new Set(("select from where and or not in is null insert into values update set delete returning begin commit rollback create table temp as with case when then else end group by order limit union all exists distinct over partition left join on conflict do nothing filter show prepare execute deallocate explain analyze local role drop if interval true false like ilike desc asc count sum min max rank grant setval json_agg json_build_object string_agg coalesce now date_trunc make_interval gen_random_uuid to_jsonb set_config pg_sleep text drop").split(" "));
 function highlight(pre, text){
   pre.textContent = "";
   const re = /(--[^\n]*)|('(?:[^']|'')*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][A-Za-z_0-9]*)|([\s\S])/g;
@@ -415,7 +472,7 @@ const counter = document.getElementById("counter"), bar = document.getElementByI
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let idx = 0;
 function setCurrent(i){
-  idx = i; counter.textContent = (i + 1) + " / " + slides.length;
+  idx = i; counter.innerHTML = "<b>" + (i + 1) + "</b><i>/</i><span>" + slides.length + "</span>";
   bar.style.width = ((i + 1) / slides.length * 100) + "%";
   history.replaceState(null, "", "#slide-" + (i + 1));
 }
@@ -464,3 +521,46 @@ document.addEventListener("keydown", (e) => {
 
 /* deep link #slide-N */
 (function(){ const m = location.hash.match(/^#slide-(\d+)$/); if (m) { const i = +m[1] - 1; requestAnimationFrame(() => go(i, true)); } else setCurrent(0); })();
+
+/* ---------- จอคอม: ทุกสไลด์ใช้ขนาดเดียวกัน และพอดี 1 หน้าจอ ----------
+   1) หาว่าแต่ละสไลด์ขยาย/ย่อได้มากสุดเท่าไหร่ถึงพอดีจอ (own)
+   2) ใช้ค่าที่น้อยที่สุดเป็นขนาดกลางของทุกสไลด์ (ตัวหนังสือเท่ากันทุกหน้า)
+   3) ขนาดกลางไม่ต่ำกว่า floor(): สไลด์ที่แน่นกว่านั้นจริงๆ ย่อเฉพาะหน้านั้น */
+(function(){
+  const mq = matchMedia("(min-width:1025px) and (min-height:600px)");
+  const MAX_ZOOM = 1.1, MIN_ZOOM = 0.5;
+  const floor = () => 0.8 * Math.min(1, innerHeight / 1080);   // จอเตี้ยกว่า 1080 ขนาดกลางลดตามสัดส่วน ทุกหน้ายังเท่ากัน
+  const own = new Map(); let shared = 1;
+  // ใช้ความกว้างจอให้เต็มขึ้น (สูงสุด 1640px) บรรทัดตัดน้อยลง สไลด์เตี้ยลง ตัวหนังสือเลยใหญ่ขึ้นได้
+  const width = (s) => { const cs = getComputedStyle(s); return Math.min(1640, s.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)); };
+  const apply = (inner, z) => { inner.style.zoom = z.toFixed(3); inner.style.maxWidth = Math.round(width(inner.closest(".slide")) / z) + "px"; };
+  const measure = (s) => {                   // ขนาดใหญ่สุดที่สไลด์นี้ยังพอดีจอ
+    const inner = s.querySelector(".inner"); if (!inner) return MAX_ZOOM;
+    const cs = getComputedStyle(s);
+    const avail = s.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    let z = MAX_ZOOM; apply(inner, z);
+    for (let k = 0; k < 4; k++) {            // ย่อแล้วบรรทัดยาวขึ้น ความสูงเปลี่ยน วนปรับให้พอดี
+      const need = inner.getBoundingClientRect().height;
+      if (need <= avail + 1) break;
+      z = Math.max(MIN_ZOOM, z * avail / need); apply(inner, z);
+    }
+    own.set(s, z); s.dataset.own = z.toFixed(2); return z;
+  };
+  const show = (s) => { const inner = s.querySelector(".inner"); if (!inner) return; const z = Math.min(own.get(s) || 1, shared); apply(inner, z); s.dataset.fit = z.toFixed(2); };
+  const reset = () => slides.forEach((s) => { const inner = s.querySelector(".inner"); if (inner) { inner.style.zoom = ""; inner.style.maxWidth = ""; } delete s.dataset.fit; });
+  const fitAll = () => {
+    reset(); if (!mq.matches) return;
+    const zs = slides.map(measure);
+    shared = Math.max(floor(), Math.min(MAX_ZOOM, ...zs));
+    slides.forEach(show);
+  };
+  const refit = (s) => { if (!mq.matches) return; measure(s); show(s); };
+  let t; const later = () => { clearTimeout(t); t = setTimeout(fitAll, 120); };
+  addEventListener("resize", later);
+  mq.addEventListener("change", fitAll);
+  if (document.fonts) document.fonts.ready.then(fitAll);
+  addEventListener("load", fitAll);
+  // เนื้อหาเปลี่ยนตอนกดเลือกบล็อก / แท็บ / ค้นหา → ปรับสไลด์นั้นใหม่ (ขนาดกลางเท่าเดิม)
+  slides.forEach((s) => ["click", "input"].forEach((ev) => s.addEventListener(ev, () => requestAnimationFrame(() => refit(s)))));
+  fitAll();
+})();

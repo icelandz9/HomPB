@@ -3,6 +3,7 @@ const SQL_TEXT = `-- ===========================================================
 -- HomPB: SQL สำหรับโชว์ตอนนำเสนอ (Supabase SQL Editor)
 -- วิธีใช้: ลากคลุมทีละบล็อก (ตั้งแต่ -- @@ ถึงก่อน -- @@ ถัดไป) แล้วกด Run
 -- บล็อกที่แก้ข้อมูลครอบด้วย begin; ... rollback; ข้อมูลจริงจะไม่เปลี่ยน
+-- ยกเว้น E3 (คืนค่าให้เอง) และหมวด Z (ล้างของค้างจากการสาธิต อยู่ท้ายไฟล์)
 -- หมายเหตุ: SQL Editor รันด้วย role postgres ซึ่งข้าม RLS ได้
 --           ถ้าจะโชว์ RLS ให้ใช้หมวด G
 -- =====================================================================
@@ -166,6 +167,7 @@ rollback;
 -- @@ B6 สั่งซื้อ: สิ่งที่ place_order() ทำข้างใน (ฉบับสาธิตทีละขั้นใน transaction เดียว)
 --      ราคามาจากฐานข้อมูลเสมอ ไม่รับจากหน้าเว็บ (Security Design ข้อ 5)
 begin;
+select set_config('hompb.system_stock', 'on', true);   -- เหมือนฟังก์ชันจริง: เขียน stock_logs เอง trigger ปรับสต็อกจึงข้าม
 -- 0) เลือกลูกค้าทดสอบ 1 คน (ต้องมีที่อยู่หลัก)
 create temp table demo_cust on commit drop as
 select a.user_id from addresses a join profiles p on p.id = a.user_id
@@ -286,6 +288,7 @@ rollback;
 -- @@ B9 ยกเลิกอัตโนมัติ (สิ่งที่ cancel_expired_orders() ทำผ่าน pg_cron)
 --      เกินเวลาโอน -> cancelled + คืนสต็อก + stock_logs เหตุผล cancel
 begin;
+select set_config('hompb.system_stock', 'on', true);   -- เหมือนฟังก์ชันจริง: เขียน stock_logs เอง trigger ปรับสต็อกจึงข้าม
 create temp table demo_order on commit drop as
 with o as (
   insert into orders (user_id, shipping_address, subtotal, total_amount, payment_due_at)
@@ -590,86 +593,145 @@ order by oi.product_name, pay.attempt_no;
 -- =====================================================================
 
 -- @@ C1 FK ผิด -> ERROR 23503 foreign_key_violation (ที่อยู่ของผู้ใช้ที่ไม่มีอยู่จริง)
+begin;
 insert into addresses (user_id, recipient_name, phone, address_line, subdistrict, district, province, postcode)
 values (gen_random_uuid(), 'ไม่มีตัวตน', '0800000000', '1', 'x', 'x', 'x', '10000');
+rollback;
 
 -- @@ C2 CHECK ราคาติดลบ -> ERROR 23514 check_violation
+begin;
 update product_variants set price = -1
-where id = (select id from product_variants limit 1);
+where id = (select id from product_variants order by sku limit 1);
+rollback;
 
 -- @@ C3 CHECK สต็อกติดลบ -> ERROR 23514 (ด่านสุดท้ายกันขายเกินสต็อก)
+begin;
 update product_variants set stock_qty = stock_qty - 999999
-where id = (select id from product_variants limit 1);
+where id = (select id from product_variants order by sku limit 1);
+rollback;
 
 -- @@ C4 CHECK อัปโหลดสลิปครั้งที่ 3 -> ERROR 23514 (attempt_no in (1,2))
-insert into payments (order_id, attempt_no, amount, slip_path)
-select id, 3, total_amount, 'slips/x.jpg' from orders limit 1;
-
--- @@ C5 CHECK ส่งด้วยขนส่งแต่ไม่มีเลขพัสดุ -> ERROR 23514
 begin;
 with o as (
-  insert into orders (user_id, status, shipping_address, subtotal, total_amount)
-  select id, 'approved', '{}', 1, 1 from profiles where role = 'customer' limit 1
+  insert into orders (user_id, shipping_address, subtotal, total_amount)
+  select id, '{}', 1, 1 from profiles where role = 'customer' order by created_at limit 1
   returning id)
-insert into shipments (order_id, method, status) select id, 'carrier', 'in_transit' from o;
+insert into payments (order_id, attempt_no, amount, slip_path)
+select id, 3, 1, 'slips/x.jpg' from o;
+rollback;
+
+-- @@ C5 กฎขนส่งต้องมีเลขพัสดุ: ตรวจใน update_shipment() -> ERROR P0001
+--      กฎนี้ไม่ได้เป็น CHECK ในตาราง shipments เพราะต้องรู้ว่ากำลังเปลี่ยนเป็น in_transit
+--      และส่งด้วยบริษัทขนส่ง (ส่งด้วยรถของร้านไม่ต้องใส่) จึงตรวจใน RPC ที่หน้าเว็บเรียก
+begin;
+select set_config('request.jwt.claims',                              -- ทำในนามแอดมิน 1 คน
+       json_build_object('sub', id, 'role', 'authenticated')::text, true)
+from profiles where role = 'admin' and is_active order by created_at limit 1;
+create temp table c5_order on commit drop as
+with o as (
+  insert into orders (user_id, status, shipping_address, subtotal, total_amount)
+  select id, 'approved', '{}', 1, 1 from profiles where role = 'customer' order by created_at limit 1
+  returning id)
+select id from o;
+insert into shipments (order_id, method, status) select id, 'carrier', 'preparing' from c5_order;
+select update_shipment((select id from c5_order), 'in_transit');      -- ไม่ใส่ขนส่ง/เลขพัสดุ -> error
 rollback;
 
 -- @@ C6 CHECK ข้อความแชทว่าง -> ERROR 23514 (ต้องมี body หรือ image_path)
 begin;
 with c as (insert into conversations (customer_id)
-           select id from profiles where role = 'customer' limit 1 returning id, customer_id)
+           select id from profiles where role = 'customer' order by created_at limit 1 returning id, customer_id)
 insert into messages (conversation_id, sender_type, sender_id) select id, 'customer', customer_id from c;
 rollback;
 
 -- @@ C7 UNIQUE sku ซ้ำ -> ERROR 23505 unique_violation
-insert into product_variants (product_id, sku, price)
-select product_id, sku, price from product_variants limit 1;
-
--- @@ C8 UNIQUE หมวดชื่อซ้ำ -> ERROR 23505
-insert into categories (name) select name from categories limit 1;
-
--- @@ C9 Partial UNIQUE ที่อยู่หลักได้แค่ 1 ที่ต่อคน -> ERROR 23505
-insert into addresses (user_id, recipient_name, phone, address_line, subdistrict, district, province, postcode, is_default)
-select user_id, recipient_name, phone, address_line, subdistrict, district, province, postcode, true
-from addresses where is_default limit 1;
-
--- @@ C10 ENUM ค่าที่ไม่มี -> ERROR 22P02 invalid_text_representation
-update orders set status = 'lost' where id = (select id from orders limit 1);
-
--- @@ C11 NOT NULL -> ERROR 23502 not_null_violation
-insert into products (name) values (null);
-
-
--- =====================================================================
--- หมวด D: ON DELETE (CASCADE / SET NULL / NO ACTION)
--- =====================================================================
-
--- @@ D1 CASCADE: ลบสินค้า -> ตัวเลือก รูป หมวด หายตาม
 begin;
-select (select count(*) from product_variants)   as variants_before,
-       (select count(*) from product_images)     as images_before,
-       (select count(*) from product_categories) as links_before;
-delete from products
-where id = (select p.id from products p
-            where not exists (select 1 from product_variants v
-                              join order_items oi on oi.variant_id = v.id
-                              where v.product_id = p.id)
-            limit 1);
-select (select count(*) from product_variants)   as variants_after,
-       (select count(*) from product_images)     as images_after,
-       (select count(*) from product_categories) as links_after;
+insert into product_variants (product_id, sku, price)
+select product_id, sku, price from product_variants order by sku limit 1;
 rollback;
 
--- @@ D2 SET NULL: ลบตัวเลือกที่เคยขายไป -> order_items ยังอยู่ ชื่อและราคาเดิมไม่หาย
+-- @@ C8 UNIQUE หมวดชื่อซ้ำ -> ERROR 23505
 begin;
-select oi.product_name, oi.unit_price, oi.variant_id from order_items oi limit 3;
-delete from product_variants where id in (select variant_id from order_items where variant_id is not null);
-select oi.product_name, oi.unit_price, oi.variant_id as variant_id_now_null from order_items oi limit 3;
+insert into categories (name) select name from categories order by name limit 1;
+rollback;
+
+-- @@ C9 Partial UNIQUE ที่อยู่หลักได้แค่ 1 ที่ต่อคน -> ERROR 23505
+begin;
+insert into addresses (user_id, recipient_name, phone, address_line, subdistrict, district, province, postcode, is_default)
+select user_id, recipient_name, phone, address_line, subdistrict, district, province, postcode, true
+from addresses where is_default order by created_at limit 1;
+rollback;
+
+-- @@ C10 ENUM ค่าที่ไม่มี -> ERROR 22P02 invalid_text_representation
+begin;
+update orders set status = 'lost' where id = (select id from orders order by created_at limit 1);
+rollback;
+
+-- @@ C11 NOT NULL -> ERROR 23502 not_null_violation
+begin;
+insert into products (name) values (null);
+rollback;
+
+
+-- =====================================================================
+-- หมวด D: ON DELETE (CASCADE / SET NULL / NO ACTION / RESTRICT)
+-- หมายเหตุ: สินค้าและตัวเลือกที่มีอยู่แล้วมีประวัติใน stock_logs ทุกตัว (RESTRICT) จึงลบไม่ได้
+--           D1 D2 เลยสร้างสินค้าทดสอบที่ยังไม่มีประวัติขึ้นมาลบใน transaction แล้ว rollback
+-- =====================================================================
+
+-- @@ D1 CASCADE: ลบสินค้า -> ตัวเลือก รูป และการผูกหมวด หายตาม
+begin;
+create temp table d1 on commit drop as
+with p as (insert into products (name) values ('สินค้าทดสอบ D1') returning id)
+select id from p;
+insert into product_variants (product_id, sku, name, price, stock_qty)   -- สต็อก 0 จึงยังไม่มี stock_logs
+select id, 'DEMO-D1', 'มาตรฐาน', 100, 0 from d1;
+insert into product_images (product_id, image_path) select id, 'demo/d1.jpg' from d1;
+insert into product_categories (product_id, category_id)
+select d1.id, (select id from categories order by name limit 1) from d1;
+create temp table d1_before on commit drop as
+select (select count(*) from product_variants   where product_id = (select id from d1)) as variants,
+       (select count(*) from product_images     where product_id = (select id from d1)) as images,
+       (select count(*) from product_categories where product_id = (select id from d1)) as links;
+delete from products where id = (select id from d1);
+select b.variants as variants_before, b.images as images_before, b.links as links_before,
+       (select count(*) from product_variants   where product_id = (select id from d1)) as variants_after,
+       (select count(*) from product_images     where product_id = (select id from d1)) as images_after,
+       (select count(*) from product_categories where product_id = (select id from d1)) as links_after   -- after ต้องเป็น 0
+from d1_before b;
+rollback;
+
+-- @@ D2 SET NULL: ลบตัวเลือกที่เคยขาย -> order_items ยังอยู่ ชื่อและราคาเดิมไม่หาย
+--      ของจริงตัวเลือกที่ขายไปแล้วมี stock_logs (RESTRICT) จะลบไม่ได้ ร้านใช้ is_active = false แทน
+--      บล็อกนี้ตัดเฉพาะเรื่อง SET NULL ของ order_items มาโชว์
+begin;
+create temp table d2 on commit drop as
+with v as (
+  insert into product_variants (product_id, sku, name, price, stock_qty)
+  select id, 'DEMO-D2', 'ตัวเลือกทดสอบ', 250, 0 from products order by created_at limit 1
+  returning id, product_id),
+o as (
+  insert into orders (user_id, shipping_address, subtotal, total_amount)
+  select id, '{}', 250, 250 from profiles where role = 'customer' order by created_at limit 1
+  returning id)
+select v.id as variant_id, o.id as order_id from v, o;
+insert into order_items (order_id, variant_id, product_name, variant_name, unit_price, quantity)
+select order_id, variant_id, 'สินค้าทดสอบ D2', 'ตัวเลือกทดสอบ', 250, 1 from d2;
+delete from product_variants where id = (select variant_id from d2);
+select product_name, variant_name, unit_price, variant_id as variant_id_now_null   -- ชื่อ ราคาอยู่ครบ variant_id เป็น null
+from order_items where order_id = (select order_id from d2);
 rollback;
 
 -- @@ D3 NO ACTION: ลบลูกค้าที่มีคำสั่งซื้อไม่ได้ -> ERROR 23503 (กันประวัติการเงินหาย)
+--      สร้างคำสั่งซื้อทดสอบให้ลูกค้า 1 คนก่อน แล้วลองลบลูกค้าคนนั้น
 begin;
-delete from profiles where id = (select user_id from orders limit 1);
+create temp table d3 on commit drop as
+with o as (
+  insert into orders (user_id, shipping_address, subtotal, total_amount)
+  select id, '{}', 1, 1 from profiles where role = 'customer' order by created_at limit 1
+  returning user_id)
+select user_id from o;
+delete from profiles where id = (select user_id from d3);           -- ERROR 23503
 rollback;
 
 
@@ -713,6 +775,7 @@ rollback;
 --
 -- ---- แท็บ A ----
 begin;
+select set_config('hompb.system_stock', 'on', true);              -- สาธิต: ไม่บันทึก stock_logs ปรับสต็อก
 create schema if not exists demo;
 create table if not exists demo.e3_backup as                       -- จำสต็อกเดิมไว้คืนทีหลัง
   select id, stock_qty from product_variants order by sku limit 1;
@@ -726,6 +789,7 @@ where id = (select id from demo.e3_backup);                        -- ต้อ�
 commit;
 --
 -- ---- แท็บ B ----
+select set_config('hompb.system_stock', 'on', true);              -- สาธิต: ไม่บันทึก stock_logs ปรับสต็อก
 with b as (
   update product_variants set stock_qty = stock_qty - 1
   where id = (select id from product_variants order by sku limit 1) and stock_qty >= 1
@@ -748,49 +812,67 @@ show transaction_isolation;
 -- @@ G1 ผู้เยี่ยมชม (anon): เห็นสินค้า แต่ไม่เห็นคำสั่งซื้อ
 begin;
 set local role anon;
-select count(*) as products_visible from products;
-select count(*) as orders_visible from orders;      -- ต้องได้ 0
+select (select count(*) from products) as products_visible,   -- เห็นสินค้า
+       (select count(*) from orders)   as orders_visible;    -- ต้องได้ 0
 rollback;
 
 -- @@ G2 ลูกค้า: เห็นเฉพาะคำสั่งซื้อของตัวเอง
---      เปลี่ยน email เป็นลูกค้าจริงที่มีคำสั่งซื้อ
+--      สร้างคำสั่งซื้อทดสอบ 2 ใบ (ของลูกค้าคนนี้ 1 ใบ ของคนอื่น 1 ใบ) แล้วสลับเป็นลูกค้าคนนี้
 begin;
+create temp table g2 on commit drop as
+select id from profiles where role = 'customer' order by created_at limit 1;
+insert into orders (user_id, shipping_address, subtotal, total_amount)
+select id, '{}', 1, 1 from g2;
+insert into orders (user_id, shipping_address, subtotal, total_amount)
+select id, '{}', 1, 1 from profiles where id <> (select id from g2) order by created_at limit 1;
+create temp table g2_total on commit drop as select count(*) as n from orders;   -- นับด้วย postgres ก่อน
+grant select on g2_total to authenticated;
 select set_config('request.jwt.claims',
-       json_build_object('sub', id, 'role', 'authenticated')::text, true)
-from profiles where email = 'cust1@mail.com';
+       json_build_object('sub', id, 'role', 'authenticated')::text, true) from g2;
 set local role authenticated;
 select auth.uid() as me,
-       count(*) filter (where user_id = auth.uid()) as my_orders,
-       count(*) filter (where user_id <> auth.uid()) as others_orders   -- ต้องได้ 0
+       (select n from g2_total) as orders_in_db,
+       count(*) filter (where user_id = auth.uid())  as my_orders,
+       count(*) filter (where user_id <> auth.uid()) as others_visible   -- ต้องได้ 0
 from orders;
 rollback;
-
--- @@ G3 ลูกค้าพยายามเปลี่ยน role ตัวเองเป็น admin -> ต้องถูกปฏิเสธ
+-- @@ G3 ลูกค้าพยายามเปลี่ยน role ตัวเองเป็น admin -> ERROR 42501 (trigger on_profile_update)
 begin;
 select set_config('request.jwt.claims',
        json_build_object('sub', id, 'role', 'authenticated')::text, true)
-from profiles where email = 'cust1@mail.com';
+from profiles where role = 'customer' order by created_at limit 1;
 set local role authenticated;
 update profiles set role = 'admin' where id = auth.uid();
 rollback;
 
 -- @@ G4 ฝ่ายคลังดูสลิปไม่ได้ (NFR-03)
+--      สร้างสลิปทดสอบ 1 ใบก่อน (slips_in_db > 0) แล้วสลับเป็นพนักงานคลัง
 begin;
+with o as (
+  insert into orders (user_id, shipping_address, subtotal, total_amount)
+  select id, '{}', 1, 1 from profiles where role = 'customer' order by created_at limit 1
+  returning id)
+insert into payments (order_id, attempt_no, amount, slip_path)
+select id, 1, 1, 'slips/demo/g4.jpg' from o;
+create temp table g4_total on commit drop as select count(*) as n from payments;   -- นับด้วย postgres ก่อน
+grant select on g4_total to authenticated;
 select set_config('request.jwt.claims',
        json_build_object('sub', id, 'role', 'authenticated')::text, true)
-from profiles where email = 'stock@hompb.com';
+from profiles where role = 'warehouse' and is_active order by created_at limit 1;
 set local role authenticated;
-select count(*) as slips_visible from payments;      -- ต้องได้ 0
+select auth.uid() as me,
+       (select n from g4_total) as slips_in_db,
+       count(*) as slips_visible                                      -- ต้องได้ 0
+from payments;
 rollback;
-
--- @@ G5 ลบข้อมูลการเงินไม่ได้แม้เป็น Admin (ไม่มี policy DELETE)
+-- @@ G5 ลบข้อมูลการเงินไม่ได้แม้เป็น Admin -> ERROR 42501 permission denied
+--      security.sql ถอนสิทธิ์ delete ของตารางเงินและ log จาก authenticated ไว้ก่อนถึง RLS อีกชั้น
 begin;
 select set_config('request.jwt.claims',
        json_build_object('sub', id, 'role', 'authenticated')::text, true)
-from profiles where email = 'admin@hompb.com';
+from profiles where role = 'admin' and is_active order by created_at limit 1;
 set local role authenticated;
-delete from payments returning id;                   -- ต้องลบได้ 0 แถว
-delete from audit_logs returning id;                 -- ต้องลบได้ 0 แถว
+delete from payments returning id;                   -- ERROR 42501
 rollback;
 
 
@@ -834,4 +916,149 @@ select * from messages
 where conversation_id = (select id from conversations limit 1)
 order by created_at;
 rollback;
+
+
+-- =====================================================================
+-- หมวด Q: คำถามที่มักโดนถาม (อ่านอย่างเดียว ไม่แก้ข้อมูล)
+-- =====================================================================
+
+-- @@ Q1 ยอดเงินในคำสั่งซื้อตรงกับรายการสินค้าไหม (ต้องได้ 0 แถว)
+--      subtotal ต้องเท่ากับผลรวม จำนวน x ราคา ใน order_items และ total = subtotal + ค่าส่ง
+select o.order_no, o.subtotal,
+       coalesce(sum(oi.quantity * oi.unit_price), 0) as items_sum,
+       o.shipping_fee, o.total_amount
+from orders o
+left join order_items oi on oi.order_id = o.id
+group by o.id
+having o.subtotal <> coalesce(sum(oi.quantity * oi.unit_price), 0)
+    or o.total_amount <> o.subtotal + o.shipping_fee;
+
+-- @@ Q2 สต็อกปัจจุบันตรงกับผลรวมประวัติ stock_logs ไหม (mismatch ต้องเป็น 0)
+--      ทุกครั้งที่สต็อกเปลี่ยน (สั่งซื้อ ยกเลิก คืนของ คลังปรับ) ระบบเขียน stock_logs
+--      ผลรวม change_qty ของแต่ละตัวเลือกจึงต้องเท่ากับ stock_qty ตอนนี้
+select count(*) as variants,
+       count(*) filter (where v.stock_qty <> coalesce(l.total, 0)) as mismatch
+from product_variants v
+left join (select variant_id, sum(change_qty) as total
+           from stock_logs group by variant_id) l on l.variant_id = v.id;
+
+-- @@ Q3 FK ตัวไหนไม่มี index (ตั้งใจ: index เฉพาะคอลัมน์ที่ query ใช้จริง)
+select c.conrelid::regclass as table_name, a.attname as fk_column,
+       c.confrelid::regclass as references_table
+from pg_constraint c
+join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+where c.contype = 'f' and c.connamespace = 'public'::regnamespace
+  and not exists (select 1 from pg_index i
+                  where i.indrelid = c.conrelid and i.indkey[0] = c.conkey[1])
+order by 1, 2;
+
+-- @@ Q4 ฟังก์ชัน security definer ทุกตัวล็อก search_path ไหม (no_search_path ต้องเป็น 0)
+--      security definer รันด้วยสิทธิ์เจ้าของฟังก์ชัน ถ้าไม่ล็อก search_path
+--      คนอื่นอาจสร้างตาราง/ฟังก์ชันชื่อซ้ำมาหลอกให้ถูกเรียกแทนได้
+select count(*) filter (where prosecdef) as security_definer,
+       count(*) filter (where prosecdef and proconfig is null) as no_search_path
+from pg_proc
+where pronamespace = 'public'::regnamespace;
+
+-- @@ Q5 view ซ่อนคอลัมน์: ผู้เยี่ยมชมเห็นแค่ "มี/หมด" ไม่เห็นจำนวนสต็อกจริง
+select 'product_variants (ตารางจริง)' as source,
+       string_agg(column_name, ', ' order by ordinal_position) as columns
+from information_schema.columns
+where table_schema = 'public' and table_name = 'product_variants'
+union all
+select 'variants_public (view ให้หน้าร้าน)',
+       string_agg(column_name, ', ' order by ordinal_position)
+from information_schema.columns
+where table_schema = 'public' and table_name = 'variants_public';
+
+-- @@ Q6 สินค้าขายดีอันดับ 1-3 ของแต่ละห้อง (CTE + window function)
+--      นับเฉพาะคำสั่งซื้อที่อนุมัติแล้วขึ้นไป ถ้ายังไม่มีคำสั่งซื้อจะได้ 0 แถว
+with sold as (
+  select c.name as room, oi.product_name, sum(oi.quantity) as qty
+  from order_items oi
+  join orders o              on o.id = oi.order_id
+                            and o.status in ('approved', 'shipping', 'delivered')
+  join product_variants v    on v.id = oi.variant_id
+  join product_categories pc on pc.product_id = v.product_id
+  join categories c          on c.id = pc.category_id
+  group by c.name, oi.product_name),
+ranked as (
+  select *, rank() over (partition by room order by qty desc) as rank_in_room
+  from sold)
+select room, rank_in_room, product_name, qty
+from ranked
+where rank_in_room <= 3
+order by room, rank_in_room;
+
+-- @@ Q7 ใครทำอะไรล่าสุด (audit_logs 20 แถวล่าสุด)
+select a.created_at, coalesce(p.email, 'ระบบ') as actor, a.action,
+       a.target_table, a.detail
+from audit_logs a
+left join profiles p on p.id = a.actor_id
+order by a.created_at desc
+limit 20;
+
+-- @@ Q8 งานอัตโนมัติ pg_cron (Supabase เท่านั้น)
+--      ยกเลิกคำสั่งซื้อที่เกินเวลาโอนทุก 5 นาที
+select jobname, schedule, command, active
+from cron.job;
+
+-- @@ Q9 Storage bucket เป็น private ไหม (Supabase เท่านั้น)
+--      สลิปและสลิปคืนเงินต้อง public = false เปิดได้ผ่าน signed URL อายุสั้นเท่านั้น
+select id, public, file_size_limit, allowed_mime_types
+from storage.buckets
+order by id;
+
+
+-- =====================================================================
+-- หมวด Z: ล้างของค้างจากการสาธิต (รันก่อนหรือหลังโชว์ได้ทุกเมื่อ)
+-- ปกติทุกบล็อกจบด้วย rollback ไม่มีอะไรค้าง หมวดนี้มีไว้กันกรณีรันไม่ครบบล็อก
+-- เช่น ก๊อปไปแค่ครึ่งบล็อก หรือรัน E3 แท็บ A แล้วไม่ได้รันแท็บ B
+-- =====================================================================
+
+-- @@ Z1 ล้างข้อมูลทดสอบที่ค้าง แล้วโชว์ว่าเหลือ 0 ทุกช่อง (บันทึกจริง)
+--      ลบเฉพาะของที่บล็อกสาธิตสร้าง ระบุได้แน่นอน ไม่แตะข้อมูลจริง
+--      - คำสั่งซื้อทดสอบ = ไม่มีชื่อผู้รับในที่อยู่ (ของจริงจาก place_order() มีเสมอ)
+--      - สินค้า/ตัวเลือก/รูปทดสอบ = ชื่อ "สินค้าทดสอบ" · SKU ขึ้นต้น DEMO- · รูปใน demo/
+--      - บัญชีทดสอบจาก B1 = demo.signup@mail.com
+--      - E3 ค้าง = คืนสต็อกจาก demo.e3_backup แล้วลบ schema demo
+begin;
+select set_config('hompb.system_stock', 'on', true);               -- คืนสต็อก E3 โดยไม่สร้าง log ปรับสต็อกปลอม
+do $$
+begin
+  if to_regclass('demo.e3_backup') is not null then
+    update public.product_variants v set stock_qty = k.stock_qty
+    from demo.e3_backup k where v.id = k.id;
+  end if;
+end $$;
+drop schema if exists demo cascade;
+
+create temp table z1_orders on commit drop as
+select id from orders where not (shipping_address ? 'recipient_name');
+delete from refund_items where refund_id in (select id from refunds where order_id in (select id from z1_orders));
+delete from refunds              where order_id in (select id from z1_orders);
+delete from payments             where order_id in (select id from z1_orders);
+delete from shipments            where order_id in (select id from z1_orders);
+delete from order_items          where order_id in (select id from z1_orders);
+delete from order_status_history where order_id in (select id from z1_orders);
+delete from orders               where id       in (select id from z1_orders);
+
+delete from product_variants where sku like 'DEMO-%';
+delete from product_images   where image_path like 'demo/%';
+delete from products         where name like 'สินค้าทดสอบ%';
+delete from auth.users       where email = 'demo.signup@mail.com';
+
+select (select count(*) from orders where not (shipping_address ? 'recipient_name')) as test_orders,
+       (select count(*) from product_variants where sku like 'DEMO-%')                as test_variants,
+       (select count(*) from products where name like 'สินค้าทดสอบ%')               as test_products,
+       (select count(*) from profiles where email = 'demo.signup@mail.com')          as test_users,
+       (select count(*) from pg_namespace where nspname = 'demo')                    as demo_schema;   -- ต้องได้ 0 ทุกช่อง
+commit;
+
+-- @@ Z2 เรียงเลขคำสั่งซื้อให้ต่อจากเลขล่าสุด (บันทึกจริง)
+--      ทุกบล็อกที่สร้างคำสั่งซื้อแล้ว rollback ทำให้เลข order_no ข้าม (sequence ไม่ย้อนกลับ)
+--      บล็อกนี้ตั้งให้คำสั่งซื้อจริงใบถัดไปได้เลข = เลขสูงสุดตอนนี้ + 1
+select setval(pg_get_serial_sequence('public.orders', 'order_no'),
+              coalesce(max(order_no), 0) + 1, false) as next_order_no
+from orders;
 `;
