@@ -76,6 +76,35 @@ button:focus-visible {
   border: 1px solid var(--line);
 }
 
+/* ปุ่มที่เป็นลิงก์ (ดูหน้าร้าน): หน้าตาเหมือนปุ่ม ไม่มีเส้นใต้ */
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.btn svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.btn.line {
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btn.line:hover {
+  background: var(--side);
+  border-color: var(--acc);
+}
+
+a.btn:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
 .btn.sm {
   padding: 6px 14px;
 }

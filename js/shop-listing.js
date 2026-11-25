@@ -2,7 +2,7 @@
 // สินค้าจริงขึ้นก่อน ตามด้วยสินค้าตัวอย่าง (js/catalog.js) ของห้องนั้น / ที่ชื่อตรงคำค้น
 (async () => {
   await renderHeader();
-  const isZone = location.pathname.endsWith("zone.html");
+  const isZone = /\/zone(\.html)?$/.test(location.pathname); // Netlify ตัด .html ออกจากลิงก์ (/zone?z=kitchen)
   const z = param("z"),
     q = param("q").trim();
   const title = isZone ? zoneName(z) || "ทุกห้อง" : q ? `ผลการค้นหา “${q}”` : "สินค้าทั้งหมด";
